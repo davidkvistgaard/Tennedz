@@ -12,3 +12,6 @@ coverage/
 .recovery-local/
 supabase/.temp/
 .vercel
+
+.next-viewer-acceptance/
+.next-viewer-build/

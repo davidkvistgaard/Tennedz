@@ -16,12 +16,12 @@ test("2027 race calendar displays dates and supports filters without opening ent
   await expect(page.getByText("19 Jan – 24 Jan",{exact:true})).toBeVisible();
   await page.getByLabel("Field").selectOption("Women");
   await page.getByLabel("Format").selectOption("stage");
-  await page.getByLabel("Class").selectOption("SILVER");
+  await page.getByLabel("Coverage").selectOption("pending");
   await expect(page.getByText("Santos Tour Down Under",{exact:true})).toHaveCount(1);
   await expect(page.getByText("22 Jan – 24 Jan",{exact:true})).toBeVisible();
   await page.getByLabel("Field").selectOption("");
   await page.getByLabel("Format").selectOption("");
-  await page.getByLabel("Class").selectOption("");
+  await page.getByLabel("Coverage").selectOption("");
   await page.getByRole("button",{name:/Year 2/}).click();
   await expect(page.getByRole("heading",{name:"Pelotonia Year 2"})).toBeVisible();
   await page.getByRole("button",{name:/June/}).click();

@@ -11,6 +11,12 @@
     "start": "next start",
     "lint": "eslint app lib tests",
     "test": "node --test tests/unit/*.test.mjs",
+    "audit:viewer:release": "node scripts/audit-motor-viewer-release.mjs --require-calibrated",
+    "audit:motor:positions": "node scripts/audit-motor-position-coverage.mjs --require-complete",
+    "audit:motor:rotation:diagnose": "node scripts/audit-position-rotation-v1.mjs --staged-backup",
+    "audit:motor:attack:diagnose": "node scripts/audit-position-one-attack-v1.mjs",
+    "audit:motor:hybrid:diagnose": "node scripts/audit-position-fixed-lane-matrix-v1.mjs --hybrid",
+    "audit:motor:early-climb:diagnose": "node scripts/audit-position-early-climb-v1.mjs --hybrid",
     "test:marketplace:sql": "node tests/support/marketplace-sql-check.mjs",
     "test:e2e": "playwright test"
   },

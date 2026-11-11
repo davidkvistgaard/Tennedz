@@ -29,8 +29,11 @@ test('race format is explicit and stage number cannot leak into a one-day race',
   assert.deepEqual(normalizeRaceContext({format:'one_day'}),{format:'one_day'});
   assert.deepEqual(normalizeRaceContext({format:'one_day',
     roadGroupPaceVersion:2}),{format:'one_day',roadGroupPaceVersion:2});
+  assert.deepEqual(normalizeRaceContext({format:'one_day',
+    roadGroupPaceVersion:3}),
+  {format:'one_day',roadGroupPaceVersion:3});
   assert.throws(()=>normalizeRaceContext({format:'one_day',
-    roadGroupPaceVersion:3}),/Invalid race context/);
+    roadGroupPaceVersion:4}),/Invalid race context/);
   assert.deepEqual(normalizeRaceContext({format:'stage',stageNumber:12}),
     {format:'stage',stageNumber:12});
   assert.throws(()=>normalizeRaceContext({format:'stage'}),/Invalid race context/);

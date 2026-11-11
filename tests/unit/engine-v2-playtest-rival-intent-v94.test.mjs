@@ -3,6 +3,8 @@ import assert from 'node:assert/strict';
 import {prepareV91Playtest} from '../../lib/engine/v2/playtest.mjs';
 import {prepareV94RivalIntent} from
   '../../lib/engine/v2/playtest-rival-intent-v94.mjs';
+import {createV94RaceDynamicsPreview} from
+  '../../lib/engine/v2/playtest-race-dynamics-v94.mjs';
 import {simulateTacticalTour} from '../../lib/engine/v2/tour.mjs';
 import {validateRecordedTour} from '../../lib/engine/v2/recording.mjs';
 import {replayRaceDynamicsRecording} from
@@ -210,4 +212,134 @@ test('a paid control chase lets non-working peloton teams rest without easing ro
   const forged=structuredClone(race);
   forged.frames[99].pelotonRestTeamIds=[];
   assert.throws(()=>validateRecordedTour(forged),/peloton rest/);
+});
+
+test('explicit V94 sporting stakes commit every named captain without changing old intent',()=>{
+  const settings={distanceKm:40,teamCount:4,
+    seed:'explicit-stakes-1',attack:'none',chase:'selective'};
+  const prepared=prepareV91Playtest(settings);
+  const sportingStakes=prepared.teams.map((team,index)=>({
+    teamId:team.id,
+    goal:index===0?'sprint_finish':
+      index===1?'summit_attack':'none',
+    captainId:team.orders.captainId}));
+  const input={prepared,format:'one_day',
+    controlTempoVersion:2,
+    opportunisticSpecialistVersion:2};
+  const historical=prepareV94RivalIntent(input);
+  const plan=prepareV94RivalIntent({
+    ...input,sportingStakes});
+  assert.deepEqual(plan.teams,historical.teams);
+  assert.ok(historical.intent.every(row=>
+    !Object.hasOwn(row,'sportingGoal')));
+  assert.deepEqual(plan.intent.map(row=>({
+    teamId:row.teamId,goal:row.sportingGoal,
+    captainId:row.sportingCaptainId})),
+  sportingStakes);
+  assert.throws(()=>prepareV94RivalIntent({
+    ...input,sportingStakes:sportingStakes.slice(1)}),
+  /every team/);
+  assert.throws(()=>prepareV94RivalIntent({
+    ...input,sportingStakes:[{...sportingStakes[0],
+      captainId:'absent'},...sportingStakes.slice(1)]}),
+  /named captain/);
+  const race=simulateTacticalTour({stage:prepared.stage,
+    weather:prepared.weather,teams:plan.teams,
+    seed:prepared.seed,
+    motorVersion:MOTOR_RACE_DYNAMICS_VERSION,
+    raceContext:plan.raceContext,rivalIntent:plan.intent});
+  assert.equal(race.committedInputs.rivalIntentVersion,5);
+  assert.equal(validateRecordedTour(race),true);
+  assert.deepEqual(replayRaceDynamicsRecording(race),race);
+  const forged=structuredClone(race);
+  forged.committedInputs.rivalIntent[0]
+    .sportingCaptainId='absent';
+  assert.throws(()=>validateRecordedTour(forged),
+    /intent manifest/);
+  const {recording,preview}=
+    createV94RaceDynamicsPreview({
+      settings,format:'one_day',
+      sportingStakes});
+  assert.equal(recording.committedInputs
+    .rivalIntentVersion,5);
+  assert.equal(preview.policy.rivalIntentVersion,5);
+  assert.equal(preview.teamPlans.find(row=>
+    row.teamId==='you').sportingGoal,
+  'sprint_finish');
+});
+
+test('opt-in protector pursuit requires a named sprint stake still in the bunch',()=>{
+  const settings={distanceKm:120,teamCount:20,terrain:'flat',fatigue:0,
+    attack:'none',chase:'selective',seed:'chase-turn-holdout-1-flat-0'};
+  const prepared=prepareV91Playtest(settings);
+  const stakes=goal=>prepared.teams.map(team=>({teamId:team.id,goal,
+    captainId:team.orders.captainId}));
+  const options={format:'one_day',settings,roadGroupPaceVersion:3,
+    chaseTurnVersion:1,bunchFrontTurnVersion:1,
+    pelotonFrontTurnVersion:1,protectorSportingPursuitVersion:1};
+  assert.throws(()=>createV94RaceDynamicsPreview({
+    ...options,sportingStakes:null}),/experimental race settings/);
+  assert.throws(()=>createV94RaceDynamicsPreview({
+    ...options,roadGroupPaceVersion:2,
+    sportingStakes:stakes('sprint_finish')}),
+  /experimental race settings/);
+  const historic=createV94RaceDynamicsPreview({
+    ...options,protectorSportingPursuitVersion:0,
+    sportingStakes:stakes('none')}).recording;
+  const noStake=createV94RaceDynamicsPreview({
+    ...options,sportingStakes:stakes('none')}).recording;
+  const sprint=createV94RaceDynamicsPreview({
+    ...options,sportingStakes:stakes('sprint_finish')}).recording;
+  const protectChoices=race=>race.frames.flatMap(frame=>
+    frame.chaseReasons.filter(row=>row.reason===
+      'one_day_captain_pursuit'));
+  assert.ok(protectChoices(historic).length>0);
+  assert.equal(protectChoices(noStake).length,0);
+  assert.ok(noStake.frames.some(frame=>frame.chasePower>0));
+  assert.ok(protectChoices(sprint).length>0);
+  assert.equal(validateRecordedTour(noStake),true);
+  assert.deepEqual(replayRaceDynamicsRecording(sprint),sprint);
+  const forged=structuredClone(sprint);
+  const pursuing=protectChoices(forged)[0].teamId;
+  forged.committedInputs.rivalIntent.find(row=>
+    row.teamId===pursuing).sportingGoal='none';
+  assert.throws(()=>validateRecordedTour(forged),
+    /chase reason|source|recording/i);
+});
+
+test('opt-in protector timing uses observed paid front pace and own helpers',()=>{
+  const settings={distanceKm:120,teamCount:20,terrain:'flat',fatigue:0,
+    attack:'none',chase:'selective',seed:'chase-turn-holdout-1-flat-0'};
+  const sportingStakes=prepareV91Playtest(settings).teams.map(team=>({
+    teamId:team.id,goal:'sprint_finish',
+    captainId:team.orders.captainId}));
+  const options={format:'one_day',settings,sportingStakes,
+    roadGroupPaceVersion:3,chaseTurnVersion:1,
+    bunchFrontTurnVersion:1,pelotonFrontTurnVersion:1,
+    protectorSportingPursuitVersion:1};
+  assert.throws(()=>createV94RaceDynamicsPreview({
+    ...options,protectorSportingPursuitVersion:0,
+    protectorPursuitTimingVersion:1}),
+  /experimental race settings/);
+  assert.throws(()=>createV94RaceDynamicsPreview({
+    ...options,format:'stage',protectorPursuitTimingVersion:1}),
+  /experimental race settings/);
+  const earlier=createV94RaceDynamicsPreview(options).recording;
+  const timed=createV94RaceDynamicsPreview({
+    ...options,protectorPursuitTimingVersion:1}).recording;
+  assert.equal(earlier.frames.find(frame=>frame.chasePower>0).km,70);
+  assert.ok(timed.frames.find(frame=>frame.chasePower>0).km<70);
+  const choices=timed.frames.flatMap(frame=>
+    frame.protectorPursuitDecisions);
+  assert.ok(choices.length>0);
+  assert.ok(choices.some(row=>row.choice==='chase'&&
+    row.observedFrontLeadAbility!==null&&
+    row.ownHelpers.length>0));
+  assert.equal(validateRecordedTour(timed),true);
+  assert.deepEqual(replayRaceDynamicsRecording(timed),timed);
+  const forged=structuredClone(timed);
+  forged.frames.find(frame=>frame.protectorPursuitDecisions.length)
+    .protectorPursuitDecisions[0].ownLeadAbility=0;
+  assert.throws(()=>validateRecordedTour(forged),
+    /protector timing/);
 });

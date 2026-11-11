@@ -1869,3 +1869,5165 @@ one rider, adding a second, a later team joining with two, or leaving.
 It reads only consecutive paid rotation plans. It is deliberately not
 called by the current viewer: current frames record paid chase workers
 but do not record which one occupied the wind at each moment.
+
+### Participation in each road group
+
+The current kilometre engine selects eligible pullers separately for each
+recorded group ahead of the bunch. A committed `sit_on` order excludes a
+rider; a cooperating rider may reciprocate when a rival sits on; a rider
+normally protects a teammate in an earlier group; low energy can prevent
+a pull. An explicit drive order or the committed fading-teammate response
+can change those choices. Selected pullers pay extra energy while riders
+in their draft pay less. The cost has a group-size rotation allowance,
+but no source frame records which individual occupied the wind or how
+long each turn lasted. A late attack when outsprinted is a separate
+committed finale order, not an automatic decision to sit on throughout
+the break. Dropped riders are tracked individually and do not form a
+cooperative rear group in this version.
+
+`road-group-participation.mjs` is a read-only explanation of the existing
+selection. The same `decideRoadGroupWork` function now selects the pullers
+used by the road and returns one explicit choice and reason per rider in
+each forward group. The explanation returns each selected rider and the
+strongest order-backed
+or source-backed reason for an exclusion. It does not assign a fictional
+pull duration or infer a private sporting motive. It is not wired into
+paid race frames or viewer commentary.
+
+A future versioned participation decision should assess every recorded
+group on every relevant kilometre. It needs a sporting stake from an
+actual rider or team order and, for GC, an actual classification; known
+teammates in groups further ahead; terrain-specific *perceived* rival
+strength rather than hidden exact strength; own and rival sprint chances;
+the remaining route; available energy and fatigue; and uncertain help
+from other teams. Its outcome should be an explicit `pull`, `sit_on`, or
+`attack` decision with a recorded reason. A separate physical rotation
+step must then put at most one rider in the wind at a time, charge that
+rider for the actual share, charge sheltering riders less, and advance
+the group from paid work. Re-evaluate when an attack creates a new group,
+when a teammate moves ahead, or when a group is caught. Rear groups need
+recorded group formation and contact before using the same mechanism.
+The viewer may narrate named leads or tactical withholding only after
+those decisions and shares are recorded and source-replayed. The current
+V93/V94 clocks, finish guards and historical recordings remain unchanged.
+
+### Per-rider kilometre contract for the next motor
+
+Updating every rider's energy is not sufficient. Before advancing a
+kilometre, a new motor version must assign **exactly one primary action
+to every active rider** from the rider's current road group and the
+information that rider or team could possess. The decision record needs
+the rider ID, group ID, committed team order, observed threats, available
+energy, chosen action, and a reason. It must not use a rival's hidden exact
+skill in a rider's decision. The paid road may use exact physical skills
+after the choice is committed.
+
+Actions must distinguish attack, exposed lead, sheltered cooperation,
+deliberate sit-on, support of a teammate, conservation in the bunch, and
+isolated riding after a drop. A rider can decline work because a teammate
+is further ahead, because the group's sporting stake does not justify
+spending energy, or because saving energy for a sprint is a committed
+strategy. A GC reason requires a real classification. Uncertain help from
+other teams affects expectations, not the paid work roster until those
+teams actually commit and contribute. If two groups are ahead, each is
+assessed separately. A dropped rider cannot gain drafting or rotation
+benefits from a rear group until a recorded contact creates that group.
+
+For every physical group, the subsequent work step must record no more
+than one exposed leader at any instant and the duration of each turn.
+Other riders receive a lower, explicit sheltered cost. Fatigue and
+availability can end a turn; having more helpers extends the number of
+future turns rather than summing their speeds. The group clock, catches,
+splits, energy ledger and viewer events must all derive from these paid
+turns. A tactical decision is recomputed after each kilometre and after
+each recorded split, catch, or change in available teammates.
+
+The release gate is whole-race source replay, not a plausible isolated
+kilometre: every active rider must have one decision and a matching paid
+energy transition at every kilometre; no rider may work in two groups or
+occupy the wind concurrently; decisions may use only committed orders and
+observed or explicitly uncertain rival information; and the same seed
+must reproduce group membership, contact and finish. Test fresh and tired
+one-day and stage cases, flat and mountain routes, multiple simultaneous
+breaks, no control team, weak and strong sprint interests, missing
+helpers, late manager orders, and riders dropped behind the bunch. Do
+not route this candidate to guided races until its group speed and
+fatigue are calibrated across those full races. Historical versions
+retain their original contracts and replay results.
+
+### Riders behind the bunch and the unfinished time limit
+
+The current `dropped` state is an individual deficit to the bunch at
+each kilometre checkpoint. It does not contain an intra-kilometre
+contact, a common rear-group clock, an occupied wheel, or a rider who
+leads that rear group. Similar deficits alone are insufficient evidence
+that two riders met. This applies equally to exhausted bunch workers,
+caught break riders who lose the bunch, and riders dropped early on a
+climb. They must all enter the same future rear-road mechanism through
+recorded events rather than receive a category-specific shortcut.
+
+The next version must carry each detached rider's paid road clock and
+energy through shorter steps. A rear group may form only when those
+clocks reach a recorded contact point. It then gets a persistent group
+identity and membership, so riders can leave, join, be dropped again,
+or rejoin the bunch without teleporting or being counted twice. Each
+member's decision at the next step is explicit: seek contact, take a
+turn, shelter, wait for a teammate, or ride alone. At any instant only
+one member leads. The exposed leader pays the lead cost; other members
+pay a lower sheltered cost. Turns are reassigned when the leader is
+spent or another member volunteers. Riding together may conserve
+energy and sustain speed, but the number of members must not simply
+add their abilities to instantaneous pace.
+
+Their shared objective is to reach the finish with the available energy.
+No cut-off time is defined yet: the motor must record their actual finish
+times and group crossings without declaring anyone outside a limit.
+When a separate, explicit time-limit rule is specified, it can compare
+those recorded times against the rule. It must not change the road
+clock retroactively or fabricate a present-day cut-off.
+
+The release gate includes source-replayed cases for the three entry
+paths above, several riders losing contact at different moments, two
+rear groups merging, one rider refusing a turn, exhausted leaders,
+terrain transitions, and a group that catches the bunch. Verify each
+rider's paid work, sheltered energy, membership and finish clock at
+every step before showing named gruppetto commentary or results.
+
+### Staying with the bunch versus deliberately letting go
+
+The present `updateRiderGroups` compares each rider's current ability
+with a bunch reference pace and accumulates a deficit after repeated
+shortfalls. Its input has no individual choice to spend more energy to
+hold the wheel. Effort changes that rider's energy charge elsewhere,
+but the group attachment transition itself does not distinguish a
+failed attempt to stay from a deliberate early release. The stage
+handoff can carry fatigue after an isolated stage; the race context
+only knows the current stage number and has no committed upcoming
+route, role or stage objective. Consequently the current motor cannot
+honestly say a rider let go to save energy for a particular future day.
+
+A next-version decision has two separate questions at every relevant
+climb or pace change. First, from the rider's known condition, terrain,
+draft, observed group pace and remaining climb, estimate the extra
+energy needed to stay attached and whether that attempt is physically
+possible. The rider may choose to try and still be dropped; the attempt
+must cost energy and affect the paid road clock. Second, if staying is
+possible, compare the current sporting stake with the explicitly
+committed multi-stage plan and the value of saving energy for later.
+The choice to release must record that strategic reason and the energy
+it actually saves. A leader defending a real classification, a helper
+still assigned to protect that leader, and a rider targeting another
+stage may reach different decisions on the same climb. The rider may
+not know exact rival capacity or a future result in advance.
+
+After either an involuntary drop or a voluntary release, the rider
+enters the paid rear-road/contact model above. Neither branch grants
+instant group shelter. No time-limit result is inferred while the
+cut-off rule is undefined. Replay must distinguish `tried_and_dropped`,
+`chose_to_release`, and `stayed_attached` from recorded decisions and
+paid energy, including early-climb, caught-break and exhausted-worker
+cases across consecutive stages. Do not calibrate a hard-effort bonus
+or future-stage utility from a single illustrative race.
+
+### Isolated one-leader road-group turn plan
+
+`road-group-turns-v1.mjs` consumes the executable per-rider pull choices
+for one existing forward group and divides a kilometre into consecutive
+turns. Each metre has one exposed leader. The candidate computes each
+member's extra lead or shelter cost and a distance-weighted mean leading
+ability, never the sum of worker abilities. A group with no willing
+leader returns `unsupported_unworked`; it does not receive free worked
+pace. A rider unable to pay even the extra planned group charge refuses
+the plan. The caller may pass the subset actually active after a recorded
+settled-front rest; the planner rejects an active worker who did not
+choose to pull. This is an isolated, opt-in plan, not a paid road transition:
+the baseline riding charge, within-kilometre exhaustion, contact, group
+clock and source replay still need a separately versioned integration.
+No guided race or viewer uses these turns yet.
+
+A read-only `audit-v94-road-group-turns.mjs` replays four 120-km V94
+one-day sources across flat/mountain and fresh/tired. Every one of the
+400 prior forward-group kilometres had an eligible recorded worker and
+the isolated planner could divide its actual worker roster into turns.
+The current aggregate model charged 236.074 extra reserve units across
+those groups; the one-leader shadow planned 154.04. These are summed
+model units, not an observed energy saving or calibrated race result.
+The shadow deliberately leaves baseline cost and road movement unpaid,
+so its lower charge cannot be inserted into the guided motor as-is.
+The same four fresh/tired flat/mountain scenarios at 260 km source-replay
+and yield 954 prior forward-group kilometres. All have a recorded active
+worker roster that the candidate can divide into one-leader turns.
+Current aggregate extra cost totals 409.61 model units versus 287.72
+planned shadow units. This larger holdout reinforces the calibration
+need; it does not establish that the shadow reaches the line at the
+same speed or with the same rider energy.
+These four long sources have eight first-time `dropped` events in total,
+none immediately after a recorded bunch-front assignment or on the same
+kilometre as a recorded break catch. They therefore do not exercise the
+rear-group entry paths requested for exhausted workers or caught break
+riders. The audit counts these paths explicitly rather than claiming
+coverage from a long-race sample that lacks them.
+
+### Isolated rear solo contact step
+
+`rear-solo-contact-v1.mjs` adds an independent, versioned short road
+step for two detached solo riders with ordered, positive time gaps to
+the bunch. Given explicit rider and bunch speeds and per-rider work
+costs for that slice, it charges each solo rider to the exact computed
+meeting point or through the entire slice if they remain separate.
+It records an exact rear-contact marker only when the rear rider closes
+the paid gap; a bunch catch before that contact refuses this branch.
+The standalone validator recalculates the step and rejects a changed
+contact marker or energy. It does not silently grant a common wheel,
+shelter, leader, finish time or time-limit result after contact.
+
+This step is not yet connected to the full race. The current kilometre
+frames do not supply independent short-step speed and position plans
+for detached riders, and a single reference slice cannot establish
+terrain-specific location for riders far apart on the road. Those plans,
+rear-group continuation and full source replay are required before any
+real race can form a gruppetto with this candidate.
+
+`rear-contact-continuation-v1.mjs` now recalculates that paid solo
+meeting before allowing a two-rider rear group to travel the remaining
+part of the same short slice. One named rider leads and pays the greater
+cost; the other pays a smaller sheltered cost. If their paid common
+speed reaches the bunch, the step stops at the computed rejoin marker.
+The source validator rejects changed energy or contact. No group is
+formed from similar checkpoint deficits, and an unpayable rider or
+missing solo contact refuses. The group speed and costs are explicit
+inputs to this isolated step, not yet derived from a committed
+multi-stage rider policy. The contact step alone does not select later
+turns or replay a full race.
+
+`rear-group-step-v1.mjs` continues the explicitly formed group on later
+short slices. Every member supplies a `pull` or `sit_in` decision and a
+reason; the group rotates one willing leader per slice. Only that rider
+pays the higher exposed rate, while companions pay the lower sheltered
+rate. The step refuses an unpayable leader or a group with no willing
+leader, and stops exactly at a paid bunch rejoin. A complete next-group
+state carries membership, clock, turn count and each rider's energy to
+the following slice; its validator recalculates the source decisions.
+This remains isolated: its speed, rider decisions and energy rates are
+supplied inputs rather than derived from the actual V93/V94 stage and
+committed orders. It does not model new joins, splits, terrain-specific
+positions or a whole-race finish. It cannot be shown as a playable
+gruppetto until those parts are source-replayed together.
+
+`rear-group-run-v1.mjs` now chains the paid solo meeting, the first
+common turn and subsequent short-slice turns without allowing an
+unrecorded jump or another rear turn after a bunch rejoin. Its validator
+recalculates the entire supplied chain and rejects changed rider energy
+or leadership. This is still a standalone witness over supplied speed,
+cost and decision plans. It does not establish physical locations or
+sporting decisions from a locked whole-race source, and is not routed
+to the guided motor or viewer.
+
+`rider-climb-decision-v1.mjs` separates an inability to pay the
+projected cost of holding a climb from a voluntary release. A voluntary
+release requires an explicit committed plan to finish this stage safely,
+target a later stage and retain a stated energy reserve; a team order
+to hold position prevents that optional release. The decision and reason
+can be recalculated from the same source. This isolated decision does
+not yet derive the hold cost from the route and actual pace, move the
+rider, form a rear group, decide a finish time or impose a time limit.
+
+`scripts/audit-v94-rear-entry.mjs` replays 32 generated 20-team,
+260-km V94 cases across eight seeds, flat/mountain routes and fresh/tired
+starts. It found 51 first transitions into the provisional `dropped`
+state. None belonged to a recorded bunch-front worker in that or the
+preceding kilometre, and none was a caught break rider in either
+kilometre. This is a coverage finding, not evidence that those entry
+paths cannot occur: the cases do not exercise them. The provisional
+`deficitSeconds` does not give a physical road coordinate, so these
+51 riders cannot be joined into a rear group from the frames alone.
+
+The same audit now has an opt-in `--generated-profile` route check. Two
+independent 260-km profile seeds, flat/mountain and fresh/tired produce
+eight source attempts under the opt-in V94 paid-turn versions. Six
+validate and replay; two mountain cases correctly refuse a combined
+fresh attack and pursuit without a shared road clock. The six accepted
+races have 112 first `dropped` transitions, all on actual `climb`
+kilometres. None is a recorded bunch worker that kilometre or the
+previous one, or a rider caught from the break in either kilometre.
+This shows the real generated climbs exercise the early-drop path far
+more than the old shallow mountain template. The `dropped` deficit is
+still provisional; these 112 transitions do not establish a paid
+position or a rear-group meeting.
+
+An internal V94 `roadGroupPaceVersion: 3` now consumes the recorded
+per-rider forward-group work decisions in an actual one-leader-at-a-time
+kilometre turn plan. Each leader's share and every sitter's lower extra
+cost enter the race energy ledger; the turn-weighted ability enters the
+rear-front and front-bunch relative clocks. Driving riders retain their
+committed extra effort and cost. The recording stores decisions, turns
+and cost shares, and the source validator recalculates them before full
+V94 replay. Old V94 versions and guided V93 keep their recorded behavior.
+
+The read-only 16-case same-seed 120-km flat/mountain fresh/tired audit
+replayed both old version 2 and this opt-in version 3 with no refusal.
+Version 3 recorded 244–816 named turns per case, but its maximum lead
+was smaller in every case (for example, 89.75 to 51.65 seconds in the
+first fresh flat case). Removing the old group-size speed bonus while
+charging sequential turns substantially changes race outcomes. This is
+not calibrated and must not become the guided default. Bunch-front and
+chase workers still use their existing pair/capacity models, and dropped
+riders still lack physical road coordinates and group contact.
+
+An independent internal V94 `bunchFrontTurnVersion: 1` now uses two
+named helpers as sequential 500-metre leaders at the bunch front.
+The selected team's front pace remains the turn-weighted average of
+those riders' actual kilometre-start abilities. Only the exposed half
+of each rider's extra front-work cost is charged; their normal riding
+cost remains in the energy ledger. A worker unable to pay the full
+kilometre work refuses instead of receiving a free front pace. The
+recording includes the exact named turns and shares, and the source
+validator rejects changed work or leadership before full replay.
+
+In 16 same-seed, source-replayed 120-km flat/mountain fresh/tired cases,
+the new version recorded 69–116 paid bunch-front kilometres per case
+with no refusal. Maximum break lead changed by roughly -1.8 to +0.2
+seconds compared with the existing pair-cost version; one case changed
+whether a front group survived at the checkpoint. This is not a race
+calibration or a guided release. Chasing helpers still use the older
+capacity/cost model, and the bunch has no independently positioned
+single-wheel contact trace.
+
+`chase-turns-v1.mjs` is an isolated candidate for rotating all committed
+chasing helpers through one exposed position. It divides the kilometre
+into named non-overlapping turns, weights the road contribution by each
+actual turn length, and charges each leader only for their exposed share.
+It refuses an unpayable turn; no committed chase contributes zero power.
+The old V94 chase still sums the separate team capacities, so this
+candidate has not yet changed the race. It needs integration with the
+committed pursuit decisions, full rider work ledger, relative clock and
+independent source validator before it can be assessed as a motor version.
+
+The candidate is now connected behind an opt-in V94
+`chaseTurnVersion: 1`: all selected chasing helpers rotate one exposed
+turn at a time. Their turn-weighted contributions, named shares and
+paid energy enter the actual attack/chase gap clock and recording.
+The source validator checks the complete turn arithmetic and helper
+reserve; full V94 replay rejects changed work. Historical versions and
+guided V93 remain unchanged. A worker unable to pay the full kilometre
+work refuses the experimental race.
+
+This is **not calibrated**. In 16 same-seed, source-replayed 120-km
+flat/mountain fresh/tired cases, all opt-in races replayed, but the
+widest break lead rose from 44–119 seconds under summed team capacity
+to 120–330 seconds under sequential chase. The front survived in all
+16 opt-in cases, versus one of the 16 old races. This demonstrates
+that the old recovery-seconds-per-capacity coefficient cannot simply
+be reused with a single-leader capacity. Do not route this version to
+guided racing or infer realistic catch frequency from it. The chase
+decision still uses the prior potential-coalition estimate; the
+physical pace and that decision need joint calibration from paid
+rider/terrain ability and observed contact, not a static multiplier.
+
+A read-only gap-ledger audit of those 16 opt-in races isolates 874
+kilometres with a paid chase turn, an existing front gap and no fresh
+attack. Across those kilometres, the recorded passive road calculation
+adds 1,663.94 seconds to the gap while the legacy capacity-to-seconds
+formula credits the named chase leaders with only 496.61 seconds. In
+355 of the same kilometres, a separately paid bunch-front pace also
+enters the passive road calculation. Recomputing the named chase
+leaders' terrain and energy adjusted `chase` abilities from the
+committed riders shows their turn-weighted ability exceeds that
+separate paid bunch-front ability in all 355 such kilometres. The
+current clock still treats the chase as an additional capacity credit,
+not as that rider's physical pace. The total is diagnostic, not a
+new finish prediction: the terms are capped per kilometre and later
+attacks and contacts are outside this subset. It shows exactly why
+merely paying one rotating chase leader while retaining the old summed
+capacity clock makes the front survive. The next motor version should
+derive the chasing group's relative pace from its actual exposed
+leader, terrain and energy, and count any paid bunch-front work only
+once. It must then recompute team pursuit decisions against that same
+road model and validate contact and full source replay.
+
+An isolated `chase-road-pace-v1.mjs` planner now reconstructs each
+named chase leader's terrain- and energy-adjusted ability from the
+committed rider source and kilometre-start reserve, then weights it by
+the exact paid turn length. It rejects a changed rider, reserve or
+incomplete/duplicated turn and assigns no pace without a paid leader.
+It does not yet move the bunch, replace the old capacity credit or
+combine simultaneous chase and front-work leaders into one rotation.
+Doing so directly would double-count exposed road work; this remains
+an internal source-checked building block rather than a race version.
+
+An isolated `peloton-front-turns-v1.mjs` candidate now combines paid
+chase helpers and the separately committed two-worker bunch-front pair
+into one non-overlapping, one-kilometre leader rotation. It reads each
+worker's actual committed rider, energy, terrain and source order,
+charges only their exposed turn, and weights both road ability and
+chase contribution by distance led. A worker cannot occupy both jobs;
+no committed workers means no paid pace. This closes the double-counting
+problem in the candidate plan itself. It is not yet wired to the race
+clock, pursuit decisions, energy ledger or source replay, and has no
+effect on guided races or existing recordings.
+
+The read-only combined-turn audit replayed 16 independent 120-km V94
+sources (flat/mountain, fresh/tired, four seeds) through this planner:
+all 1,920 recorded kilometres had exactly one paid exposed leader with
+no overlap or uncovered distance. A chase and a separate team's
+front-work pair were both committed on 359 kilometres; 529 had chase
+only and 1,032 had front work only. This is a structural feasibility
+check, not a race outcome. The existing race still charged and credited
+those two jobs separately. The planner must enter the actual energy
+ledger and relative road clock in a new opt-in version, with full
+source validation, before its effects can be assessed.
+
+That shared plan is now connected behind an additional **opt-in** V94
+`pelotonFrontTurnVersion: 1`, which requires the existing named chase
+and two-worker front-turn versions. The actual energy ledger charges
+only the combined plan's exposed shares; the separate plans remain
+recorded as source proposals. The relative gap clock uses its one
+turn-weighted leader ability as bunch pace and removes the old
+additional chase-capacity time credit on kilometres without a fresh
+attack. A fresh launch simultaneous with a paid pursuit is explicitly
+refused until the launch and moving-bunch clocks have one contract.
+The source validator reconstructs the shared plan from committed
+riders, orders, terrain and pre-kilometre energy, checks the paid chase
+share and relative gap, and full replay rejects a changed leader.
+Historical recordings and guided racing retain their old versions.
+
+In 16 same-seed, source-replayed 120-km flat/mountain fresh/tired cases,
+all shared-version races completed without a validator refusal. Their
+widest leads were 51–248 seconds, compared with 108–327 seconds when
+separately rotating chase and front plans retained the old chase credit,
+and 44–119 seconds in the prior summed-capacity motor. The front still
+survived in all 16 shared cases. This is a material improvement over
+the separate candidate but **not calibrated** for realistic late
+catches. In particular, team pursuit decisions still estimate the old
+summed coalition's catch time, and the road ability to seconds mapping
+remains provisional. Do not route this version to guided races or
+production until decisions, fatigue, contact and finishes are tested
+together across a broad holdout.
+
+The same 16 sources were then run with **both** the single-leader
+peloton plan and the opt-in single-leader forward-group pace
+(`roadGroupPaceVersion: 3`). Fifteen validated and replayed; one
+correctly refused an unmodeled fresh attack occurring alongside paid
+pursuit. Among the 15, maximum leads were 35–82 seconds and a forward
+group remained at the recorded line in 14. All 15 first paid a chase
+at km 70 of 120, exactly 50 km remaining, despite the first front
+appearing at km 5. In a representative fresh flat case, five control
+teams were still holding their selective chase at km 69; one-day
+protector teams first paid at km 70. This is a decision-clock defect:
+the coalition's old summed-capacity catch estimate makes waiting look
+safe while the new physical single-leader road often cannot catch.
+Simply increasing a speed coefficient would conceal that mismatch.
+The next opt-in decision must assess each observed front, remaining
+terrain, helper reserves and uncertain other-team participation using
+the same paid road model. It must not assign a GC stake to a team with
+no recorded classification or automatically command every protector.
+
+An internal read-only `rotationVersion: 3` threat matrix now estimates
+the same one-exposed-leader relative road pace: terrain-adjusted front
+worker ability, the lower-quartile bunch baseline, actual chase-helper
+turn shares, and the V94 passive-gap coefficient. Extra riders extend
+the possible rotation and energy reserve; they do not add simultaneous
+speed. The observer keeps exact own riders but bounded rival skill and
+energy estimates. For this version, rival future work orders are not
+read from the source: a neutral steady/selective potential order is
+used and the nominated/conditional coalition marks uncertain team
+participation. This is an *all-in potential* calculation, not a claim
+that those teams have committed or paid a turn. The historical matrix
+versions and actual motor decisions are unchanged.
+
+A four-case, source-replayed 120-km flat holdout inspected the matrix
+at km 10, 20, 30, 40, 50, 60 and 69. In seed 1 fresh, the observed
+front moved from nominated catch capacity at km 10-20 to conditional
+capacity at km 30-40, then beyond even conditional potential at km 50;
+five control teams were still holding their chase. The tired version
+crossed that last boundary by km 40. Seed 2 fresh stayed inside the
+nominated potential through km 69; seed 2 tired was beyond all potential
+already at km 10. These bands are diagnostic only. The future decision
+still needs a committed sporting stake, an explicit choice of which
+team spends energy and when, bounded uncertainty in willingness, and
+same-source contact and finish calibration. The matrix must not be
+silently substituted for the old decision clock.
+
+A separate read-only rider-kilometre coverage audit sampled the same
+joint physical V94 candidate on 120- and 260-km flat/mountain routes,
+fresh and tired. Seven of eight sources replayed; one 120-km tired
+mountain source correctly refused a fresh attack simultaneous with paid
+pursuit. Each replayed frame had an energy-ledger row for all 160 riders.
+The recorded forward-group participation decision covered only riders
+already in a forward group at the start of the kilometre; a newly
+attacking rider first appears in the next selection. On the 260-km
+flat fresh and tired sources, respectively, 146 and 228 rider-kilometres
+ended in the `dropped` state and **zero** had a dropped-rider choice or
+paid rear-group contact. Energy accounting therefore must not be
+mistaken for the per-rider tactical logic in the requested vision.
+These specific 260-km mountain samples produced no dropped end frames;
+that does not establish realistic mountain survival. The next rear
+group version needs a physical transition and paid contact source before
+it can assign a shared wheel, rotation, shelter or finish pace.
+
+The same read-only audit now accepts bounded `--seeds=N` and a compact
+`--summary` output. Three independent holdout seeds across the same
+120/260-km, flat/mountain, fresh/tired matrix produced 22 replayed
+sources and two honest shared-road-clock refusals. The 22 sources had
+668,800 rider-kilometre energy rows, but only 26,963 explicit forward
+participation decision rows. They recorded 2,344 dropped-state
+rider-kilometres and zero dropped-rider participation decisions.
+The forward count is one kind of decision, not a count of every other
+team or attack choice; the contrast still proves that complete energy
+rows cannot establish a decision for every rider every kilometre.
+On the current branch, the same read-only audit was rerun with eight
+seeds across all 64 route/fatigue settings. Sixty-one sources replayed
+and three refused the unresolved shared clock. The replayed races had
+1,865,600 rider-kilometre energy rows and 75,026 forward participation
+decisions, while 7,738 dropped-state rider-kilometres still had zero
+dropped-rider decisions. This is a wider coverage check, not a
+whole-race physical validation or a new decision policy.
+
+An isolated `rear-detachment-v1.mjs` candidate now links the committed
+climb choice to one paid 1-km road step. It requires an explicit
+contiguous bunch leader turn plan whose weighted ability matches its
+recorded total; the rider starts in bunch contact and uses their own
+terrain, energy and chosen effort. Trying to hold can still produce a
+positive solo time gap if the rider cannot match the bunch. A deliberate
+energy-saving release requires the already versioned future-stage plan;
+an invalid plan or unaffordable hard kilometre refuses. An attached
+rider receives the same draft ability as the bunch and a provisional
+20% lower work cost than an exposed rider. The work price and ability
+to seconds conversion are experimental and uncalibrated. The output
+records the first solo gap and route kilometre distance boundaries
+(the route segment's `startM`/`endM` are elevations), with source
+replay/tamper rejection, but does not infer a later meeting, share a
+wheel, give a finish time, or alter V93/V94. The paid bunch turn source
+must itself have been validated by its existing full-race validator
+before this isolated candidate can be connected to a recording.
+
+The initial audit attempt with the legacy synthetic `terrain: mountain`
+template found **zero** `climb` kilometres in three completed 260-km
+sources: its long profile slopes are all below the route's 5% climb
+classification. This template cannot test early mountain shedding.
+The follow-up therefore used the existing seeded 13-anchor mountain
+profile generator as a committed custom route, without changing old
+templates. Four 260-km, 20-team V94 physical-road sources validated and
+replayed; 282 of their 1,040 route kilometres were classified `climb`.
+On 281 climb kilometres a source-paid bunch leader plan was available.
+Among 33,143 eligible *rider-kilometre counterfactuals*, the new entry
+step yielded 16,604 exact bunch-contact outcomes, 16,481 small positive
+gaps held as unresolved wheels, and 58 gaps beyond the provisional
+three-second separation gate. Forty-eight of those 58 riders remained
+`peloton` in the existing recording and ten were marked `dropped`.
+These are repeated per-kilometre trials, not 58 distinct riders or
+official drop events. The disagreement confirms that this candidate
+and the existing provisional bunch-membership model are not a
+calibrated common physical clock. No rear-group contact or draft benefit
+is inferred from the trial, and it must remain off the playable route.
+
+An isolated `rear-solo-road-v1.mjs` now accepts only the exact positive
+gap and paid reserve from the detachment step (or its own previous
+step), plus a complete source-paid bunch turn plan for the next
+kilometre. The rider explicitly chooses conserve, steady or hard
+effort and a `finish_safely` or `rejoin_bunch` reason. Terrain-adjusted
+solo ability and the recorded bunch leader produce two travel times;
+the rider pays energy through either the full kilometre or the
+calculated within-kilometre bunch contact. A contact stops at its
+distance marker and does not grant the rest of the kilometre for free.
+Source replay rejects changed energy, leader turns or position, and
+unaffordable work refuses. The absolute speed conversion remains a
+candidate; the model is not connected to historical V93, playable V94,
+or official finish times. It also cannot merge two rear solos without a
+separate, equally paid physical contact step.
+
+The four generated-mountain sources above supplied a valid paid bunch
+turn at the following kilometre for all 58 counterfactual solo entries.
+The solo continuation replayed and paid all 58 conservative next steps;
+all remained behind for that one kilometre and none rejoined or ran
+out of energy. This only tests a two-kilometre chain against the source
+road; those riders were not moved in the recorded tour. Later source
+orders and energy would diverge if the candidate were actually routed,
+so a full-race branch with its own state and validator is still needed.
+
+The same four replayed generated-mountain sources now test *separate*
+pairwise next-kilometre rear-contact counterfactuals. Among 58
+candidate solo entries, 122 rider pairs had ordered positive gaps and
+93 pairs had equal modelled gaps, for which this two-solo contract cannot
+establish who follows whom. When both ordered riders chose conservative
+finish pace, all 122 pairs stayed separate. When the rear rider instead
+chose hard effort to rejoin while the front rider conserved, all 122
+separate pair calculations reached a paid contact in the next
+kilometre; every source replayed and none exhausted its rider.
+These pair calculations are mutually incompatible alternatives—one
+rider occurs in many pairs—and cannot be combined into 122 real group
+meetings. The all-or-none result shows that the provisional pace and
+individual decision need calibration and physical simultaneous-group
+resolution before this candidate is routed. No contact was inserted
+into an actual race or viewer.
+
+`rear-source-contact-v1.mjs` now joins two *separately source-replayed*
+rear solo states, derives both solo speeds and costs from their riders,
+energy, terrain and explicit effort, and recalculates an exact paid
+within-kilometre meeting against the same validated bunch turn plan.
+Forged prior positions, changed prior energy, invalid bunch turns and
+an unaffordable kilometre refuse. Its output contains the reconstructed
+solo-contact input so the earlier isolated rear-group continuation can
+verify the same meeting before granting any shared shelter. The group
+continuation's leader speed and cost are still caller-supplied; those
+must be derived from committed rider decisions in a further version.
+This contact chain remains isolated from actual V94 dropped riders and
+does not establish a finish time or group membership in a real race.
+
+`rear-source-group-v1.mjs` now takes that verified solo contact and two
+explicit rider choices for the remaining slice. A selected rider must
+have chosen `pull`; their terrain, energy and effort determine speed
+and exposed cost, while the other rider pays a lower individual
+sheltered cost. The existing continuation recomputes the same contact
+before forming a two-rider group; it records the group's clock and
+refuses unpayable work or a leaderless plan. Full source replay rejects
+changed rider choices, contact or energy. This is a genuine one-leader
+paid first turn in the isolated chain, but the choice source is still
+explicit input rather than autonomous whole-race rider logic. Later
+turns and merges remain outside this version.
+
+The separately versioned `rear-group-choice-v2.mjs` replaces
+caller-selected first-turn
+choices in an isolated branch with a reproducible rider decision. It
+reads each rider's explicit rear goal and distinct `rearWork` directive,
+current committed effort order, remaining energy and recorded teammates
+in a group further ahead. The existing breakaway `breakWork` order is
+never silently reinterpreted for a rear group. A rider can sit because
+of a rear directive, a teammate ahead,
+insufficient energy or a valid future-stage reserve plan. A cooperative
+rider with a `finish_safely` or `rejoin_bunch` goal can take a paid turn;
+an explicit rear drive directive can override energy-saving intent if
+affordable.
+The willing roster alone determines the first leader. If both riders
+decline, the version refuses instead of silently inventing a puller.
+The exact choices, reason, leader, road and energy replay from the
+contact source. This still handles only a two-rider first-turn branch,
+not a whole-race goal policy or rear groups of arbitrary size.
+The earlier isolated v1 contract remains available for replay, but it
+interpreted a breakaway work order as a rear-group order. V2 requires
+the new explicit `rearWork` directive and must be the basis for any
+future routed rear-group version.
+
+The isolated `rear-group-source-road-v1.mjs` extends that exact two-rider
+contact one further kilometre. It replays the prior contact and first
+turn, requires the next physical kilometre and the same rider roster,
+then recomputes each rider's willingness from a distinct `rearWork`
+directive, current team effort, energy and any teammate ahead. One
+willing rider leads; the other occupies shelter even when willing to
+take a later turn. The route and rider physiology determine pace and
+each rider's exposed or sheltered energy price. A paid bunch turn plan
+sets the reference clock. The result includes the actual gap, energy,
+and any calculated bunch contact marker, all recomputed by source
+validation. A group with no willing leader refuses.
+
+This is a one-kilometre, two-rider continuation. The new rear directives
+are explicit inputs to the isolated experiment rather than committed
+whole-race orders. Larger groups, recruitment, changing team stakes,
+stage finish and official classification remain outside this contract.
+It does not enter guided races or alter prior recordings.
+
+The opt-in `rear-group-source-road-v2.mjs` adds a physical hold check to
+that replayed kilometre. Each rider away from the front must be able to
+match the one paid leader's speed at their chosen effort with a draft
+allowance. The existing climb witness, with a hard-working leader and
+conserving follower, now refuses because the follower cannot hold;
+switching the named leader to the slower willing rider produces a paid,
+replayable group road. The old V1 recording stays unchanged. V2 stops
+when a follower cannot hold; it does not create a split, rear contact
+or finish from an unrecorded road.
+`rear-group-source-run-v2.mjs` applies that check again after each paid
+kilometre, using the next kilometre's own member choices, leader and
+remaining energy. Its two-kilometre source replays; changing the
+second kilometre's rear directive so the faster rider leads makes the
+conserving follower fail the hold check. The older consecutive V1
+recording remains available for historical replay.
+The analogous opt-in three-rider `rear-group-source-step-v3.mjs` and
+`rear-group-after-join-run-v2.mjs` apply the hold check after a paid
+third-rider join, including after later leader changes. The existing
+strong-leader example refuses when a conserving follower cannot hold;
+a slower willing leader permits two replayed paid kilometres. These
+gates protect the already recorded group from an impossible free wheel.
+They still stop before a newly detached rider's solo road is known.
+An even narrower two-rider branch,
+`rear-group-follower-split-v1.mjs`, now replays the same paid group source
+when its follower cannot hold. The named leader keeps the exposed cost;
+the follower instead pays a full solo kilometre at their own chosen
+effort. Constant source-derived speeds determine their separation and
+the distance where it crosses the existing dropped threshold. The
+focused climb witness produces two paid solo states behind the bunch
+and rejects a forged energy trace. A smaller separation remains an
+unresolved wheel gap, and any bunch contact requires a separate road.
+This branch does not silently let the old two-rider group continue or
+create a finish time.
+`rear-split-solo-road-v1.mjs` replays that split and takes both named
+riders one further kilometre as separate solos, each with an explicit
+effort and goal and their own energy charge. The focused climb witness
+keeps both behind the bunch with the former follower farther back.
+A forged split or duplicate choice fails replay; a potential meeting
+with the bunch or between the two riders requires a separate physical
+contact road. This is one more paid kilometre, not a full rear finish.
+The flat-versus-climb same-source check changes road speed but currently
+charges the same isolated solo energy at the same chosen effort. The
+whole-race work demand has a terrain-load term; these rear prototypes
+have not yet carried that term into a versioned, fully reconciled
+ledger. Their positive energy charges are accounting witnesses, not
+calibrated climbing costs, and block routing or finish claims.
+At the focused 6% gradient, the whole-race base-work multiplier would
+be 1.21 before other costs, while the isolated follower solo still uses
+1.00. A later paid version must reconcile the full leader and shelter
+ledger, rather than patch only the follower's final reserve.
+`rear-group-follower-split-v2.mjs` now replays the old physical split
+marker and charges both separated riders for their actual climbing
+roles and the route-derived cap. The leader and follower spend more
+than in V1 on the 6% climb; their source-derived separation and bunch
+gaps are unchanged. It remains a single opt-in split kilometre. The
+historical following solo run still uses V1 prices and does not
+inherit V2's new balances.
+`rear-solo-road-v2.mjs` and `rear-split-solo-run-v2.mjs` now take those
+V2 balances forward as two separate solos. Each rider chooses effort
+and goal again each kilometre; every paid bunch turn receives its own
+source-derived road speed and terrain work. The run carries the
+route-derived cap and zero rear recovery, and refuses any solo/bunch
+contact or meeting between the two riders until that road is paid.
+A two-kilometre climbing continuation replays both riders' balances
+and rejects a forged later charge or skipped kilometre. This still
+does not produce a full-stage finish or a time-limit decision.
+`rear-split-solo-contact-v1.mjs` can replay that V2 split and any
+consecutive V2 solo run, then locate the two riders' meeting inside a
+named bunch turn. Both pay terrain-priced solo work only to the exact
+contact marker; the record includes both balances and a shared physical
+rear-group position. A flat-road witness closes a climb-created gap in
+the third kilometre, and forged prior energy or gap states fail replay.
+The full-kilometre solo proposals must each be affordable before this
+narrow contact branch runs. The remainder of the contact kilometre has
+no chosen group leader or shelter charge yet, so the branch explicitly
+leaves that road unsettled and cannot be routed or produce a finish.
+`rear-bunch-origin-road-v1.mjs` starts a separate physical projection at
+the race start, with zero gap, an explicit rider choice for each traversed
+kilometre, committed effort orders, and named paid bunch turns. It pays
+exposed or sheltered terrain work according to the rider's actual turn,
+replays the route cap and quiet-bunch recovery, and records the first
+turn where a sheltered rider cannot hold the bunch pace. A deliberate
+release is a different event and requires an explicit future-stage plan.
+The focused flat-to-climb witness carries two paid bunch kilometres
+before losing the wheel at the start of a steep third kilometre. This
+origin stops at the split marker: solo remainder, other riders, source
+recording binding and finish times still require separate road models.
+`rear-recorded-bunch-origin-v1.mjs` now binds that narrow origin to a
+fully validated and replayed experimental V94 recording. It takes the
+committed rider and orders, exact route, and each named bunch-turn plan;
+it refuses an unworked plan, a rider already in a forward road group,
+or an altered recorded turn. A same-seed 120 km, 20-team source test
+replays five paid bunch kilometres for its first named leader. The projected
+energy and wheel state are separately versioned and are not substituted
+for V94's checkpoint group label or energy ledger. This remains a
+single-rider physical projection, not the race's full field.
+`rear-origin-pace-solo-v1.mjs` now replays the physically carried
+flat-to-climb wheel loss and pays a new, explicit solo choice over the
+remaining named climb turns. It records terrain cost, the solo and
+bunch clocks, the true gap, the route cap and zero rear recovery. The
+focused rider completes that split kilometre behind the bunch;
+`rear-origin-pace-finish-v1.mjs` continues from that replayed source
+through explicit solo choices and named paid bunch turns. The tested
+single-rider flat-to-climb case records actual elapsed time at 3 km,
+and a second case pays two further flat turns before finishing at
+4 km. Both retain the true gap, energy ledger and no time limit or
+official placing. Full-field source and calibration remain open.
+Both bunch-origin solo continuations now refuse a plan that names the
+detached rider as a later bunch leader in the same kilometre. Focused
+pace-loss and energy-loss witnesses prove the refusal. The front must
+be replanned and paid by a rider still physically in the bunch before
+that detached solo can continue; one rider cannot occupy both roads.
+The same-seed first-kilometre calibration audit is a hard routing
+blocker. Across six replayed 20-team, 120 km V94 recordings (flat,
+rolling and mountain, each at fatigue 0 and 30), the current opt-in
+bunch-origin speed comparison loses 117 of 160 riders immediately in
+every case. V94 records no separate road group in any first frame.
+The median projected speed deficit among those 117 ranges from about
+0.70 to 1.06 km/h. Every one of those 117 riders paid positive work
+in the V94 first-frame ledger with zero unmet demand. The named front
+workers' ability is being treated as realized bunch speed; capacity
+alone does not establish the field's actual physical pace. This shows
+that the isolated hold-speed rule is
+not calibrated as a field-wide physical wheel rule. Preserve both
+source observations; do not infer 117 real drops or route this model
+into guided races. A replacement must distinguish sustainable
+sheltered holding work from an actual inability to pay and must be
+validated over complete race clocks, contacts and finishes.
+The same replay also exposes an energy-source mismatch. On the
+mountain/fatigue-30 first frame, 158 riders are not the two named
+front workers. Each V94 ledger row charges full base work, while the
+opt-in terrain-priced sheltered quote is exactly 80% of that row.
+Those 158 cheaper draft costs cannot be substituted into the V94
+ledger after its movement; a new version must settle every rider's
+role, work, recovery and position on the same physical road.
+The reproducible read-only `audit-v94-rear-origin-calibration.mjs`
+extends the first-kilometre comparison to four seeds across flat,
+rolling and mountain routes, each fresh and tired (24 settings).
+It replays each generated V94 recording before comparing the separate
+opt-in physical origin. One mountain/fresh setting correctly refuses
+the unresolved shared-clock combination. In all 23 replayed settings,
+the origin projects 66–117 immediate wheel losses while V94 has zero
+separate first-frame road groups. Every projected loser has positive
+paid V94 work and zero unmet demand. The discrepancy persists across
+seeds; neither source establishes an actual dropped wheel or a
+calibrated replacement bunch clock.
+The audit's energy reconciliation now also checks all projected
+first-kilometre **holders** in those 23 settings. All 1,583 have a
+paid-work mismatch and a resulting reserve mismatch against V94.
+Thus accepting a rider who remains in the projected bunch would not
+make their energy source compatible either. The source-bound V2 gate
+must stay closed until movement and energy are settled on one road.
+`rear-recorded-bunch-origin-v1.mjs` now refuses a projected pace
+loss from a V94 front-turn recording. The same replayed turn plan still
+produces a separate paid survival projection for its named first leader.
+Its energy is not reconciled to V94, and the uncalibrated 117-rider
+split cannot be returned as physical fact.
+The separate synthetic bunch-origin experiment remains available
+for developing and testing the missing physical clock.
+The opt-in `rear-recorded-bunch-origin-v2.mjs` now replays the V94
+source and audits the projected rider's energy before, paid work,
+recovery and energy after for each kilometre. Its strict energy gate
+refuses even the named front worker's five-kilometre example: the
+separate road charges different work in the first kilometre and ends
+with a different reserve. A replayable front-turn plan therefore does
+not make the projected reserve a V94 physical source. This is an
+energy-only reconciliation; the audit explicitly leaves the physical
+clock unverified and cannot establish a wheel, contact or finish.
+Recorded V94 stage context contains a stage number but no committed
+stage schedule. The recorded-origin adapter now uses that number for
+ordinary paid holding and refuses a caller-supplied stage count or
+future-stage release plan; otherwise a request could invent the later
+stage needed to justify deliberately leaving the bunch. A replayed
+20-team stage witness checks both the allowed holding road and refusal.
+`rear-energy-demand-v1.mjs` now exposes an unaffordable work quote
+without granting energy, and `rear-bunch-energy-loss-v1.mjs` replays a
+paid bunch-origin source before pricing the next turn. In a long
+high-fatigue witness, a rider pays repeated named front turns, then
+cannot fund a full sheltered turn. The physical wheel ends at the
+precise distance their remaining reserve can pay; the split begins at
+zero gap and records no fictitious seconds behind the bunch. An
+unpayable *named leader* still refuses as an inconsistent source.
+The energy-loss road now checks every scheduled front-turn name before
+movement, including turns after the loss marker. An unnamed later
+leader cannot be hidden by stopping the first turn early.
+At that increment, the road stopped at the split marker.
+`rear-exhausted-solo-v1.mjs` replays that exact energy-loss marker and
+uses the existing exhaustion-coast clock for the remaining solo road.
+At zero effort reserve the rider still moves at a slower sustainable
+pace; requested work is recorded as curtailed, and the rider gains no
+rear recovery. `rear-exhausted-finish-v1.mjs` extends this specific
+source through explicitly chosen conservative solo kilometres and
+sums actual riding time from the start, including all paid bunch work,
+the partial loss turn and each coast slice. A synthetic long-work
+witness finishes two kilometres after its loss, reconciles rider and
+bunch clocks, and records `timeLimitSeconds: null` with no official
+placing. This is one isolated source path, not whole-field finish
+validation or a routed race engine.
+`rear-split-solo-contact-v2.mjs` advances the same source-replayed
+meeting one named turn at a time and charges only distance actually
+travelled. It no longer requires an affordable full-kilometre solo
+proposal before locating contact. The existing flat witness reproduces
+V1's meeting marker and bunch gap, and forged prior reserves or route
+fail replay. A low-reserve case in which V1 refuses the remaining
+kilometre but V2 reaches contact has not yet been validated from a
+complete paid split source; V2 remains an isolated alternative.
+The opt-in `rear-group-follower-split-v2.mjs` also now refuses a
+contact after km 161 before calculating its route cap. Its source
+binds the contact and split segments but cannot bind an earlier
+decay-bearing kilometre in the caller's route. The focused late
+contact witness checks this refusal; the existing paid km-13 contact
+and km-14 split remain replayable. A full-route commitment would be
+needed to lift this boundary safely.
+`rear-split-contact-continuation-v1.mjs` replays that meeting and the
+pre-race rear-goal commitment before selecting one willing leader for
+the remaining physical road. It checks that the sheltered rider can
+hold the selected pace, charges both for only the remaining named turns
+with a lower sheltered base cost, and settles the route cap and zero
+rear recovery at the full kilometre. In the focused witness, a
+committed goal change at the 16 km marker takes effect at km 17, so the
+former rear rider declines the turn and the other rider leads; without
+that commitment the proposed leader is too fast for their follower and
+the road correctly refuses. Bunch contact still stops at its marker,
+and this branch has no whole-race finish.
+`rear-energy-demand-v1.mjs` now provides a separate opt-in price for a
+known rear-road role and distance. It applies that terrain load to both
+the exposed rider's and sheltered rider's base effort, keeps the
+exposed leader's extra work and the lower draft fraction, and refuses
+unpayable work. Flat and 6% climb comparisons and source replay pass.
+This is a pricing primitive, not a replacement for the existing rear
+road records: it does not carry the whole-race energy cap, recovery,
+route-wide prior reserves, or a source-bound postcontact continuation.
+It cannot yet be routed or used to claim a finished rider.
+`rear-group-source-road-v3.mjs` applies that price to both riders over
+the distance actually travelled on the replayed two-rider V2 road.
+It retains V2's hold decision, named leader, speed, contact marker and
+historical record while recording lower terrain-priced balances for
+both roles on the 6% climb. The flat road agrees with V2's charges.
+This is a separate opt-in one-kilometre road; its new balances still
+need whole-race cap/recovery settlement before they can replace any
+routed state. `rear-group-source-run-v3.mjs` now replays the initial
+paid contact and carries these terrain-priced balances into the next
+kilometre's fresh leader and follower decisions. The two-kilometre
+climbing witness replays, rejects a forged reserve or skipped kilometre,
+and leaves V1/V2 records intact. This remains a bounded two-rider
+experiment without a full-field finish or later group recruitment.
+`rear-energy-cap-source-v1.mjs` separately replays the whole-race
+capacity ceiling from the committed rider and every route kilometre.
+It applies the existing after-160-km decay, including climbing and
+surface load, and refuses a missing kilometre. At km 161 on a 6% climb,
+the fresh fixture's cap moves from 100 to 99.728; a rider starting
+at 88 from fatigue moves to 87.728. This source primitive does not
+yet clamp the V3 group's paid balances or settle recovery and contact.
+The separate `rear-group-source-run-v4.mjs` now applies that route-derived
+cap after each **complete** terrain-priced rear kilometre, records the
+zero recovery earned behind the bunch, and carries the settled balance
+into the next kilometre's choice. It binds the route to the replayed
+contact segments, refuses a missing earlier route kilometre or
+unpayable rider, and stops at bunch contact because the remainder of
+that kilometre has no paid road here. The two-kilometre source test
+replays and rejects a forged recovery award. The contact trace binds
+only its kilometre and the preceding one. V4 therefore refuses a
+contact after km 161, because earlier decay-bearing route kilometres
+are not source bound and a caller could otherwise forge the later
+energy ceiling.
+Km-160 and km-161 contacts followed by paid cap decay both replay;
+km 162 contact refuses because km 161 then lacks a route source.
+It remains an isolated two-rider run: the full field, later recruitment,
+actual finish and calibration are outside this version.
+A separate replay shifts the same source-bound contact to km 160 and
+continues through climbing km 161–162. The run records the capacity
+ceiling dropping to 99.728 and then 99.456 while both riders keep paying
+their own work. This checks that the late route and cap actually reach
+the V4 continuation, beyond the cap primitive's standalone test.
+The read-only generated-profile rear-entry audit (`--generated-profile
+--seeds=8 --pace-climb`) replayed and validated 28 of 32 full 20-team,
+260-km V94 cases. Four cases honestly refused their combined fresh
+attack and pursuit clock. The accepted cases had 386 newly labelled
+`dropped` riders, 377 on climbing kilometres. All 386 had a positive
+checkpoint deficit already in the previous kilometre; none had a
+recorded bunch-work or caught-break event in that or the preceding
+kilometre. All 377 climb snapshots admitted the separate opt-in
+pace-loss solo calculation, but that cannot establish their initial
+physical detachment or contact with another rider. These checkpoint
+labels therefore cannot seed a rear group, a wheel, or an actual finish
+clock. The race source needs explicit paid crossing and subsequent
+contact evidence before rear routing.
+The same 8-seed generated-profile audit with `--onset` inspected the
+**first positive** climbing deficit, before the `dropped` label. Among
+the 28 validated races, 444 such rider-kilometres all admitted the
+separate paid climb-split calculation. None of its behind-bunch times
+agreed with the V94 checkpoint deficit within half a second: the
+absolute mismatch was 3.347–3.456 seconds (mean 3.423 seconds).
+For example, one rider's checkpoint first showed 0.230 seconds while
+the separately paid road produced 3.678 seconds from a split at that
+kilometre's start. This is an explicit clock conflict, not a source
+for assigning the rider a physical wheel or merging rear groups.
+The provisional checkpoint deficit and paid road must be reconciled
+under one versioned clock before the onset can enter the whole race.
+Across the same 444 first positive climbing deficits, every alternate
+paid split begins at the first metre of its kilometre; none of the
+source bunch plans has only one turn. `rear-pace-climb-split-v2.mjs`
+now prices each solo slice against its own bunch-turn ability with the
+route's terrain load and a route-derived capacity ceiling. Fresh and
+tired focused witnesses replay two turn abilities and spend more climbing
+energy than the historical V1 split. This is still an isolated
+alternative road: it does not overwrite V94's conflicting checkpoint
+deficit or its whole-field energy ledger, and cannot seed a group or
+finish until one recorded physical clock owns that rider. Its focused
+turn inputs do not name leaders, so they do not prove paid physical
+front rotation under the newer source contract.
+`rear-split-solo-run-v1.mjs` extends that exact split through consecutive
+solo kilometres. Each rider has a fresh explicit choice in each kilometre,
+with a separate energy and bunch-gap calculation; the source replay
+rejects altered later energy. A changed second-kilometre effort changes
+the rider's resulting reserve. The run refuses a skipped kilometre or
+any meeting between the solos or with the bunch until a contact road
+can be paid. No stage finish or time limit is inferred.
+
+For a three-rider group rotating within a kilometre,
+`rear-group-turn-kilometre-v2.mjs` checks every sheltered rider against
+the actual named leader in each paid slice, using that rider's reserve
+at the start of the slice. The existing alternating-leader witness
+refuses when a conserving rider cannot follow a stronger leader;
+with one slower willing leader, all slices replay and pass. The V1 turn
+recording is unchanged, and a failed hold still needs a separate paid
+split road.
+
+`rear-group-source-run-v1.mjs` chains that same derived calculation
+through consecutive whole kilometres. Each step uses the prior paid
+group gap and energy, a new terrain segment and bunch turn record,
+and that kilometre's explicit rider goals and team effort. It refuses a
+missing kilometre, forged prior contact, changed rider statistics,
+caller-supplied replacement group, or continuation after a recorded
+bunch rejoin. The complete sequence replays and rejects altered rider
+energy or turn evidence. This is still a bounded two-rider experimental
+chain. It lacks a committed whole-race source of rear directives. The
+run itself cannot accept a third rider or handle a caught break rider
+falling through the bunch.
+
+`rear-group-committed-source-run-v1.mjs` now binds the two-rider V4
+terrain, recovery and cap ledger to an explicit pre-race rear-goal
+commitment. It replays the paid contact, requires the contact goals to
+match that commitment, and derives each later kilometre's goals from
+the committed phase markers. A caller cannot replace `rearGoals` or
+stage context for one kilometre. In a focused climb trace, a rider's
+committed change to sitting in after a route marker persists across two
+paid kilometres; both energy settlements replay, and forged contact
+intent or settled energy is rejected. This is still an isolated
+two-rider run. Its bunch turn inputs are not yet bound to a complete
+whole-race source, and it does not award an official finish.
+
+An isolated `rear-solo-source-run-v1.mjs` now chains an occupied-wheel
+departure through successive, fully paid solo kilometres without
+granting group shelter. `rear-group-solo-join-v1.mjs` replays that solo
+and the separate two-rider rear-group road, then calculates whether the
+solo catches the group during the next kilometre. In the accepted
+three-rider example the solo began farther behind the bunch on a climb,
+then used a stronger flat-road ability to reach the existing group at
+a computed marker. The original group keeps exactly one leader to the
+marker; its other rider shelters and the incoming rider pays solo work.
+Only those fractions of the kilometre enter the actual energy ledger.
+The result records a three-rider group at contact, with all prior group
+and solo energy source-replayed. It refuses a forged rider, forged
+prior energy, no contact or simultaneous bunch contact. Full-kilometre
+pace proposals in the evidence are not charged past the meeting point.
+`rear-joined-group-continuation-v1.mjs` replays that contact and asks
+all three riders again whether they will pull or sit. The next willing
+leader in physical rotation takes the wind for the remaining metres;
+the other two pay their own lower sheltered charge. Their three energy
+balances and the shared clock advance together to the kilometre end,
+or stop at a calculated bunch rejoin. A leaderless or unpayable turn
+refuses. A changed contact, choice or energy fails source replay.
+`rear-group-source-step-v2.mjs` and
+`rear-group-after-join-run-v1.mjs` now carry that same three-rider
+group through consecutive later kilometres. Every kilometre takes
+fresh explicit rider choices, terrain, current energy and a paid bunch
+turn record; the next willing leader follows the previously recorded
+leader in the actual group order, including when someone newly declines
+work. One rider takes the wind, two shelter, and their individual paid
+energy and the shared gap feed the next step. The run replays the full
+join chain and refuses a forged starting group, changed roster, missing
+kilometre, leaderless group or continuation after bunch contact.
+Further joins, split departures, and real race finish times remain
+outside this isolated version. The new `rearWork` goals are still
+caller-supplied evidence rather than committed whole-race orders.
+Neither this candidate nor the preceding rear-road modules are routed
+to a whole race.
+
+`rear-group-committed-after-join-run-v1.mjs` now replays the physical
+third-rider join and derives the goals for each subsequent kilometre
+from one pre-race commitment for all three riders. In the focused
+same-source case, a route-marker change makes two riders sit in, so a
+slower willing rider leads and both sheltered riders can hold. Removing
+that committed change makes the paid hold check refuse; supplying
+different goals for one kilometre or altering the replayed energy also
+refuses. This isolated continuation still uses separately supplied
+bunch turn plans and does not settle a full-field race or finish.
+
+`rear-group-turn-kilometre-v1.mjs` is a separate opt-in continuation
+from a replayed three-rider rear-group step. At the next kilometre it
+asks each rider again, then assigns equal road-distance turns to the
+willing riders in physical rotation after the previous leader. The
+recorded bunch turn boundaries and these rear turn boundaries split the
+kilometre into short slices. Exactly one rear rider leads each slice;
+the others shelter at a lower energy cost. The source rider, effort,
+terrain and remaining energy determine the rear pace at each turn, and
+the paid bunch turn determines its opposing pace. Every slice records
+each rider's energy and the gap. A calculated bunch contact ends the
+rear group at that marker. A rider unable to pay a turn causes refusal;
+replay rejects a forged previous leader or any altered energy. Equal
+distance turns are a deliberately explicit candidate scheduling rule,
+not a claim about real races or a calibrated default. It still needs
+committed whole-race rear goals, realistic turn timing, additional
+joins and split handling, then broad finish and source validation.
+
+`rear-goal-commitment-v1.mjs` removes one source ambiguity from that
+isolated turn experiment. It requires an explicit pre-race intention for
+every named rider: a finish/rejoin/future-stage goal, a separate rear
+work directive, and any route-marker changes. A future-stage motive
+needs a committed target stage and reserve. No break-work or chase
+order is silently interpreted as rear work. At each kilometre, the
+intention active after the previous marker is read for the actual
+three-rider group; then current energy, team effort and teammates
+further ahead still determine who is willing to pull. The wrapper
+replays both the commitment and the paid turn trace, rejecting a
+forged rider choice or energy. This remains an opt-in source contract:
+the live race preparation and user interface do not yet collect these
+intentions for all riders, and the equal-distance turn scheduling and
+finish road have not been calibrated.
+
+`rear-recorded-bunch-source-v1.mjs` can now take an actual v94 race
+kilometre as the opposing bunch road. It first validates and fully
+replays the locked race, requires a worked shared peloton turn plan,
+and refuses a bunch leader who also belongs to the proposed rear
+group. This binds the bunch turn abilities and named workers to the
+recorded source instead of accepting a free numeric pace. In six
+source-replayed generated mountain-profile races (two other generated
+cases refused the already known combined attack/pursuit limitation),
+all 112 first recorded dropped transitions had a worked peloton turn
+in that kilometre. The recorded dropped deficit is still a checkpoint,
+not physical rear-group contact or a complete within-kilometre wheel
+trace. A rear-road counterfactual cannot borrow a physical position
+from it; no candidate is routed to the real race on this evidence.
+An expanded six-seed generated-profile audit reached 21 fully replayed
+races and refused three on the existing combined attack/pursuit guard.
+All 311 new dropped transitions had a paid bunch turn at that
+checkpoint; 306 occurred on recorded climbs. None of these 311 were
+recorded as bunch workers or just-caught break riders in the same or
+preceding kilometre. These samples establish a usable opposing bunch
+source for climb-drop experiments, while leaving the other two rear
+entry paths untested in this holdout.
+By contrast, a separate eight-seed legacy-profile audit replayed 32
+cases and found 51 new dropped-state transitions. None had a worked
+shared bunch-front turn at that checkpoint, and none followed a
+recorded bunch worker or caught break rider in the same or preceding
+kilometre. Those checkpoint labels cannot provide physical rear-entry
+positions or a paid bunch-turn source; they must not be used to infer
+rear-group contact.
+
+`road-group-sprint-choice-v1.mjs` is a separate opt-in answer to a
+specific forward-group question: a rider with an explicit stage-win
+goal can decline a late turn if their own known sprint is weaker than
+the observer's estimated rival sprint. The estimate includes a bounded
+range and does not expose the rival's exact hidden ability to the
+decision. A committed `drive` order can override that shelter motive;
+a teammate further ahead or insufficient remaining energy can stop a
+turn. The decision record includes each rider's observed rival ranges
+and reason, and source replay rejects altered choices. The existing
+single-leader road-group turn planner accepts the resulting willing
+pullers and charges the named leader more than the sitter. This is an
+isolated tactical branch, not a full road transition or a replacement
+for the current V94 group decision policy. Its late-sprint window and
+effect on race outcomes need calibration against whole races.
+
+`team-chase-choice-v1.mjs` is an opt-in one-kilometre timing decision
+for a team with an explicit sprint or summit stake and an actual
+committed chase order. It assesses each existing front group
+separately through that team's bounded rider observations, its own
+known helper roster, and a deliberately uncertain set of other teams
+that might help. The other teams' private future work orders remain
+hidden. It compares whether the nominated chasers can still catch if
+they begin now or wait one kilometre. The result can be `watch`,
+`commit_now`, `request_help`, `commit_and_request_help`, or
+`capacity_shortfall`, with both capacity headrooms recorded. Asking
+for help never adds those riders to the actual paid road. The
+one-kilometre witness test shows a gap where delaying changes the
+perceived catch from possible to impossible. Adding a weaker
+conditional helper need not increase instantaneous catch headroom:
+only one rider leads at a time, although a larger roster can spread
+future fatigue. This is still a forecast, with caller-supplied team
+stake and coalition, not a calibrated or executed chase policy.
+Focused same-source comparisons also show that replacing the remaining
+flat road with climbs increases the chase headroom against a
+climbing-weak escape, while reducing the chasing roster's energy and
+raising its fatigue, or removing its helpers, reduces that headroom.
+Those changes come from rider/route work estimates, not scripted gap
+awards. They do not establish realistic catch rates.
+
+`team-chase-stake-v1.mjs` gives that isolated timing choice an explicit
+roster-bound sporting source. Every team names a captain and a goal
+before the simulated start: sprint finish, summit attack, break-stage
+bid, or none. Changes can be committed only at order markers and apply
+from the following kilometre. Only an active sprint or summit goal can
+enter the opt-in chase choice; a contemporaneous chase order must also
+allow pursuit. A changed captain, goal, team roster, or timing decision
+fails replay. The source is a caller-provided commitment snapshot,
+not yet a saved whole-race order or an authenticated in-race manager
+event. It creates no GC objective from a stage label and neither
+guarantees allied help nor charges any energy by itself.
+
+`isolated-paid-chase-road-v1.mjs` connects one urgent committed-team
+choice to one actual kilometre of named pursuit. It replays the team
+stake and forward riders' decisions, then selects only the observing
+team's available helpers. Existing front and chase turn planners set
+sequential leaders. The union of their turn boundaries divides the
+road into short slices: one rider leads each physical group, the
+others modeled in that group shelter at lower cost, and each rider's
+remaining energy changes after every slice. Rider/terrain effects
+determine both speeds; a calculated contact stops at its actual route
+marker and pays only the distance reached. The witness test covers a
+full kilometre and a separate late contact inside the kilometre.
+Conditional allies are explicitly unpaid. This is still only a
+bounded two-group counterfactual: other peloton riders' energy and
+speed, post-contact movement, multi-front interactions and the race
+finish remain unresolved. It cannot produce official results or run
+inside guided races.
+
+`isolated-caught-front-slide-v1.mjs` adds one explicit post-contact
+branch to that paid chase road. It accepts only a source-replayed catch
+of one named front rider before the kilometre ends. The caught rider
+chooses conservative solo finishing; the branch checks that their hard
+road ability cannot match the next named bunch leader. The bunch's
+chase helpers continue their one-leader turns, sheltered helpers pay
+less, and the former front rider pays solo work from the exact catch
+marker. Their clock can move behind the bunch without a free wheel or
+instant rear-group membership. Unpayable work, a forged catch, or a
+rider who could hold the bunch refuses. This is an isolated one-km
+path, not a claim that recorded V94 catches have a known within-km
+contact marker or that the rider finishes the race.
+`isolated-caught-front-slide-v2.mjs` replays that V1 paid road and
+locates the later bunch-exit marker where the accumulated solo clock
+first crosses the existing rear-gap threshold. Its event is recorded
+at that calculated marker, after the catch; the V1 recording remains
+unchanged and replayable. A later return inside the threshold refuses
+until a separate contact road accounts for it.
+
+`isolated-paid-chase-run-v1.mjs` carries the same committed stake and
+one observed front across consecutive urgent pursuit kilometres. It
+recomputes the team's perceived catch decision and the front rider's
+work choice each kilometre, copies only the energy actually paid by
+named front and chase workers into the next source, and replays every
+individual paid road step. In a focused two-kilometre witness, the
+first committed chase does not yet catch the break; the second uses
+the updated gap and helper energy and reaches a calculated contact.
+The source-replayed caught-rider slide can then start at that exact
+marker. This run refuses a `watch` decision rather than manufacturing
+an unpaid intermediate road. It explicitly lists unmodeled peloton
+riders, stops at contact, and has no official results. Long neutral
+periods, new attacks, changing ally willingness, the rest of the
+peloton's energy and the finish are outside this version.
+
+`rear-unpayable-climb-v1.mjs` covers a distinct isolated entry path:
+a rider starts with an occupied bunch wheel but cannot fund a whole
+kilometre of hard climbing. A paid bunch turn plan provides the opposing
+road. The rider holds until either their available energy can no longer
+fund hard shelter plus the remaining solo climb, or the next named
+bunch turn exceeds their own hard climbing ability. The first such
+event determines the loss-of-wheel marker. From that marker the rider
+pays conservative solo work against each remaining bunch turn; their
+relative clock and energy are recorded slice by slice. If even the solo
+kilometre cannot be paid, or the proposed solo would keep contact, the
+contract refuses. The result distinguishes physical inability from the
+separate, already modeled voluntary release for a committed later
+stage. This is one climb only: an end-of-kilometre zero reserve does
+not imply that the rider can finish the race, and a sub-threshold gap
+remains an unresolved wheel rather than an invented rear group.
+
+A read-only six-seed generated-profile V94 audit put that low-energy
+entry in context. Of 24 flat/mountain and fresh/tired 20-team 260-km
+sources, 21 fully replayed and three retained the existing simultaneous
+attack/pursuit refusal. The replayed races recorded 311 first dropped
+transitions, 306 on climbs. All 306 had a worked bunch turn and a prior
+peloton *snapshot*, but none had energy below the candidate whole-km
+hard sheltered cost. The new unaffordable-climb branch therefore
+explains **zero** of these recorded transitions. Some prior snapshots
+already carried a small deficit, so they do not prove an occupied wheel
+at the next kilometre start. The predominant climb-drop path still
+needs a separately modeled physical ability/pace loss with an actual
+wheel trace; the isolated low-energy witness is no substitute for it.
+
+`rear-pace-climb-split-v1.mjs` is a separate opt-in pace-loss candidate
+for a rider who **chooses to hold** and can fund the projected hard
+sheltered kilometre. It compares that rider's terrain and energy based
+hard climbing ability with each named paid bunch turn. If a later turn
+first exceeds the rider's hold ability, the occupied wheel is lost at
+that turn boundary. The rider must then choose and pay a solo effort;
+each remaining slice records pace, energy and the clock behind the
+bunch. A matchable bunch, a voluntary future-stage release, an
+unpayable solo, or a solo clock that immediately regains the bunch
+refuses. A small positive gap remains unresolved rather than creating
+an invented rear group. This is an isolated within-kilometre contract:
+the recorded V94 peloton snapshot does not prove a physical occupied
+wheel, and no version is routed into whole races or official finishes.
+
+The same 24-case read-only audit applied this opt-in pace-loss candidate
+to each of the 306 recorded climb transitions using the rider, prior
+energy and that kilometre's paid peloton turns. All 306 counterfactuals
+paid their chosen conservative solo road and exceeded the existing
+dropped-gap threshold. **None** had zero prior checkpoint deficit:
+every source rider already carried a small positive deficit while
+still labeled `peloton`. Thus 306/306 is a conditional calculation
+*given an occupied wheel*, not evidence that those wheels existed or
+that this version reproduces 306 real drop trajectories. No original
+V94 recording or guided outcome changed. A future motor must record
+the wheel and exact loss event before connecting this pace branch.
+
+The pace-loss output can now serve as a separately replayed prior solo
+source for a later physical rear-rider meeting. A focused witness uses
+abilities no higher than 100: the rider loses a paid climb turn, then
+meets another already detached rider on a later kilometre at the
+computed contact marker. The meeting pays both solo riders to that
+marker and rejects an altered split point or rider statistics. This
+does not establish that any of the 306 V94 snapshot transitions had
+the required occupied wheel or that any two of them actually met.
+
+`rear-unpayable-solo-run-v1.mjs` source-replays that within-kilometre
+climb split before a rider can enter consecutive, paid solo kilometres.
+It refuses a sub-threshold wheel gap, a forged split marker, a changed
+rider or a skipped kilometre. This still does not establish physical
+contact with another rear rider or a finish time.
+
+The isolated `rear-source-contact-v1.mjs` now accepts this replayed
+climb split as one of its paid prior solo roads. A later rider may
+reach another dropped rider only at the calculated contact marker;
+forging the earlier wheel-loss marker is rejected. The focused witness
+has two distinct source riders, one unable to hold the climb wheel,
+then a later paid solo contact. It does not infer contact from a shared
+kilometre snapshot or attach the group to guided races.
+
+`isolated-paid-chase-slide-run-v1.mjs` composes a source-replayed
+consecutive paid pursuit with the caught front rider's explicitly
+chosen, source-replayed postcontact road. It settles the named chase
+workers and caught rider through the end of the contact kilometre,
+carrying their paid energy into a separate final ledger. A focused
+two-kilometre case starts with a gap too large to catch in the first
+kilometre and reaches contact in the second. The remaining road leaves
+only a small positive wheel gap, so the status remains
+`wheel_gap_unresolved` and **no dropped-rider event** is recorded. The
+version still lists unmodeled peloton riders, stops at that kilometre
+and withholds official results. It refuses unobserved `watch` kilometres
+and does not manufacture the full bunch road or a later rear group.
+
+`isolated-paid-control-road-v1.mjs` covers one distinct kilometre in
+which an observer with a committed sprint stake chooses `watch`, while
+another team has explicitly ordered a **named** helper to rotate at
+the bunch front. That single worker pays the whole exposed control
+kilometre; the front rider also chooses and pays their own work. Their
+source-derived speeds update the physical gap and can yield a
+calculated contact. The unit refuses a missing worker, conflicting
+attack or chase order, unavailable worker, another ordered front-work
+team, or a mismatched perception source. The focused witness records
+the gap growing under a weaker paid control helper, while the sprint
+team waits. Other bunch riders have no energy ledger here. This is
+neither a free `watch` road nor a whole-race control policy, and it
+does not yet compose with the later paid pursuit run.
+
+`isolated-paid-control-run-v1.mjs` continues this narrow watched road
+kilometre by kilometre. It recomputes the sprint team's *perceived*
+catch choice and the front rider's work choice from the updated gap and
+only the energy that the two named workers actually spent. In a focused
+30-km-route witness, a weak named controller pays multiple kilometres
+while the sprint team watches. When the observer's next decision becomes
+`commit_now`, the run records an exact source replayable handoff **before**
+advancing that kilometre; it does not quietly replace the controller
+with unpaid pursuit. It still cannot settle the rest of the peloton or
+carry that handoff through combined control and chase work.
+The same synthetic seed and route with a stronger paid controller
+instead reaches the front before the sprint team's handoff; making
+that controller fatigued and low on energy delays the calculated
+contact. All three isolated traces replay, but the fixture has only
+three teams and one named worker, so these are mechanism checks rather
+than whole-race calibration.
+
+`isolated-paid-cooperative-road-v1.mjs` models the first kilometre
+after that weak-control case triggers a committed sprint-team chase.
+The same named controller and the actual available chase helpers take
+disjoint shares of **one** bunch-front position. The current leader
+sets each slice's pace; their abilities are not summed. Every named
+worker pays exposed work on their turn and a lower sheltered cost on
+the other turns. The front rider also chooses and pays their own road.
+The focused witness shows three distinct bunch turns and no contact in
+that first chase kilometre. It refuses an absent controller, conflicting
+order, missing payable chase helper, or unworked front. The separate
+`isolated-paid-control-chase-handoff-v1.mjs` replays the entire earlier
+watched run before allowing this shared kilometre, carrying the exact
+paid gap and energy forward and rejecting a forged control reserve.
+This remains an isolated three-team source trace. Other bunch riders,
+later cooperative kilometres and finish results are unmodeled; neither
+version is routed to guided races.
+
+`isolated-paid-control-chase-run-v1.mjs` now re-evaluates the same
+observer's uncertain threat decision and the front rider's work choice
+each successive kilometre, using the gap and named workers' energy
+paid in the previous one. It chooses the single-worker control road
+for `watch` and the shared control/chase turns for a committed chase.
+In the same weak-controller three-team fixture, the observer waits,
+then commits helpers for several kilometres, but eventually reports
+`capacity_shortfall` with the break still ahead. The run stops **before**
+moving that unsupported next kilometre. Each prior control and
+cooperative road step replays; a forged gap fails validation. A strong
+controller in the same synthetic seed catches the front earlier, while
+fatigue delays that contact. This is a real paid tactical mechanism for
+the modeled riders, not a whole-field result: all other riders' choices,
+energy, additional road groups and the finish remain unmodeled.
+Four further same-seed isolated traces now replay every paid step on
+flat and climbing routes, each with fresh and tired rider reserves.
+They test the state transition and refusal boundaries, not a realistic
+catch-rate distribution or full 20-team race.
+
+The read-only `isolated-paid-road-coverage-v1.mjs` now replays that
+control/chase trace and enumerates **missing rider-kilometres**, rather
+than merely listing riders never modeled at all. An observer helper
+who later takes a paid chase turn was still unmodeled during the earlier
+watched kilometres; that missing riding cost cannot be erased by the
+later turn. The strict coverage gate rejects this fixture. Even a
+future complete energy ledger would still need physical group, contact
+and finish validation before official results. The current isolated
+trace is not a full-field energy calculation.
+
+The coverage audit now checks explicit rider decisions separately from
+paid energy. In the three-team, 24-rider control/chase witness, the
+single front rider has a source-replayed per-rider decision each worked
+kilometre; the other 23 riders do not. The named controller and later
+chase helpers have paid work, but their team orders and road roles do
+not silently count as individual decisions. A complete energy ledger
+alone therefore cannot pass the strict rider-kilometre gate. This is a
+read-only refusal check, not a change to any race recording or route.
+
+`isolated-control-caught-front-slide-v1.mjs` also covers a front rider
+caught by one *paid control worker* while the sprint observer still
+waits. It replays the exact control catch, checks that the caught rider
+cannot hold the named worker's pace, then charges both for the
+remaining road. Only when the computed postcontact gap exceeds the
+existing dropped threshold does it record that the rider passed
+through the bunch into a solo road, at the computed point where the
+gap crosses that threshold rather than at the initial catch. The
+strong-controller focused
+case records that event and rejects a forged energy trace. It does
+not grant the rider an unproved sheltered wheel or place them in a
+rear group, and the other bunch riders and finish remain unmodeled.
+
+`isolated-control-caught-rear-solo-v1.mjs` then takes that exact
+source-replayed slide into the next kilometre. The detached rider
+explicitly chooses a conservative solo road while the same named
+controller continues paying for the bunch front; their source-derived
+speeds and energy update the gap. The focused case remains alone
+behind after another fully paid kilometre and rejects a changed energy
+ledger. If the solo rider later reaches the bunch, this version stops
+at the calculated contact marker. It does not assign a rear-group
+wheel or finish time to a rider who has not physically met anyone.
+The same source can now drive a consecutive solo run: at every later
+kilometre the caught rider explicitly continues a conservative
+`finish_safely` road, the named controller's active order is checked,
+and both riders pay from the preceding energy state. A focused 20-km
+continuation remains alone behind and replays from the original paid
+catch; it records the solo rider's elapsed time **since the catch**,
+including the paid remainder of the contact kilometre.
+It does not have a source for the earlier absolute race clock, so it
+does not publish an actual full-stage finish time or invent a time
+limit. The other bunch riders still have no ledger.
+An explicit next-kilometre `sit_in` order for that controller now
+refuses the continuation instead of silently retaining their paid
+front role. Another payable bunch leader would need their own recorded
+order, turn and source-replayed road.
+
+The V1 consecutive solo run repeats one conservative decision; it is
+not a fresh rider choice at every kilometre. An opt-in V2 run now
+requires `rear-solo-commitment-v1.mjs` before the race. The rider's
+goal and effort can change only after a committed route marker, and
+each later kilometre derives its decision from that plan while using
+the current paid energy and the controller's active order. An effort
+above the team's order, an unpayable road, or a future-stage goal
+without a valid stage plan and retained reserve is refused. A focused
+same-source case changes from conserving to a committed steady rejoin
+attempt after km 15 and pays more energy than the V1 continuation;
+tampered energy fails replay. V1 remains unchanged. V2 still models
+only the detached rider and named controller, lacks the prior absolute
+race clock and is not routed to guided races or official results.
+
+`physical-start-bunch-v1.mjs` provides a new opt-in physical root at
+the start line: the complete committed roster begins at metre zero
+with source-checked starting energy and a snapshot of the route,
+roster, rider attributes and orders. The start now requires the
+existing normalized manager-order shape, including named-helper and
+route-marker phase guards; an uncommitted phase is refused. The
+synthetic early phase-change tests explicitly commit km 1, 2 or 3 as
+route markers. In a supported first kilometre,
+one explicitly named ordered helper sets the bunch pace and pays
+exposed terrain work; every other rider has a recorded shelter decision,
+pays a lower terrain cost, and carries their own recovery and cap.
+The 24-rider same-seed witness changes road cost with climbing terrain
+and starting fatigue. An unsupported attack or chase, absent leader,
+unpayable rider, or follower unable to hold the leader's pace refuses
+before movement. This does not invent a wheel loss or an early rear
+group. It is one kilometre only, with no front break, contact or finish,
+and is not attached to V94 recordings or guided races. The next version
+must carry this actual group and every rider's state across kilometres,
+then model paid split and contact when someone cannot hold.
+
+The same opt-in root now has `runPhysicalBunchV1` for consecutive
+supported kilometres. It recomputes from the committed start rather
+than accepting a caller-supplied prior group or energy state. Named
+front workers can rotate at committed order phase boundaries. Every
+kilometre records 24 separate shelter or pull decisions, a single
+paid leader, current terrain cost, each rider's recovery and energy,
+the physical group at the next kilometre and elapsed road seconds.
+The five-kilometre same-seed witness rotates leaders at km 2 and 4,
+replays all 120 rider decisions and rejects a forged energy row. This
+path still refuses any unsupported attack, chase, wheel loss or
+unpayable road. It remains independent of V94 and guided races.
+
+An opt-in `runPhysicalBunchToPaceLossV1` replays the complete paid
+start and prior bunch road, then stops at the first requested kilometre
+where a rider cannot match the single named leader. That rider pays
+solo terrain cost for the distance physically covered while the bunch
+finishes that kilometre; their measured location, energy and distance
+behind the bunch are recorded. Each detached rider remains a separate
+solo, even if several drop together. A weak rider drops on an early
+climb and a former front worker can drop behind a stronger later
+leader in focused same-source tests. This is a partial-kilometre state:
+neither recovery nor the next-kilometre cap is awarded to a detached
+rider until their road continuation is modeled. It does not create a
+rear group or claim a finish time. The supported intact-bunch run still
+refuses loss rather than silently ignoring it.
+
+`physical-pace-loss-completion-v1.mjs` continues one of those source
+recorded solo riders through the unpaid remainder of the split
+kilometre. The rider pays solo terrain cost at their current energy,
+gets no bunch recovery, reaches the kilometre endpoint after the
+bunch, and receives the route-derived energy cap only after finishing
+that distance. Its elapsed time and seconds behind the bunch replay
+from the recorded partial position; a forged split or timing fails.
+The rider remains a singleton physical group. Subsequent kilometres,
+contact with other dropped riders and actual stage finish remain to be
+modeled.
+
+`runPhysicalBunchAfterPaceLossV1` also carries the surviving bunch
+forward with new paid single-leader kilometres. A detached rider is
+excluded from the later bunch group, energy ledger and decisions; no
+wheel is silently restored. If an order names that detached rider for
+a later front turn, the road refuses until a valid replacement order
+exists. A same-seed early climb witness carries the surviving bunch
+through km 3 while the detached rider's road remains separate. Later
+additional bunch splits and the detached rider's consecutive solo road
+are still unsupported in this version.
+
+The start source may also snapshot explicit `rear-solo-commitment-v1`
+plans for named riders. `physical-detached-solo-run-v1.mjs` takes such
+a plan and replays the rider's completed split kilometre against the
+surviving bunch. Each later solo kilometre gets its committed goal and
+effort, must respect the active team effort ceiling, pays full solo
+terrain cost, settles the route-derived cap and records actual elapsed
+time and seconds behind the bunch. A future-stage saving goal still
+requires its explicit committed stage plan and reserve. A same-source
+climb witness verifies two further paid solo decisions and rejects a
+forged energy row or changed plan. A route-marker plan changes the
+rider's goal from a safe finish to rejoining at km 6. This route
+refuses if the rider
+catches the bunch; source-paid contact and possible rejoining still
+need separate implementation. It also refuses unpayable solo road.
+
+`physical-rear-solo-contact-v1.mjs` now derives the first meeting of
+two detached singleton riders from their recorded split, completed
+kilometre, pre-race solo plans, energy-priced solo pace and the
+surviving bunch's actual clock. It accepts a contact only inside the
+requested kilometre, at the same distance and time for both riders,
+with both still behind the bunch. Each pays the exact partial solo
+distance before a two-rider rear group is recorded. A climb-to-flat
+witness has the initially trailing rider catch the rider ahead during
+km 2; forged timing and a later duplicate contact fail replay. The
+remaining part of that kilometre has a separate paid group road below.
+No official result or time limit is inferred.
+
+`physical-rear-contact-road-v1.mjs` pays the remaining distance of
+the contact kilometre as a two-rider group. The rider who was ahead
+keeps the single exposed turn unless their committed future-stage
+reserve forbids it; the catcher takes shelter, priced below solo work
+at the same effort. If the ahead rider cannot lead, the catcher may take
+the front. Each rider records a goal, turn choice, terrain charge,
+zero rear recovery and the route-derived cap at the completed
+kilometre. The group clock remains behind the sourced bunch or the
+road refuses separate bunch contact. The climb-to-flat witness
+replays the paid turn and rejects forged energy.
+
+`physical-rear-group-run-v1.mjs` carries that exact contact group
+through later kilometres. The two riders rotate one exposed leader
+per kilometre, each records a fresh pull or shelter decision from
+their pre-race goal and active team effort limit, and both pay
+terrain-priced energy with zero rear recovery and a route-derived
+cap. A rider whose goal is to finish safely can moderate the front
+pace to the follower's physical draft capacity. A committed rejoin
+attempt refuses if its faster front pace would shed the follower;
+that split needs its own road. The climb-to-flat witness rotates
+leaders through km 4, pays less for shelter than solo riding at the
+same effort, and rejects a forged energy ledger. The group remains
+behind the sourced bunch or this module refuses a separate contact
+branch. General full-stage finish and multi-group calibration remain
+open.
+
+`physical-rear-race-replay-v1.mjs` assembles a narrow complete-road
+witness from these physical sources. It requires exactly two riders
+to leave the bunch, meet through paid solo contact, and form one
+paid rear group while the surviving bunch keeps a valid single
+leader. For each race kilometre it records every starter's physical
+group, elapsed crossing time, settled energy and one or more explicit
+decisions. At the route end it records each rider's observed finish
+seconds without inventing an official placing or time limit. A
+same-seed 24-rider, 20-kilometre climb-to-flat witness covers all
+480 rider-kilometres and rejects forged energy. This is not general
+race support: attacks, a caught break rider passing through the bunch,
+later bunch splits, additional rear contacts, sprint finishes and
+whole-race calibration remain open. It is not routed to V94 or
+guided races.
+
+The read-only `scripts/audit-physical-rear-race-matrix.mjs --assert`
+replays eight same-seed 24-rider, 20-kilometre variants: climb grade,
+rear rider fatigue, exposed wind, cobbles, a named front-worker
+rotation and a changed team sporting stake. All eight currently
+produce 480 rider-kilometres and 482 decision rows, counting the
+two contact-kilometre riders' pre-contact and group decisions
+separately. On this synthetic route the bunch finishes in 1,756.0 s
+in the base case and 1,790.2 s with exposed wind; rear finish time
+changes from 1,913.3 s to 1,924.0 s when the two rear riders begin
+more fatigued. Cobbles move the paid rear meeting from 1,138.2 m to
+1,226.2 m. The front-worker variant records both named leaders.
+Changing the team stake changes the recorded goal but has no physical
+effect with the same named front-work orders; connecting sporting stakes to
+executable choices remains work. The lowest finish energy in the base
+20-kilometre witness is 86.08, and these normalized values have not
+been calibrated against a full race.
+
+`runPhysicalNamedAttackV1` is a separate opt-in branch from the same
+committed start and paid bunch kilometres. One manager-named rider
+may attack only with a committed `break_stage` or `summit_attack`
+team stake, while a different named helper keeps leading the bunch.
+The attacker pays the attack terrain and energy cost, and their
+own measured kilometre time must be faster than the bunch's paid
+leader time before a front solo and time gap exist. The 23 remaining
+riders retain individual bunch decisions and costs. A focused km 2
+witness records all 24 decisions, a faster front crossing and the
+attacker's reduced energy; forged gap and absent sporting stake fail.
+The intact-bunch path still refuses that active attack. Subsequent
+front road, perceived rival assessment and any physical pursuit or
+catch are still separate work; this branch is not routed to V94 or
+guided races.
+
+`runPhysicalBunchAfterNamedAttackV1` now continues the surviving
+23-rider bunch with one paid front leader and individual sheltered
+costs. The active manager attack order stays in the source; when its
+named rider is already ahead, each later kilometre records an
+`already_ahead` refusal for that attempted repeat. It cannot
+silently launch another named rider or return the forward rider to
+the bunch. A focused continuation through km 4 replays the road and
+rejects a forged blocked-attack row or a changed attack target.
+The forward rider's own later road is modeled separately below.
+
+`physical-front-solo-run-v1.mjs` now replays that forward rider against
+the same paid bunch clock. Each later kilometre has an individual
+decision from the continuing committed `break_stage` or
+`summit_attack` stake and active team effort order, a full solo
+terrain charge, zero bunch recovery, route-derived cap, measured
+clock and gap. At the existing exhaustion threshold the rider may
+explicitly decline the higher team effort to conserve for this
+stage's finish; the manager order remains recorded. A strong named
+attacker completes the 20-kilometre synthetic route ahead of the
+23-rider bunch in a focused source replay. If the bunch catches the
+attacker, the run refuses and requires a separate paid contact road.
+Neither this synthetic success nor its energy scale is a general
+race calibration or official result.
+
+`physical-front-bunch-catch-v1.mjs` now derives a narrow catch from
+a named break's replayed solo road and a later stronger named bunch
+leader's paid road. It solves the metre and clock at which their
+kilometre travel times meet, charges the attacker and all 23 bunch
+riders for the exact partial distance, and refuses an earlier
+kilometre without physical contact. A same-seed test changes the
+bunch's front worker at a committed km 5 order marker and records a
+later catch; forged contact time fails replay. At the contact instant
+the rider and bunch are co-located, but no sheltered wheel or group
+membership is inferred. The remaining distance must decide whether
+the spent attacker holds on or slides through behind the bunch.
+
+`physical-caught-break-slide-v1.mjs` resolves the tested case where
+the spent attacker cannot match the paid bunch leader even with
+draft benefit. It records that physical inability separately from
+a deliberate future-stage release. At contact the rider explicitly
+switches to an energy-saving pace to finish the current stage, pays
+the remaining terrain as a solo, receives zero bunch recovery, and
+crosses the kilometre endpoint later than the 23-rider bunch.
+Their singleton position, energy, time and source goal replay; no
+peloton wheel is inferred. `physical-bunch-after-caught-slide-v1.mjs`
+continues the 23-rider paid bunch with the active attack order
+recorded as `dropped_after_paid_catch`, rather than falsely
+`already_ahead`. `physical-slid-break-solo-run-v1.mjs` pays each
+remaining solo kilometre at current-stage safe-finish pace, with
+zero bunch recovery. A 20-kilometre, 24-rider same-seed witness in
+`physical-caught-break-race-replay-v1.mjs` now records every rider's
+decision, energy, clock and physical group through observed finish.
+Forged catch, slide, post-catch order status, later energy and race
+clock fail source replay. This is still one narrow synthetic route;
+other terrain, role and fatigue combinations and rear contact with
+another dropped rider need further physical testing. The result is
+not an official classification or calibrated guided motor.
+
+The read-only `audit-physical-caught-break-matrix.mjs --assert` runs
+nine same-seed 20-kilometre variants. Six replay all 480 rider
+kilometres and 481 decision rows: baseline, modestly increased
+attacker fatigue, later climb, wind, cobbles and a changed summit
+stake. Baseline contact is at km 13,
+metre 12,562.5; the caught rider finishes 17.7 seconds after the
+bunch, with both times derived from paid road. Modestly increased
+attacker fatigue moves the paid catch to km 9. A very fatigued
+attacker loses the paid bunch pace before the planned attack. The
+active named attack remains visible as
+`rider_dropped_before_attack`; the rider does not launch from the
+rear or inherit a wheel. Without an explicit future-stage plan,
+physical inability permits only current-stage `finish_safely` solo
+pace, with a separate terrain charge each later kilometre.
+`physical-single-loss-race-replay-v1.mjs` now records all 24 riders
+and their observed finish for that case and for an early climb drop.
+The former-bunch-worker witness was tightened: the earlier 70-skill
+field lost 23 followers when a 95-skill worker took over, so it was
+not evidence of one isolated worker drop. With a 96-skill field,
+a 90-skill first worker and a 97-skill later worker, exactly that
+former worker loses pace at km 2 while the other 23 continue. Their
+separate paid road and all 24 observed finishes now replay through
+km 20. A later order naming the detached worker to lead still
+refuses; there is no inferred return to the bunch.
+`physical-front-race-replay-v1.mjs` covers
+the two no-catch variants: a fresher attacker and a weaker later
+bunch leader both produce 480 rider-kilometre decisions and a paid
+front-solo finish instead of an invented catch. All nine narrow
+variants now reach source-replayed finishes; six include a paid
+catch, two a front finish and one a physical pre-attack loss. This
+does not cover simultaneous losses, general multi-group race roads
+or riders joining after new paid contact. The minimum finish energy near
+84 on this short route is diagnostic only; fatigue and whole-race
+energy scales remain uncalibrated. No variant is routed to guided
+races or production.
+
+`physical-front-threat-choice-v1.mjs` now feeds the existing
+committed, perceived-strength chase policy from a front solo's
+source-replayed gap and all riders' current paid energy. It checks
+the observing team's active chase order and explicit sporting stake.
+The full source recording retains exact energy for replay, while
+the `choice` payload contains the observer's forecast and no rival
+skill or exact energy input. Only that choice should be shown to
+the observing team. In a same-seed test a sprint team
+with a selective chase order watches the small measured gap at km
+10; waiting until km 16 instead yields a `capacity_shortfall`
+forecast. Forging the observed gap fails replay. This choice does
+not itself spend a rider's energy or move a group.
+
+`physical-perceived-chase-km-v1.mjs` connects one urgent
+`commit_now` choice to a pre-committed manager rotation: the
+observer's named helper becomes the only exposed peloton leader;
+the other 22 bunch riders pay a lower sheltered cost, while the
+front solo pays their own road. It replays all 24 kilometre states,
+energy and both clocks from the prior physical source. A `watch`
+choice refuses a paid chase. The one-kilometre witness uses a
+96-skill attacker and a 99-skill sprint roster: perceived urgency
+commits at km 8 with a steady named helper, but the actual paid
+gap *widens*. The forecast assumes a stronger rotating chase than
+this single named worker can deliver; therefore perception and
+physical pursuit timing remain uncalibrated. A hard manager effort
+in this witness moves the forecast to `capacity_shortfall`; the
+cause and policy response need further calibration. No projected catch
+is treated as a physical catch.
+
+The read-only `audit-physical-threat-window.mjs --assert` checks
+384 same-seed combinations of attacker skill, observer skill and
+decision kilometre. It finds 79 `watch` and 302
+`capacity_shortfall` choices, but only three `commit_now` windows.
+That thin and sometimes physically ineffective commitment window
+must be reconciled with actual turn rotation, energy and race
+length before the chase policy can be routed into a whole race.
+The audit now also pays the next kilometre for each of the three
+`commit_now` windows using a pre-named sprint helper. All three
+measured gaps widen: by 0.728, 0.495 and 1.197 seconds. The
+forecast therefore has no observed effective chase in this matrix,
+even when it urges immediate commitment. Its hypothetical rotating
+helper capacity and front effort assumptions need to be reconciled
+with the actual single exposed leader and paid front pace before
+it can control a full physical race.
+`physical-observer-pace-estimate-v1.mjs` now adds an observer-side
+next-kilometre estimate to the opt-in front-threat choice when the
+observer has a named leader. It uses the front rider's observed paid
+speed on the preceding kilometre, the observer's uncertain rival
+strength and energy estimate, and the observer's own committed leader
+and exact energy. It does not read the rival's private future order
+or exact strength into the estimate. For the three urgent windows its
+estimated gap changes are +0.737, +0.504 and +1.206 seconds, within
+0.009 seconds of the corresponding paid changes in this flat witness.
+The old multi-helper catch forecast still determines the action;
+this new pace signal exposes that disagreement for calibration and
+does not silently cancel a manager-authorized chase.
+`physical-chased-front-step-v1.mjs` now shares the front rider's
+paid terrain, energy and sporting-stake calculation with an opt-in
+consecutive pursuit source. `physical-perceived-chase-run-v1.mjs`
+follows the first perceived commitment with the actual manager's
+named chase leader on every later kilometre; a later precommitted
+helper can take over without changing the order silently. The full
+`physical-perceived-chase-race-replay-v1.mjs` records every rider's
+decision, energy and clock from the start to observed finish while
+the front rider remains ahead. In the three urgent 20-km windows,
+all 480 rider-kilometre states replay, but the front rider still
+finishes 18.132, 16.065 and 24.15 seconds ahead. A physical catch
+or a later chase dropout would require its own paid source. These
+results confirm the present urgency forecast is uncalibrated; this
+opt-in chase is not routed to guided races.
+`physical-perceived-chase-contact-v1.mjs` now sources the first
+catch during a manager-committed chase from the separately paid
+front and bunch clocks. It records their common road metre and time,
+the named exposed bunch leader, and both sides' partial energy. The
+12-case same-seed front-effort probe has two such contacts, on km 19
+at metre 18,510.3 and km 16 at metre 15,397.3. The contact remainder,
+caught rider's position after contact and all later finishes are
+explicitly unsettled. This does not establish realistic pursuit
+timing or permit routing to guided races.
+`physical-perceived-chase-slide-v1.mjs` now pays the caught rider's
+remaining contact kilometre as a separate solo only when measured
+holding ability is below the named bunch leader's pace. In those two
+contacts the holding deficits are 3.359 and 0.391 ability points;
+the rider falls 0.630 and 0.346 seconds behind the bunch by the end
+of that kilometre. No wheel or bunch place is granted at contact.
+Later kilometres and finish replay still need a separate source.
+`physical-perceived-chase-slide-race-v1.mjs` now carries one 25-km
+same-seed witness through the full observed finish. The manager
+commits a sprint-team chase at km 12 and a later chase stop at km 20.
+The front rider slows under a committed order, is caught at metre
+15,859.7 on km 16, cannot hold the paid leader, and slides 0.117
+seconds behind by that kilometre's end. The named worker continues
+paying front work; each intervening kilometre explicitly records that
+its chase target has been caught. The later manager phase ends the
+chase order. All 600 rider-kilometre states and 24 finish times
+source-replay, without a wheel or group membership inferred for the
+caught rider. This single flat synthetic case does not calibrate
+whole-race pursuits, fatigue or other contact outcomes.
+The same 25-km witness also finishes when a precommitted km-20 phase
+hands named front work to another team after the chase target is
+caught. The previous nominated chase-team restriction now applies
+only while an active chase order remains. The new leader pays the
+road from its own committed order; no later order is relabelled.
+`audit-physical-threat-window.mjs --calibration --assert` varies
+five perceived chase roles, three initial fatigue levels (10, 20,
+40), and flat, mid-route hill, climb and exposed-wind road across
+60 same-seed 25-km cases. Fifteen choose a chase, make paid contact,
+slide and source-replay all 600 rider-kilometre states and 24 finish
+times. Thirty-eight choose watch and seven report capacity shortfall;
+those do not simulate a committed chase. No climb case reaches the
+contact-finish branch in this matrix. Some wind cases reproduce the
+same contact metre as calm road. These are specific calibration gaps,
+not evidence of complete long-race realism.
+The `--long-calibration --assert` probe places a manager-ordered late
+attack and rotating named bunch leaders into 80, 160 and 260 km flat
+races. Across 48 same-seed strength combinations, 18 choose watch,
+28 report capacity shortfall, and two commit a chase that reaches
+paid contact, slides, and finishes. The 160-km replay has 3,840
+rider-kilometre states, 24 finish times, seven distinct paid bunch
+leaders and minimum finish energy 66.49. The 260-km replay has 6,240
+states, 24 finishes, seven leaders and minimum finish energy 51.83.
+No 80-km variant commits in this small grid. These long flat cases
+extend source coverage, but the substantial remaining energy and
+selective chase decisions still need calibrated race evidence.
+The finish audit also checks one named paid bunch leader on every
+kilometre, a decision and nonnegative energy for every rider on every
+kilometre, and source-derived observed times for all 24 finishers in
+each of the 18 short and long contact-finish cases.
+Six further long-route probes put a hill, climb or exposed 20 km/h
+wind into the late chase window of those two long witnesses. Hills
+and climbs change both decisions away from commitment. The 260-km
+wind case still catches and finishes, but its contact metre and
+minimum finish energy are identical to calm road in this uniform-skill
+fixture. The current physiological wind treatment alters skill mix
+only; it does not add an absolute wind load to the paid energy demand.
+Wind-sensitive pursuit timing and cost remain uncalibrated.
+`physical-observer-pursuit-horizon-v1.mjs` is a separate read-only
+timing estimate. It projects the observer's own named leader and
+known orders against the front rider's last visible paid speed,
+uncertain rival attributes and energy, and a stated steady-effort
+energy assumption. It does not use the rival's private future order
+or move either road group. In all 18 audited contact-finish cases it
+predicts the correct catch kilometre. On flat road its contact point
+is within 15 metres of the paid source; hill and wind cases differ by
+as much as 585 metres. This forecast is diagnostic and does not
+replace the still-unreliable action policy or prove pursuit realism.
+Changing the rival's private future effort order, while replaying the
+same paid start, leaves this observer projection unchanged. The
+forecast uses observed road and perceived strength rather than
+peeking at that order.
+Across the 114 short, long and terrain audit rows, the independent
+pace projection finds a catch before the committed chase stop in 59
+`watch` cases, all 18 `commit_now` cases, and 15 cases labelled
+`capacity_shortfall` by the existing action forecast. The other 22
+capacity-shortfall cases have no projected catch. The projection
+assumes the front keeps its last observed effort and uses approximate
+future energy costs, so this is a measurable disagreement between
+two forecasts, not evidence that the denied chases would actually
+catch the front. A paid counterfactual and broader finish calibration
+are needed before changing the executable action policy.
+`physical-manager-chase-counterfactual-v1.mjs` now pays the named
+manager's actual chase order on a separate diagnostic path without
+changing that policy or any guided race. It records exact clocks,
+energy and contact metre through the first meeting. In the 114-case
+matrix, this paid road reaches contact in 59 `watch` cases, all 18
+`commit_now` cases, and 15 `capacity_shortfall` cases; the manager
+order ends before contact in the other 22 shortfall cases. The
+observer-only timing projection matches the paid contact kilometre
+in 68 of the 92 meetings and differs by no more than two kilometres.
+A 25-km hill case explicitly records `capacity_shortfall` while the
+manager-order probe reaches contact at km 16; the normal perceived
+chase still refuses to execute, preserving the current guard. The
+contact source alone does not establish that the alternative policy
+would give realistic race results.
+`physical-manager-chase-contact-km-v1.mjs` now settles the rest of
+the contact kilometre in these diagnostics. All 92 paid meetings
+show physical inability to hold the named bunch leader; the caught
+rider pays conservative solo work, slides behind and completes that
+kilometre with 24 sourced rider states. A forged contact record is
+refused. The contact-only source does not establish later riding.
+`physical-manager-chase-race-replay-v1.mjs` now extends the same
+manager-order counterfactual across every remaining kilometre. The
+caught rider pays solo road after failing to hold the bunch; the
+other 23 riders continue behind exactly one named paid leader, and
+the continuation refuses a later unrecorded return to the bunch.
+The 114-case same-seed audit reaches a fully source-replayed finish
+for every one of its 92 paid-contact cases, with 24 observed rider
+finish times in each; the other 22 cases still stop at their explicit
+manager order before contact. The 92 full finishes comprise 60 at
+25 km, 10 at 80 km, 11 at 160 km and 11 at 260 km. The minimum
+recorded rider energy across each whole race ranges from 51.668 to
+91.136; these values do not establish physiological calibration.
+The recorded 260-km finishes fall between 5.88 and 5.92 hours in
+this synthetic field. The audit also checks a decision and physical
+state for each of 24 riders per kilometre, 24 finish times, and
+nonnegative energy for every completed counterfactual.
+A modified finish energy is rejected
+by source replay. These results test a diagnostic counterfactual,
+not a calibrated chase policy. The tactical `capacity_shortfall`
+classification remains unchanged, and neither this replay nor the
+forecast is routed to guided races. Pursuit timing across varied
+fields, terrain, fatigue, wind and team orders still needs whole-race
+calibration.
+An additional `--early-long-calibration` probe starts the same paid
+break at km 2 and the manager chase at km 11 on 160- and 260-km roads.
+Each distance covers flat road at initial fatigue 20 and 40 plus
+late hill, climb and exposed-wind variants at fatigue 20. All ten
+observer actions are
+`watch`, while both the observer-only horizon and the paid manager
+road reach contact at km 15. All ten counterfactuals source-replay
+every rider kilometre and 24 finishes. Their minimum recorded
+energy ranges from 42.66 to 66.16; the two flat 260-km slowest finishes
+are 5.90 and 5.98 hours. This extends early-contact coverage, but
+it still uses a uniform synthetic field. Exposed wind leaves the
+minimum recorded energy identical to calm road at each distance;
+absolute wind cost remains uncalibrated. This probe does not validate
+season-long control exhaustion or tactical routing.
+`--role-long-calibration` varies the named observer worker's hill,
+mountain, endurance and wind ability and the front rider's matching
+abilities at the same seed. On 160- and 260-km flat routes, both
+manager-order chases meet at km 11 and source-replay all 24 finishes
+at initial fatigue 20 and 40.
+On the corresponding routes with a later hill, climb or exposed wind,
+contact still occurs at km 11, but the full diagnostic refuses when
+a bunch follower cannot hold the paid pace. A separate opt-in
+post-catch source records `sprint-2` losing the 160-km bunch on
+km 148 and the 260-km bunch on km 251. In the climb variants the
+split occurs 18.72 m and 16.40 m before the respective kilometre
+lines. It source-replays the partial paid energy and verifies the
+physical split. A separate versioned
+completion then pays each rider's remaining metres and checks that
+the caught break rider cannot meet that rider or the bunch before
+the same kilometre line. All eight paid split completions replay
+from their source, charge positive energy, award no solo recovery,
+and reject forged completion energy. The
+later solo road and possible future
+contact remain unsettled. The refusal is an explicit missing
+physical branch, not a finished race result.
+The higher-fatigue climb variants produce the same loss kilometres,
+also with paid split and completion followed by explicit refusal.
+`physical-manager-postcatch-loss-v1.mjs` now exposes that refusal as
+a versioned partial-race recording rather than claiming a finish.
+The eight mixed-role hill, climb, wind and higher-fatigue split cases
+each replay all 24 rider states on the complete loss kilometre:
+3,528 prior rider-kilometres before the 160-km loss and 6,000 before
+the 260-km loss. The caught break rider and the new detached rider
+both pay their own remaining road; a forged loss-kilometre energy is
+rejected by source replay. Later contact and all remaining kilometres
+are still unsettled.
+`advancePhysicalManagerPostcatchBunchKmV1` now pays the next
+kilometre for the 22 riders who remained in the bunch, from the
+replayed split source. In all eight mixed-role split cases the
+committed named leader is `sprint-4` after the 160-km loss or
+`sprint-3` after the 260-km loss. The detached rider cannot
+silently return or serve as that leader. Forged next-kilometre
+energy is rejected. Neither solo has yet been carried across that
+next kilometre, so this is still a partial race.
+`physical-manager-postcatch-solo-pair-v1.mjs` now pays the caught
+break rider and the newly dropped worker separately across that
+same next kilometre. It refuses an unrecorded meeting with each
+other or the bunch, charges solo energy without recovery, and
+source-replays all 24 rider states behind the committed 22-rider
+bunch leader. All eight mixed-role split cases pass this next
+kilometre. At this step the later road was still unsettled.
+`replayPhysicalManagerSeparatedRoadV1` now extends those three
+physical groups to the actual finish when their paid clocks never
+meet. All eight mixed-role split cases complete: the 160-km cases
+record 3,840 rider-kilometre states and the 260-km cases record
+6,240, each with 24 observed finish times. Every later kilometre
+has one named paid bunch leader and two separately priced solos
+with no recovery. A crossing of either solo's clock with the bunch
+or the other solo refuses before claiming a group, and a forged
+finish energy fails source replay. These synthetic no-contact
+finishes do not settle variants in which the two solos meet or
+another bunch rider falls away.
+Two later-climb mixed-role controls let the gap between the caught
+break rider and dropped worker shrink while both still finish
+separately. Moving the same committed climb to km 30 and using a
+moderate terrain-strength difference produces the missing paid
+meeting in both 160- and 260-km fixtures. The riders meet on km 31
+at metre 30,207.88, 0.99 seconds behind the bunch's clock there.
+`physical-postcatch-split-contact-v1.mjs` prices each rider only
+to that measured metre and replays the meeting from the prior
+physical split and solo clocks; a forged contact time is refused.
+This meeting occurs before the bunch reaches the kilometre line.
+`physical-postcatch-contact-road-v1.mjs` now continues both
+early-climb fixtures over the remaining 792.12 metres with the
+newly dropped worker as named exposed leader and the caught
+break rider sheltered. Their separate contact energies feed the
+terrain-priced group work; both stay behind the bunch at the
+kilometre line, and altered energy is refused by source replay.
+The leader cannot use the caught rider's faster pace because that
+follower cannot hold it. The separate
+`physical-manager-postcatch-contact-v1.mjs` source preserves all
+24 rider decisions and energy states through that kilometre.
+`physical-manager-postcatch-group-v1.mjs` then rotates the two
+named rear leaders, prices their work and shelter on each later
+terrain kilometre, and records 24 actual finish clocks in both
+160- and 260-km synthetic fixtures. The respective recordings
+contain 3,840 and 6,240 rider-kilometres, with positive energy
+and no inferred bunch return. The original manager order again
+names the dropped worker at km 61. A versioned, precommitted
+emergency helper replacement records the substitution each time
+it is needed; omitting that plan refuses at km 61. These
+synthetic observed finishes are not official awards or guided
+race behavior. Broader role, terrain, fatigue and contact
+calibration remains necessary before routing.
+The `--postcatch-matrix --assert` same-seed probe adds 12
+distance, fatigue and hill/climb combinations. At fatigue 20
+and 40, all eight source-replayed rear contacts finish with
+positive energy, two alternating rear leaders and a positive
+physical gap to the bunch. Hill versus climb changes the
+contact metre (30,660 versus 30,208 at fatigue 20) and the
+finish gap; higher fatigue lowers minimum finish energy. The
+four zero-fatigue cases now record the earlier front-solo catch
+at km 10, metre 9,896.6. The new opt-in follower-loss replay
+then prices all 24 riders through km 31 (744 rider-kilometres),
+including the newly detached rider and the already slid break rider.
+The two rear riders meet at physical metre 30,591 on the hill or
+30,155.8 on the climb, before the bunch completes that kilometre.
+One named exposed rear leader pays more energy than the sheltered
+rider. The pair then alternates paid turns through observed finish.
+All four 160- and 260-km variants replay 3,840 or 6,240 rider-kilometres,
+24 finish clocks, two rear leaders and nonnegative energy.
+`--postcatch-strength-matrix --assert` varies the caught rider's
+hill and mountain skills by ten points. Four variants finish
+after paid rear contact. Two weaker-rider hill variants never
+reach that contact scenario; two stronger-rider climb variants
+refuse because the slid rider physically returns to the bunch
+before the older whole-race replay can settle the return.
+`physical-manager-return-contact-v1.mjs` now replays those
+two stronger-rider crossings from the prior solo and bunch
+clocks at km 30, metre 29,987.45. The rider pays 987.45 metres
+alone and 12.55 metres sheltered after physically meeting the
+bunch. A forged contact clock fails source validation. Later
+`physical-manager-return-km-v1.mjs` includes all 24 riders'
+decisions and paid energy through km 30 (720 rider-kilometres),
+and refuses a forged finish energy. Both the returned rider and
+the original front worker physically lose the km-31 climb at
+different measured metres (30,986.55 and 30,954.26), so
+`physical-manager-return-loss-v1.mjs` prices their remaining
+solo metres. Their within-kilometre piecewise clocks do not
+cross. `physical-manager-return-separated-v1.mjs` then prices
+the two separate solo roads and the 22-rider bunch through
+observed finish in both 160- and 260-km variants: 3,840 and
+6,240 rider-kilometres, 24 finish clocks, positive energy,
+and no later solo contact. The precommitted emergency worker
+plan pays the named replacement when the dropped worker is
+ordered back to the front. These synthetic variants still need
+broader whole-race calibration and do not establish real-world
+gaps or official results.
+
+`audit-physical-bunch-distance.mjs --assert` extends the opt-in
+paid-bunch source to mixed flat, hill, climb, descent and wind routes
+of 20, 80, 160 and 260 kilometres. All 12 equal-skill same-seed
+combinations at initial fatigue 10, 20 and 40 finish with 24
+physically present riders, nonnegative energy and named paid leaders.
+At 260 kilometres a 90-skill first worker physically loses the bunch
+at km 6, metre 5,991.8; a weak climber loses it at km 21, metre
+20,963.6. Each is the only split rider. A manager order that later
+names either detached rider to lead correctly refuses the continuation.
+When the manager has instead committed a different named worker for
+those later phases before the race, both detached riders complete
+their own paid solo road while the other 23 continue. Both 260-km
+recordings source-replay 6,240 rider-kilometre states and all 24
+observed finishes. These are synthetic single-loss witnesses; they
+do not establish calibrated long-race fatigue, multiple simultaneous
+groups, new paid contact or an effective perceived chase. The 260-km
+replay remains separate from guided races and production.
+
+`runPhysicalStaggeredBunchLossV1` keeps a replayable paid bunch
+source when different riders lose contact on different kilometres.
+A 20-km same-seed fixture loses a former front worker at km 6 and
+a weaker climber at km 11, leaving exactly 22 riders in the physical
+bunch. Each split has its measured partial distance; neither rider
+silently returns on later bunch kilometres.
+`physical-staggered-detached-solo-v1.mjs` pays each rider's remaining
+split kilometre and later solo road. With a moderate climb weakness,
+`physical-staggered-race-replay-v1.mjs` then source-replays all 480
+rider-kilometre states and 24 observed finishes while the two solos
+remain separate. A stronger climb weakness makes their solo clocks
+cross; the full race correctly refuses without a paid contact road.
+`physical-staggered-solo-contact-v1.mjs` now finds exactly one later
+kilometre where those separately paid solo clocks meet. It records
+the common road metre and time, charges both riders to that point,
+and verifies that both remain behind the bunch.
+`physical-staggered-contact-road-v1.mjs` pays one exposed leader and
+one sheltered rider for the rest of that kilometre. The two riders
+then alternate paid single-leader turns in
+`physical-staggered-rear-group-v1.mjs`; the 20-km contact witness
+now source-replays all 480 rider-kilometre states and 24 observed
+finish times. The weaker-climber variant without contact still
+retains its separate solo finish replay. These are narrow synthetic
+cases. Other contact timing, terrain, fatigue and multiple simultaneous
+groups require whole-race calibration before guided races.
+The read-only `audit-physical-staggered-matrix.mjs --assert` varies
+the second rider's climbing skill (30–80), initial fatigue
+(10, 20, 40) and climb gradient (4 or 6 percent) across 30 same-seed
+20-km races. Eighteen have a paid rear contact, single-leader
+rotation and full finish replay; twelve finish as two separate solos.
+Every case records 480 rider-kilometre states and all 24 observed
+finishes; contact cases have 482 decisions because each rider chooses
+again for the remainder of the contact kilometre. No case invents a
+rear group without a paid meeting. Minimum finish energy ranges from
+79.09 to 91.2 on these short routes, so this is coverage evidence,
+not whole-race fatigue calibration.
+Twelve additional same-seed variants run 80, 160 and 260 kilometres
+with explicitly ordered later front-worker rotations and mixed
+terrain; three 260-km variants add exposed 20 km/h wind. Seven replay
+rear contact and five replay separate solo finishes. Every variant
+reaches all 24 source-derived finish times with nonnegative energy;
+the 260-km recordings each contain 6,240 rider-kilometre states.
+For a 60-mountain climber, the 260-km calm route records contact
+on km 18, while the exposed-wind route leaves both riders separate
+through the finish. This sensitivity is useful coverage evidence,
+not proof of realistic speed, contact frequency or fatigue over a
+whole cycling season.
+
+The front-solo source also accepts a paid bunch catch in the first
+kilometre after a named attack. A flat attack followed immediately by
+a climb gives a source-derived meeting metre and clock on km 3.
+The attack kilometre is replayed directly, with no invented intervening
+solo kilometre. The existing catch, slide and separate solo road then
+replay all 24 riders through the observed 20-km finish. This closes the
+next-kilometre boundary only; it does not settle all early catches in
+long races or change guided-race routing.
+When an already committed chase order starts after a paid catch, the
+post-slide bunch records the resolved target and still charges its
+named front worker for pulling. The rider's decision stays visible as
+front work rather than a chase of a rider who is no longer ahead.
+The zero-fatigue long-race matrix now pays the km-31 follower loss,
+the contact with the slid break rider and the rest of that kilometre.
+The reported follower position at the bunch's kilometre end is the
+solo projection used to find the meeting. It is not a later contact
+metre: the paid meeting occurs earlier in the same kilometre. The
+rear group's following road and observed finish are replayed by the
+same paid group source as the manager-chase case. This covers four
+synthetic zero-fatigue variants, not a calibrated distribution of
+early catches, split timing or long-race fatigue.
+
+The separate `audit-physical-field-scale.mjs --assert` stresses the
+same opt-in source with 20 committed eight-rider teams over mixed
+120- and 260-km routes at two fatigue levels. Four equal-skill races
+pay one named exposed bunch leader at a time and record 160 rider
+decisions each kilometre (19,200 or 41,600 rider-kilometres), with
+160 observed finish clocks and nonnegative energy. Four variants
+with one weak climber record its km-21 physical loss and replay all
+160 riders to finish. Four variants with one weak climber per team
+record 20 simultaneous physical losses at km 21. Each split rider
+pays the remaining solo metres separately. Their measured arrivals
+share the same clock and route metre at km 21's end, 3.65 to 3.89
+seconds after the bunch, so `physical-simultaneous-loss-contact-v1`
+records a source-backed meeting. It refuses riders whose paid solo
+clocks or metres differ. `physical-simultaneous-rear-group-v1` then
+pays one exposed leader and 19 sheltered riders on each later
+kilometre, rotating through all 20 named leaders. Every 120- and
+260-km variant source-replays 19,200 or 41,600 rider-kilometre states
+and all 160 observed finish clocks with nonnegative energy. The first
+shared kilometre charges the leader more than any sheltered rider;
+forged finish energy is rejected by replay validation. The source
+remains opt-in and does not move guided races or create official
+results. Eight additional variants give one dropped climber a different
+climbing ability. A separate paid-arrival partition records one
+19-rider meeting and one unmatched solo at the same route metre but
+different clocks; it does not assign the solo a wheel. The current
+all-rider contact continuation refuses that mixed branch. A separate
+`physical-mixed-simultaneous-rear-group-1` recording pays the 19-rider
+group and the unmatched solo independently. Each later kilometre has
+one exposed group leader, 18 sheltered group riders and one separately
+paying solo, while the surviving bunch also retains its paid leader.
+Eight mixed variants with a 31- or 35-mountain unmatched solo
+source-replay 19,200 or 41,600 rider-kilometre states and 160
+observed finish clocks. Four further descent variants make the solo
+slow enough for the group to reach it on km 36 at both fatigue levels
+over 120 and 260 km. The old separate continuation refuses there. A
+new source prices all 20 to their common meeting; the 120-km,
+fatigue-10 case meets at metre 35,648.1, 87.1 seconds behind the
+bunch. One exposed leader and 19 sheltered riders then pay the rest
+of km 36. The `physical-mixed-joined-rear-race-1` replay rotates all
+20 through finish. The four recordings contain 19,200 or 41,600
+rider-km states, all 160 observed finish clocks and nonnegative energy.
+Every joined rider has both pre-contact and post-contact decisions on
+km 36; the surviving 140-rider bunch retains its own paid decisions.
+Forged partition, contact energy or finish data fails source
+validation.
+
+Equal skills and simultaneous identical solo arrivals are scale
+witnesses, not a calibrated field distribution. Other mixed arrivals,
+later merges, realistic fatigue and whole-race chase
+timing remain unresolved before routing.
+
+`audit-physical-field-scale.mjs --probe-varied --assert-varied` now
+tests a separate opt-in `physicalDraftVersion: 2` with four
+heterogeneous 160-rider fields (120 or 260 km; fatigue 10 or 30).
+It uses the already versioned terrain-specific bunch draft allowance:
+10 ability points on flats, 6 on hills, 0 on climbs and 8 on descents.
+A rider whose sheltered cruise ability is insufficient but whose paid
+solo ability can match the actual leader stays with the bunch as an
+individual `hold_pace` decision. That rider pays full work and receives
+no recovery; the single named front leader remains the only leader.
+The prior physical source and historical recordings retain their
+original version and 2-point draft. The varied fields first lose
+15–17 riders on km 21, not km 1, and the surviving bunch pays a named
+leader on every kilometre through finish with explicit precommitted
+worker and emergency orders. Across the four cases, 37–46 riders
+physically detach on km 21, 26, 66 or 141; 352–661 rider-km use the
+paid pace-match state. These recordings only complete the surviving
+bunch. The detached riders' independent road, contacts, energy and
+finish clocks remain to be resolved before a heterogeneous full-field
+race can be routed.
+
+The varied-field audit now source-replays each detached rider's
+remaining loss-kilometre road in one batch. Near-equal end clocks are
+only an observation. A piecewise road-clock check locates one contact
+between team-3-3 and team-4-3 at metre 25,999.203884 in each fatigue-30
+field, about 0.8 m before their near-coincident km-26 arrival. Their
+energy at that metre is derived from the two paid solo segments. The
+fatigue-10 fields have no crossing between riders dropped in the same
+kilometre. No shared pace, draft benefit or finish follows from this
+read-only contact. Encounters with riders dropped on other kilometres
+and every detached rider's later road remain unresolved.
+
+The exact km-26 contact now has an opt-in paid remainder witness in
+both fatigue-30 fields. The catching rider team-3-3 takes the exposed
+turn from metre 25,999.203884 to 26,000; team-4-3 pays the lower
+sheltered cost. The shared speed is limited by the leader and the
+follower's terrain-specific ability, and both retain separate orders,
+decisions, energy and clock. This settles only the pair's last 0.8 m
+of km 26. Other rear riders and later group kilometres still need
+contact-aware replay.
+
+An isolated continuation now pays this two-rider group's next 94 or
+234 kilometres through the 120 or 260 km course end. The riders
+alternate the single exposed turn; the other pays sheltered terrain
+cost, and both retain decisions, team effort caps, energy and clocks.
+The continuation refuses an unpaid bunch catch. It does not yet test
+contact with the other 35 or 39 detached riders, so its end clocks are
+counterfactual pair-road evidence rather than validated whole-race
+finishes.
+
+A batched source probe now pays independent solo candidates for all
+37–46 detached riders. Those candidate trajectories have no unpaid
+bunch catch, but they are not race finishes because they ignore mutual
+contact. Comparing their piecewise road clocks and paid energy finds
+the first field contact between team-3-3 and team-4-3 in every varied
+case: within km 26 at fatigue 30, and near metre 30,097 in km 31 at
+fatigue 10. Only the path up to that first contact is sourced as a
+separate-solo race. The later paths must be recomputed with the new
+physical group and all remaining riders.
+
+The later km-31 contact has a source-replayed paid remainder. The
+catching rider team-4-3 takes the first exposed turn while team-3-3
+pays shelter. The isolated pair then alternates one paid leader and one
+sheltered rider for another 89 or 229 km through the 120 or 260 km
+course end. Those clocks still exclude interactions with the other
+detached riders, so they cannot be published as whole-race results.
+
+A contact-aware diagnostic now compares that first paid pair's road
+against every other solo and compares the remaining solos with each
+other. In all four varied fields, the next chronological meeting is
+between team-8-6 and team-19-1 within km 31, at about metre 30,265
+with fatigue 10 and metre 30,109 with fatigue 30. Both riders have
+source-priced energy at the contact. It is a second event, not an
+automatic merge with the first pair; shared road and later encounters
+remain unsettled.
+
+The second measured contact also has a separate opt-in paid road. In
+all four varied 160-rider cases, team-8-6 catches team-19-1 within km
+31 and pays the exposed remainder while team-19-1 pays the lower
+sheltered terrain cost. Each then has a decision, energy debit and
+alternating single-leader isolated pair road to km 120 or 260. The
+first rear pair and other detached riders still have unresolved later
+encounters, so these isolated end clocks are not whole-field finishes.
+
+A two-pair replay now inspects both groups and every remaining solo
+without merging them. The next chronological km-31 contact differs by
+fatigue: at fatigue 10 the first pair catches team-14-6 around metre
+30,302; at fatigue 30 the second pair catches the first pair around
+metre 30,758. The inspector records each involved rider's paid energy
+at that point. The common road after the encounter, subsequent
+contacts and the full field finish remain unpriced.
+
+The third meeting now has an opt-in paid remainder and isolated group
+continuation. The fatigue-10 contact forms three riders with team-4-3
+still exposed; the fatigue-30 pair meeting forms four with team-8-6
+still exposed. All others shelter at lower terrain-priced cost. The
+members rotate a single paid leader on later kilometres. These roads
+remain counterfactual beyond any further contact with the other
+detached riders, and they do not establish whole-field finish times.
+
+An event-ordered rear replay now starts from the paid bunch splits and
+solo candidates, finds the earliest road-clock intersection, changes
+only the involved roads, and prices one leader plus sheltered members
+to the next encounter. It checks for an unhandled bunch crossing and
+refuses one. Each kilometre records all 160 riders' physical groups,
+decisions, energy and clock; contact and cross-kilometre energy must
+reconcile with the paid sources. Two varied-field same-seed witnesses
+at fatigue 10 cover 120 and 260 km: 12 and 22 rear contacts, 19,200
+and 41,600 rider-kilometres, and all 160 actual finish clocks. The
+first three contacts match the separate source inspectors. The two
+fatigue-30 fields are now refused at km 26 because team-3-3 and
+team-4-3 have identical measured split markers and no physical
+ordering. Earlier full-finish counts of 12 and 15 contacts in those
+fields relied on an arbitrary rider-ID tie break and are withdrawn.
+No time limit or GC stake is inferred.
+
+This remains an opt-in Motor Lab replay. Its rear riders cooperate at
+recorded contact to save finish energy; it has not yet calibrated
+intent-sensitive passing, all orders and stages, heterogeneous group
+splits, break transitions and whole-race distributions. No guided race
+uses this version, and these witnesses do not establish release
+readiness.
+
+At each rear contact, a versioned choice now uses the two roads'
+observed speed at the meeting, each rider's precommitted rear goal,
+current team order and committed team stake. If the catching road has
+an explicit rejoin goal or a named captain with a live sporting stake,
+it passes through an observed slower road and both roads keep their
+paid paths. Other measured contacts may cooperate for cheaper shelter
+and a safe finish. A 24-rider same-seed witness records that deliberate
+pass-through in the rider's kilometre decisions and retains separate
+solo groups through finish. No rival's hidden skill is consulted for
+this choice. This rule still needs broader role, terrain and stage
+calibration before any guided routing.
+
+A separate 24-rider witness uses a valid pre-race plan naming stage 2
+and an 80-energy reserve. That rider joins a measured rear contact,
+stays sheltered in every later shared segment and finishes above the
+reserve. The contact records the other rider as the actual paid
+leader. A claimed later-stage motive without that committed plan is
+rejected before the race.
+
+The full-field stage-plan audit replays the same 160 varied riders
+over 120 and 260 km at fatigue 10 with a named
+stage-2 target for team-4-3. The committed reserves are 70 and 50
+energy respectively. Source replay records 13 and 21 measured rear
+contacts, all 160 per-kilometre decisions and finish clocks, and the
+saving rider's 84.008 and 71.978 finish energy. That rider shelters in
+every segment of its formed rear group (90 and 230 kilometres). A
+70-energy reserve on the longer, more fatigued source is refused by
+the solo source rather than silently relabelled as attainable. This
+is a feasibility witness. The earlier 260-km fatigue-30 replay with
+64.076 finish energy also relied on the ambiguous km-26 split and is
+withdrawn. These runs do not calibrate stage tactics or the whole-race
+finish distribution.
+
+The isolated bunch-loss source now also accepts one paid loss or
+several losses in the same kilometre. Its earlier gate demanded two
+different loss kilometres even though no later road depends on that
+count. Historical recordings for previously accepted inputs retain
+the same source. A 160-rider, 120-km weak-climber field at fatigue 10
+and 30 now records one km-21 loss, no rear contact, every rider's
+kilometre decisions, and all 160 finish clocks. A more severe field
+records 20 km-21 losses, but the rear event replay refuses an
+ambiguous contact among equal paid trajectories: it has no measured
+catching road to establish a physical wheel. This case remains open;
+the replay does not form a rear group by assuming those riders are
+together.
+
+The same-kilometre fallback now requires different measured split
+distances before it can name a catching road. In the 20-rider case,
+equal split markers are refused in the first loss kilometre with
+`Rear contact lacks distinct paid split ordering.` This prevents an
+arbitrary rider-ID tie break from assigning a temporary leader before
+the later replay refusal. The missing physical ordering remains an
+open source requirement.
+
+A same-seed 160-rider captain audit changes one team's named captain
+and committed sprint stake while holding the first paid rear contact
+at km 31, metre 30,097.365217 and the same clock and contact energy.
+The baseline catcher joins that road; the named sprint captain passes
+through the observed slower road. Four pass-through contacts are
+recorded over 120 km, each rider still has a decision each kilometre,
+and all 160 finish clocks replay. That captain later joins a different
+measured road when its own contact choice allows it. This demonstrates
+a role-and-stake dependent choice on identical observed contact, but
+does not calibrate how often a sprint captain should do so in a race.
+
+The event replay now checks two additional clock handoffs. A rider's
+first rear segment after a paid bunch loss must start at the bunch's
+clock for that split kilometre, and every later rear segment must
+start at that rider's previous recorded kilometre finish clock.
+Energy continuity was already checked at both points. The 24-rider
+loss and 160-rider contact witnesses still replay with these clock
+checks; an elapsed-time gap cannot be hidden between kilometres.
+
+An opt-in physical draft source version 3 addresses a separate bunch
+accounting defect. Version 2 allowed a nonleader to match the bunch
+pace using solo physiology while assigning `pace_match` and full
+exposed energy cost inside the same physical peloton. The 160-rider
+fatigue-10 witnesses contained 402 such rider-kilometres at 120 km and
+661 at 260 km. Version 3 keeps the same payable pace condition but
+records each such rider as sheltered and charges the lower draft
+fraction. At the first observed case, team-0-2 on km 26 pays 0.1572032
+instead of 0.196504 energy. Both version-3 fields have exactly one
+exposed bunch leader every kilometre, zero `pace_match` group roles,
+12 and 18 measured rear contacts, and all 160 actual finish clocks.
+Historical version-1 and version-2 recordings remain unchanged. The
+new version is isolated from guided races pending broader terrain,
+fatigue, break and finish calibration.
+
+At fatigue 30, both version-3 varied-field distances still refuse the
+same ambiguous km-26 rear contact; lower draft cost does not supply
+missing physical order. A separate 160-rider weak-climber field at
+fatigue 30 fully replays one measured km-21 drop and all 160 finishes
+at both 120 and 260 km, with one exposed bunch leader in every
+kilometre. This covers a tired single-loss branch while the
+simultaneous-loss source remains unresolved.
+
+Same-seed version-2/version-3 finish comparison shows the accounting
+change reaches riders without a scripted finish adjustment. At 120 km,
+37 of 160 riders finish with more energy (largest gain 0.8), none
+finish with less, and the observed finish-clock range is unchanged.
+At 260 km, 37 finish with more energy (largest gain 4.147), two with
+less after subsequent physical interactions, rear contacts change
+from 22 to 18, and the earliest finish clock moves by about 0.0984
+seconds. These are model sensitivities, not evidence that the finish
+time or energy distribution is calibrated against cycling data.
+
+The version-3 shelter rule also replays in the separate 24-rider
+manager-attack and perceived-chase branches. One named chase worker
+leads each bunch kilometre while every other bunch member is
+sheltered, including after the paid catch when the caught rider slides
+behind. Every rider has a decision and energy state for all 20 or 25
+kilometres, and all finish clocks replay. This cross-branch witness
+does not integrate the slid rider into the generic rear-contact event
+replay or establish whole-race calibration.
+
+A new isolated continuation covers the kilometre after a caught break
+rider slides through the bunch and a follower later drops. On the flat
+same-seed 24-rider road, their independent paid paths do not meet in
+kilometre 15, so both remain solo. When only that kilometre changes
+to a climb, the former break rider catches the dropped follower at
+metre 14,494.9144. Their recorded contact energies feed a shared road
+with one exposed leader, one sheltered rider and continuous source
+clocks and energy. If the catching rider is the committed captain with
+an active break stake, the same measured contact and energies yield a
+pass-through decision and separate solo roads. The recording has all
+24 decisions for the new kilometre and rejects forged energy. The
+joined pair then pays five more kilometres with alternating exposed
+leaders, lower sheltered cost, continuous contact energy and clocks,
+and all 24 observed finish times over the complete 20-km route. A
+forged finish clock is rejected. A later return to the bunch or a new
+bunch loss still refuses without another paid source; the pass-through
+branch has not been continued to finish. This is a narrow full-race
+witness, not field-scale or terrain/role calibration. It uses the older
+physical draft version. On the same 24-rider route with version 3 and
+a harder named bunch leader, the priced km-14 road instead has 16
+simultaneous splits, including repeated split markers. The single-loss
+continuation refuses that input; it cannot infer their relative wheels
+or form a shared rear group. A general event source for those breaks
+remains necessary.
+
+An opt-in physical draft version 4 keeps version 3's paid speed,
+energy and split metres but records why each rider leaves that hard
+leader. It compares each follower's ability and affordable sheltered
+cost at hard effort with the leader's paid pace. In the same 24-rider
+km-14 source, 15 of the 16 split riders could hold if they exceeded
+their active team effort ceiling. Their decision now explicitly says
+`try_hold_within_order` with `team_effort_ceiling`; the one rider who
+cannot hold even at hard effort keeps a `pace_loss` with
+`cannot_hold_even_at_hard_effort`. No later-stage motive is inferred,
+and the 16-way contact still refuses. Historical versions 1–3 keep
+their original recordings. This is truthful cause accounting for one
+source, not a calibrated rider choice to attack the climb or violate
+the manager's order.
+
+The same-seed 160-rider version-4 audit replays 120 and 260 km at
+fatigue 10 with all 160 finish clocks and the same 12 and 18 measured
+rear contacts as version 3. All 39 and 45 priced bunch splits in those
+two varied fields are order-limited, not physically impossible at a
+fundable hard effort. At fatigue 30, all 37 and 39 splits on the two
+distances have the same cause, but rear replay still refuses the equal
+split ordering. The separate weak-climber source establishes that a
+true physical inability remains possible. These cause distributions
+show that the varied-field order and pace policy still needs whole-race
+calibration; classifying the cause does not justify automatically
+overriding the manager order or routing this model to guided races.
+The 160-rider weak-climber control at fatigue 30 also replays 120 and
+260 km: its single km-21 loss in each race is classified
+`cannot_hold_even_at_hard_effort`, has no inferred rear contact and
+retains all 160 finish clocks. Thus both cause branches have source
+witnesses, while their prevalence is not calibrated.
+
+An isolated version-4 stage-release witness now exercises the other
+cause of leaving a bunch. Rider `other-3` has a pre-race two-stage
+plan whose km-5 marker changes the next kilometre to
+`save_for_stage`, names stage 2 and retains an energy reserve of 80.
+The 24-rider bunch pays kilometres 1–5. At the exact 5,000-metre
+boundary, the rider's ordered sheltered hold ability and affordable
+energy are checked against the paid bunch leader. The rider can hold,
+but chooses a slower conserving solo for kilometre 6; the source
+records its elapsed clock, positive gap, exposed energy cost, reserve
+and a separate decision for all 24 riders. Replayed source equality
+rejects changed energy. A missing plan, physical inability to hold,
+or a simultaneous named manager attack refuses. This proves a
+deliberate release for one committed case without misclassifying a
+forced drop. A second isolated replay carries both physical roads
+through the full 20 km, preserving the solo reserve, the bunch's one
+paid leader and 24 individual decisions each kilometre. It records
+all 24 actual finish clocks and rejects a forged finish. Later contact
+is still refused until it has its own paid event source. This narrow
+finish witness does not establish field-scale calibration, alter
+guided races or justify a time cut-off.
+
+The same release replays in four equal-skill 160-rider audits over
+120 and 260 km with fatigue 10 and 30. Each has 160 decisions in
+every kilometre, one paid bunch leader, no unpriced contact, and 160
+observed finish clocks. The conserving solo ends 29.25–41.34 seconds
+behind the bunch and with 60.455–83.175 energy, exceeding its
+committed reserve of 20. These controlled sources check continuity
+and scale; their small time gaps are not calibrated release or chase
+outcomes for a varied field.
+
+A changed-terrain counterfactual has a weaker paid bunch leader on km 7
+and a stronger conserving rider behind. The no-contact finish replay
+refuses when their clocks cross. A separate versioned contact probe
+now sources their first meeting inside that kilometre from the prior
+positive gap and both measured pace lines. It records the exact metre
+and clock, the solo's exposed cost to contact, and each of the 23
+bunch riders' cost and energy to that point. Forged contact metres
+fail replay. A reserve chosen between the solo's contact energy and
+its projected full-kilometre energy still permits the paid contact;
+unridden solo metres are not charged. The event leaves both physical
+groups separate and marks
+the rider's next choice and remainder of the road unsettled; a later
+join cannot silently inherit a wheel or a full kilometre of shelter.
+
+An opt-in follow-up now makes that choice explicitly in the measured
+contact kilometre. The saving rider checks its conserve-effort hold
+ability against the paid bunch leader, then chooses shelter because
+the remaining sheltered metres cost less energy than riding them
+alone and the committed reserve survives. The recording charges the
+solo distance before contact and the sheltered distance afterward,
+retains one named bunch leader, and gives all 24 riders a decision and
+energy state at the km-7 boundary. The joining rider has two decisions
+for that kilometre. A forged join energy fails source replay. Later
+kilometres still need plan-aware bunch continuation before a finish
+can be claimed on this contact branch.
+
+The source-backed contact branch now continues to the 20-km finish.
+After joining, the rider remains a named sheltered member of the
+peloton and chooses `conserve` under its separately recorded `steady`
+team effort ceiling. Its committed stage-2 goal and reserve remain
+visible in each later decision; energy uses the lower sheltered cost
+and the group's one exposed leader still pays the turn. All 24 riders
+have a decision, energy and clock every kilometre, and all 24 actual
+finish clocks replay. A changed finish clock is refused. A later
+inability to hold at the conserving effort still needs its own paid
+drop and rear-road source; the isolated continuation refuses that
+branch rather than assigning a wheel or silently increasing effort.
+
+A four-case, read-only 160-rider audit now exercises that return over
+120 and 260 km at fatigue 10 and 30. The solo release occurs during a
+named steady front turn. A separate pre-race km-6 order changes the
+next named front worker to `conserve`, allowing a measured return at
+metre 6,120.45 or 6,120.46 of km 7. The rider pays about 120 metres
+alone and 880 sheltered; all 160 rider-kilometre decisions and finish
+clocks replay through the varied flat, hill, climb and descent route.
+Its finish energy is 68.02–88.26, above the committed reserve of 20.
+This controlled team-order intervention demonstrates source
+continuity at field scale, not that such a slowing or return happens
+at a calibrated frequency in real races. Without an explicit lower
+front order, the comparable long race need not have this contact.
+
+The same 24-rider stage-saving return has a further controlled branch.
+After a measured km-7 join, the named front worker changes at a
+pre-race km-7 marker and leads a faster climb in km 8. The saving
+rider can hold at hard effort but cannot hold while honoring its
+committed `conserve` effort. The new decision records
+`try_hold_stage_reserve` and `committed_stage_effort_ceiling`, while
+retaining the separate manager `steady` ceiling; it is neither a
+new voluntary release nor a claim of absolute physical inability.
+The rider pays its measured partial bunch split, the remaining solo
+metres and each later solo kilometre. The 23-rider bunch continues
+with one paid front leader and all 24 rider decisions, energies and
+actual finish clocks replay through km 20. An unsourced later return
+still refuses. This is a narrow role and terrain witness, not an
+estimate of how often stage savers lose the bunch after rejoining.
+
+The event-ordered rear replay now accepts two riders whose separately
+paid solo roads begin at the same recorded split metre and clock. It
+checks both split sources against that meeting, then records a contact
+decision. The prospective front turn is chosen from observed road pace,
+then paid contact energy, with a stable rider-id tie break; no previous
+wheel order is inferred. The group prices one exposed leader and one
+sheltered rider from that metre onward. Previously recorded cases with
+distinct splits retain their output shape and replay.
+
+The same-seed varied 160-rider audit now finishes 120 and 260 km at
+both initial fatigue 10 and 30. At fatigue 30 the first shared split
+occurs in km 26 at metre 25,999.203884; the first group has one paid
+leader and one sheltered rider. The 120-km run records 12 contacts and
+19,200 rider-kilometre states; the 260-km run records 15 contacts and
+41,600 states. Both source-replay all 160 observed finish clocks with
+nonnegative energy. These synthetic outcomes establish source
+continuity for this measured simultaneous-split case, not a calibrated
+rate of real-world bunch losses or rear cooperation. Guided V94 routing
+and production remain separate.
+
+A larger 160-rider stress case now gives 20 weak climbers a paid km-21
+split. Nineteen have the same recorded metre and clock and form a rear
+group through 18 recorded shared-start contacts. The twentieth has a
+different paid road and joins only at its later measured crossing.
+Both initial-fatigue 10 and 30 cases replay 19 contacts, one paid
+leader and sheltered members in the resulting 20-rider group, and all
+160 actual finish clocks over 120 km. The one-weak-climber controls
+remain separate solos. A computed catching direction at the exact
+shared starting coordinate is cleared because no rider was behind
+there; the forward pull is chosen and paid from that coordinate. This
+still leaves broader race calibration, front-break interactions and
+guided routing unproven.
+
+The read-only extreme-field audit also runs these four cases over 260
+km. Every case has 41,600 source-replayed rider-kilometre states and
+all 160 observed finish clocks; the 20-rider group still needs 19
+measured contacts, while the single weak climber stays solo. Initial
+fatigue 30 makes the earliest finish slower and lowers the minimum
+finish energy compared with fatigue 10. The 20-rider group extends
+the finish-time spread relative to the single weak climber. Minimum
+finish energy is 57.39 at fatigue 10 and 49.39 at fatigue 30 in these
+synthetic fields. These monotonic checks are useful but do not
+calibrate whole-race effort, contact frequency or competitive timing.
+
+An additional opt-in rear-intent source (`physicalRearIntentVersion: 2`,
+with physical draft v4) removes the earlier automatic `conserve`
+choice for an unplanned detached rider. Each later solo and rear-group
+kilometre now reads the committed manager effort order; a rider who is
+the named captain for an active sprint, summit or break-stage stake
+records a rejoin goal. An explicit pre-race solo plan still overrides
+that goal within the manager effort ceiling, including a committed
+future-stage reserve. Contact decisions retain observed road pace, so
+this does not read hidden rival ability. The version is stored in the
+start source, and the unflagged path preserves prior recordings.
+
+A 24-rider climb witness pays the ordered steady solo and a three-rider
+rear group with one leader, and replays every rider through three
+kilometres. The broad same-seed 160-rider read-only probe across 120
+and 260 km, fatigue 10 and 30, currently refuses 13–19 solo candidates
+because their newly ordered pace reaches the bunch. It does not assign
+them an unrecorded bunch wheel. A general paid bunch-contact choice,
+partial kilometre and continued group membership must be sourced
+before this intent version can claim a full race or guide V94.
+
+`physical-ordered-solo-bunch-contact-v1.mjs` now locates the first
+clock crossing for that ordered solo, charging its actual effort and
+terrain to the contact metre. It records the bunch's one paid front
+leader and each member's energy at the same clock. A controlled
+24-rider climb-to-flat witness has only one detached rider and pays
+the subsequent choice to take shelter for the remaining metres:
+the shelter cost is lower than a solo alternative, the rider can hold
+the measured pace, and every rider has a decision and energy at that
+kilometre. This contact and join replay from the committed source.
+
+In the varied 160-rider fields the first independent candidate for
+`team-4-3` reaches the bunch at metre 35,500.05 in km 36 with initial
+fatigue 10, or metre 32,711.11 in km 33 with fatigue 30. Other rear
+roads are already active, so those crossings are explicitly marked
+`candidateOnly` and a bunch join refuses. Their earlier rear contacts
+must be ordered and paid before either a full field return or a finish
+can be claimed. For the isolated 24-rider witness,
+`physical-ordered-solo-bunch-race-v1.mjs` now starts the next
+kilometre from the joined group's recorded energy and membership,
+pays one named front worker and the sheltered members through the
+20-km finish, and replays all 24 finish clocks. A later split refuses
+until its separate road is sourced. This narrow finish does not settle
+the 160-rider simultaneous rear roads or calibrate guided V94.
+
+The read-only `--probe-rear-ordered-prefix` audit narrows the first
+unresolved event in the same seeded 160-rider route. For 120 and 260 km
+with fatigue 10, the event-ordered rear replay pays all 160 states and
+three rear contacts through km 31; one independent solo then reaches
+the bunch at metre 31,447.39 in km 32. With fatigue 30, the paid
+prefix extends through km 32 and its first candidate bunch crossing
+is metre 32,711.11 in km 33. Both candidates remain refused because
+three previously formed rear contacts can alter later trajectories.
+The next source must order this bunch contact against the active rear
+groups and recompute later roads from the resulting membership.
+
+The opt-in rear replay can now expose a source-validated end-state
+snapshot without changing historical recordings. At the last fully
+paid 160-rider boundary, fatigue 10 has 26 separate rear roads,
+including two groups formed through paid contacts; fatigue 30 has
+24 rear roads, including one such group. Each snapshot records group
+members, clock, energy and the next rotation index. These states are
+replayed from the previous kilometres, not reconstructed from a
+position or an assumed wheel. The following bunch meeting remains
+unsettled until those active roads and the bunch are advanced and
+compared on the same kilometre.
+
+The first opt-in boundary comparison does this without assigning a
+new group. At fatigue 10, `team-18-0` would meet the bunch at metre
+31,447.39 on an independent solo path, but first meets `team-11-2`
+at metre 31,225.68 on two paid solo roads. That earlier rear contact
+must decide their later path. At fatigue 30, the apparent independent
+solo crossing of `team-4-3` is already superseded: the prior replay
+places that rider in a four-person rear group, and that group's paid
+next-kilometre road has no contact. The standalone solo crossing is
+therefore diagnostic only. The boundary probe orders these first
+events from actual prior group membership and refuses to change
+membership or award a finish until the subsequent road is priced.
+
+The first ordered rear contact now also replays both solo approaches
+to metre 31,225.68 and asks each rider to choose using only the two
+observed road speeds, current energy, committed team order and stake.
+In the fatigue-10 160-rider probes, both choose to form a two-rider
+group; `team-18-0` pays its first exposed turn and `team-11-2` receives
+the lower shelter cost. A candidate group road is priced from their
+contact energy, but its later intersections and the other active
+rear roads have not yet been settled. No full km-32 state, field
+return or finish is claimed from that candidate.
+
+After that first two-rider join, a new source comparison replaces the
+two obsolete solo paths with their paid shared road. Its next
+candidate event is a group-to-bunch clock crossing at metre
+31,451.64, with `team-18-0` still paying the exposed turn and
+`team-11-2` sheltered. This is 4.25 metres later than the obsolete
+solo-to-bunch projection. No rider joins the bunch yet: each group
+member's ability to hold the bunch, contact energy, committed goal
+and the remaining kilometre still need a paid transition.
+
+The two members now have a source-replayed contact decision at metre
+31,451.64. Their earlier exposed and sheltered group costs are paid
+only to that point. Both can hold the measured bunch pace, can pay the
+remaining distance, and spend less energy in bunch shelter than alone.
+They explicitly choose to join, bringing the paid bunch to 133 riders
+at the end of km 32 in both fatigue-10 120/260-km probes. Each has
+the solo approach, first rear contact, group turn and bunch join in
+the kilometre decision trace. The other 27 riders still require their
+own km-32 roads; this is not a complete 160-rider kilometre or finish.
+
+The remaining 24 rear roads have no later measured contact in km 32.
+`physical-ordered-rear-km-v1.mjs` now pays each to the kilometre end,
+checks its clock and energy against the prior recorded state, and
+assembles the field with the 133-rider bunch. The result has 160
+distinct rider states and 25 physical groups (one bunch and 24 rear
+roads) in both fatigue-10 route lengths. Each rear group retains one
+paid exposed leader; any new loss retains its paid partial bunch road
+and solo completion. Km 33 onward must still use this new membership
+and energy, so this does not validate a 120/260-km finish.
+
+The same km-32 replay also exports its paid end sources for the next
+kilometre: the 133-member bunch state and 24 distinct rear entities
+covering the other 27 riders. Each rear entity carries its measured
+clock, per-rider energy and recorded membership; existing groups carry
+the next exposed-turn rotation. The broad probe checks those counts
+and source fields. This is a continuation source, not yet a km-33
+transition or whole-race calibration.
+
+An opt-in next-kilometre bunch probe now replays that complete km-32
+source before advancing its exact 133-member bunch into km 33. The
+other 27 rider IDs stay explicitly detached; a new paid pace loss may
+remove more riders, and an absent ordered front worker still needs a
+precommitted emergency replacement. This probe does not advance the
+24 rear roads or assert a complete km-33 field state.
+
+The next boundary probe pays each remaining solo and group from that
+recorded end state, retaining the group's scheduled exposed turn and
+the lower sheltered energy cost. In the fatigue-10 120/260-km probes,
+km 33 has no new bunch split and no measured road-clock contact. The
+complete km-33 replay therefore joins the 133 paid bunch states with
+27 individually paid rear states on 24 separate roads. It exports new
+clocks, energies and rotation sources for km 34. The fatigue-30
+branches are checked separately below; the 120/260-km finishes remain
+unvalidated.
+
+The no-contact continuation now accepts a verified whole-field end
+state as its source. The fatigue-30 120/260-km probes use their paid
+km-32 rear-event recording, rather than the obsolete independent solo
+crossing, to price km 33. Both have 24 rear roads, no new bunch split
+and no measured contact; the continuation pays all 160 riders through
+km 33. This does not settle later kilometres or a finish.
+
+The reusable state continuation keeps all 160 fatigue-10 riders paid
+through km 40 in both route lengths with no further measured contact.
+For fatigue 30, the first later event is at metre 33,173.656142 in
+km 34: a four-rider rear group catches one solo. The committed goals
+and observed road speeds choose a join. Their paid approaches and the
+remaining road form a five-rider group with one exposed leader and
+four lower-cost sheltered riders. All 160 km-34 states are replayed;
+the 27 riders remain on 23 distinct rear roads. Km 35 pays without a
+new contact. A solo reaches the bunch at metre 35,074.361235 in km 36;
+that next choice and the finish are still unsettled.
+
+The km-36 solo-to-bunch meeting is now priced from the solo's paid
+energy at metre 35,074.361235 and the bunch's measured clock. The
+rider can hold the bunch, pay the remaining road and save energy in
+shelter while respecting the committed order and reserve. The rider
+chooses to join; the recorded partial solo road and sheltered
+remainder place 134 riders in the bunch at km end, with 26 riders on
+22 rear roads.
+The other rear roads pay separately, and no later km-36 contact is
+measured. Both fatigue-30 route probes now pay all 160 riders through
+km 40. These are still prefixes, not validated 120/260-km finishes.
+
+The same source transition pays the next fatigue-10 solo-to-bunch
+meeting in km 47. Both 120/260-km probes then have 134 riders in the
+bunch, 26 riders on 23 rear roads and all 160 km-47 rider states.
+Clear kilometres pay through km 65 in both fatigue settings. At km
+66 the bunch source records 13 new pace losses with fatigue 10 and
+11 with fatigue 30, at distinct measured metres within roughly two
+metres of the kilometre end. Each rider now pays the remaining solo
+distance from that split, with source energy, effort, terrain and
+recovery. The boundary compares all new trajectories with the
+existing rear roads, each other and the bunch. No road-clock contact
+occurs in km 66 in the four same-seed 120/260-km fatigue-10/30
+probes. The resulting state has all 160 distinct riders and keeps
+the new solos separate. The next measured contact is a solo meeting
+the bunch at metre 68,280.039786 in km 69 under fatigue 30; under
+fatigue 10 it is at metre 70,066.508636 in km 71. Those meetings
+still need decisions and paid remainder; neither finish is validated.
+
+The contact probe now evaluates those next meetings. Under fatigue
+30, `team-1-5` reaches the bunch position in km 69 but cannot hold
+its measured pace, so it cannot be silently absorbed into shelter.
+Under fatigue 10, `team-9-2` can pay and hold a km-71 bunch join;
+the partial join reaches 122 bunch riders. A separate paid solo pair
+meets later in that same kilometre at metre 70,523.626011, so km 71
+cannot yet be marked complete. The fatigue-30 crossing and the
+fatigue-10 second contact require explicit physical continuations.
+
+The fatigue-30 crossing now has an explicit no-join continuation.
+`team-1-5` keeps its individually paid solo road after the measured
+km-69 meeting because its sheltered holding ability is below the
+recorded bunch pace. No other km-69 road-clock meeting occurs in the
+four probes, so that kilometre ends with 160 paid rider states, 123
+in the bunch and the other 37 on 33 distinct rear roads. The crossing
+is recorded in the rider's decisions; it does not create a group.
+The later race and fatigue-10 second km-71 contact remain unsettled.
+
+The ordered km-71 continuation prices that second contact after the
+bunch join. `team-1-1` catches `team-13-5` at metre 70,523.626011;
+their committed decisions make a two-rider group with `team-1-1`
+paying the exposed turn and `team-13-5` sheltered. The repriced group
+then catches solo `team-6-7` at metre 70,810.44904. This is a third
+same-kilometre event. The ordered chain now reprices that three-rider
+group with `team-1-1` still the one exposed leader and no further
+km-71 contact. Each affected rider keeps the paid approach, contact
+choice and remaining road in their km-71 decision trace. Both
+fatigue-10 routes have 160 paid km-71 riders, 122 in the bunch and
+38 on 33 rear roads. Their next measured event is a solo-to-bunch
+meeting in km 72 at metre 71,192.244369. For fatigue 30, km 70 pays
+without contact after the km-69 solo passage; the next event is a
+solo-pair contact in km 71 at metre 70,045.628085. These later
+events and the 120/260-km finishes remain unsettled.
+
+The next opt-in probes show different event order. At fatigue 10,
+`team-13-0` reaches the bunch at metre 71,192.244369 in km 72 and
+can hold its measured pace; its final choice and all other rear
+roads still need paying. At fatigue 30, `team-1-1` catches
+`team-2-2` at metre 70,045.628085 in km 71. Their committed
+decisions form a two-rider group with `team-1-1` exposed. A separate
+solo then meets the bunch at metre 70,318.555781. The rear group
+must remain on its own paid road while that bunch decision is made.
+
+The reusable ordered sequence now handles rear and solo-to-bunch
+events in either order. It replays the fatigue-10 km-72 field meeting
+at metre 71,192.244369, a separate paid rear-pair join at metre
+71,242.16943 with `team-18-0` exposed, and a second solo joining
+the bunch at metre 71,612.928972. No later km-72 contact is measured.
+The full replay has 160 riders, 124 in the bunch and 36 on 30 rear
+roads, with each contact and remainder in the rider decision trace.
+The next event is in km 73 at metre 72,324.017632. Under fatigue 30,
+the same sequence records further km-71 contacts but reaches a
+three-rider group's meeting with the bunch at metre 70,905.641841.
+Each group member now has an individual measured holding, payment,
+reserve and shelter decision. All three can enter the bunch at that
+contact; the group's prior one-leader road is paid only to the
+meeting, and each member pays the remaining distance in bunch
+shelter. The five ordered km-71 events under fatigue 30 are two rear
+joins, two solo-to-bunch joins and this group-to-bunch join. Both
+route probes end km 71 with 160 paid rider states, 128 in the bunch
+and 32 on 28 rear roads. Later kilometres and both finishes still
+need whole-race calibration.
+
+The read-only mixed-field audit now advances each subsequent kilometre
+from the preceding full rider state. It chooses a clear road, an ordered
+contact sequence or a bunch-loss source according to the paid bunch
+step, then checks all 160 end states. A rear solo's measured bunch
+crossing may explicitly retain its solo road when the rider cannot
+hold or pay for shelter. That contact, its partial approach and the
+remaining solo energy are recorded without changing membership. The
+fatigue-30 probe exercises this passage in km 104 at metre
+103,863.695557.
+
+In km 106, five further riders leave the bunch within the final half
+metre. The loss boundary now starts each new solo road at its recorded
+split metre. This removes spurious earlier contacts with riders who
+were still in the bunch. The sole measured earlier meeting is old solo
+`team-11-2` crossing the bunch at metre 105,129.865902. He cannot
+hold its pace, so the mixed split kilometre records his paid solo
+approach, passage and remainder while all five new riders pay their
+own completion. No group forms from an unrecorded meeting.
+
+The four same-seed 120/260-km, fatigue-10/30 route probes now carry
+all 160 riders to the route end. The audit checks their kilometre,
+distance, increasing clock, nonnegative energy and decision trace at
+each step after the ordered field prefix. At the observed route end,
+the latest rider is 71.8–71.9 seconds behind the earliest on 120 km
+and 186.7–230.0 seconds behind on 260 km. Minimum remaining energy
+ranges from 40.579 to 70.709 across these four probes. These are
+source-observed clocks, not official results. They do not yet validate
+sporting finish order, wider role and terrain outcomes, realistic
+break leads or control workload. Guided routing remains withheld.
+
+A second same-seed role matrix changes one team's committed captain
+while retaining the varied terrain, riders and route. Its early rear
+roads are rebuilt from their own paid km-31 state. At km 33, two solos
+meet but the faster captain's committed goal leads to a recorded
+pass-through, not a forced rear group. In the tired 260-km branch, an
+old solo joins a three-rider rear group in km 141 before twelve riders
+leave the bunch near that kilometre's end. The joined group pays one
+exposed leader and sheltered members for its remaining road; the new
+solo roads begin only at their measured split points. All four role
+variants now reach their 120/260-km route ends with 160 paid rider
+states and source-replayed contact kilometres. The differing role
+changes some remaining energy and rear-group membership. This doubles
+the full-field synthetic matrix to eight cases; it still lacks front
+break and broad sporting calibration, so observed clocks are not
+official results.
+
+The same role-matrix seed also completes four terrain counterfactuals:
+the climbs after km 40 increase from 6% to 8% while riders, orders and
+other route segments stay fixed. At fatigue 10 and 30, both the 120-km
+and 260-km routes retain 160 paid riders, source-replayed contacts and
+observed route-end clocks. Compared with their matching 6% runs, the
+earliest clock rises by about 126 seconds at 120 km and 317 seconds at
+260 km; the lowest remaining rider energy falls in all four cases.
+The audit asserts these directions against the matching same-seed
+baseline. This expands the full-field synthetic matrix to twelve
+cases, but does not validate front breaks, chase timing, finish order
+or official results. Guided V94 routing remains withheld.
+
+An additional same-seed front-source probe commits team 19's named
+`team-19-1` to a selective km-1 attack for a `break_stage` goal, then
+ends that attack order at the km-5 marker. The attacker pays a faster
+road and starts 2.37–2.42 seconds ahead. In otherwise uniform 160-rider
+fields, the existing front replay carries all riders through the 120-
+and 260-km route ends at fatigue 10 and 30. Source validation and
+per-rider kilometre, clock, energy and decision checks pass. With no
+manager chase, the observed front gap reaches 181–186 seconds at 120 km
+and 369–379 seconds at 260 km. These are provisional observed clocks,
+not calibrated leads or official results.
+
+Using the same attack in the varied field, all four distance/fatigue
+branches stop at km 21, when the first bunch follower cannot hold the
+paid pace. The front-only replay refuses that split rather than
+inventing a finish. The explicit audit preserves this boundary: the
+front attack, rear split, subsequent chase and any catch still need a
+single paid field continuation before a varied front-break race can be
+calibrated or routed to guided play.
+
+The opt-in `physical-front-first-rear-loss-v1` source now replays that
+first varied split kilometre from the named attack's complete prior
+road. It keeps the front rider's paid solo energy and clock separate
+from the bunch's one exposed turn, prices each split rider's partial
+road and solo completion, and checks the chronological candidate
+contacts among the front, bunch and rear roads. At km 21, the four
+120/260-km, fatigue-10/30 probes have no candidate contact, so all 160
+riders receive a source-replayed kilometre state: 142 bunch + 17 rear
++ one front at fatigue 10, or 144 + 15 + one at fatigue 30. The front
+gap is 27.95 or 27.36 seconds. A focused simultaneous-split case does
+produce candidate contact; its field kilometre remains incomplete
+until a paid group choice and remainder resolve it. The current source
+does not by itself carry the front and rear roads beyond km 21.
+
+The opt-in front/rear continuation now advances the paid km-21 state
+through later clear kilometres, using each rider's own stored clock,
+energy, committed order and stake. It includes new physical bunch
+splits only after paying each partial road and checking contact among
+all old and new rear roads, the front rider and the bunch. In the same
+four varied probes, all 160 riders reach km 25. At fatigue 10, eleven
+more riders split in km 26 with no measured contact; the complete field
+reaches km 30 and the first unresolved meeting is two rear solos at
+metre 30,096.330085 in km 31. At fatigue 30, eleven new km-26 splits
+include two rear solos that meet at metre 25,999.203884. The source
+stops at that contact, with no invented group or kilometre finish.
+Contact choice, remaining road and the subsequent front/rear race to
+the finish still require source replay and calibration.
+
+The next opt-in front/rear contact source resolves the first fatigue-10
+meeting in km 31 without moving any historical or guided race. The two
+solo approaches are repriced from their stored clocks and energies;
+the riders choose to join at metre 30,096.330085. A single exposed
+leader pays the remaining group road while the other rider receives
+the lower shelter cost. Rechecking all paid paths finds another rear
+solo meeting this group at metre 30,301.208844, so km 31 remains
+unsettled. The fatigue-30 meeting in km 26 occurs between newly split
+roads and has no unambiguous catching road. The contact source refuses
+that branch until simultaneous split ordering is paid and resolved.
+The same-seed 120/260-km probes verify both outcomes. Neither branch
+is a whole-race or finish validation.
+
+The next paid contact in the low-fatigue km-31 branch now also has an
+opt-in source. It replays the first two-rider group's road from metre
+30,096.330085 and meets a third solo at metre 30,301.208844. All
+three riders choose to join based on observed paid road speeds and
+their committed intents. One rider pays the exposed turn on the final
+group road; the other two receive the lower shelter cost. Repricing
+the remaining roads finds no further km-31 candidate contact. The
+tired simultaneous-split branch remains unresolved.
+
+The low-fatigue km-31 branch now assembles both ordered joins, the
+separate front solo, the bunch and every remaining rear road into one
+source-replayed 160-rider kilometre state. The second group contains
+three riders at km 31; the bunch has 131 riders, with one front rider
+and 25 other rear solos. Every rider has a km-31 clock, energy and
+decision chain. The two contact riders retain their solo approach,
+first join, intermediate paid group road, second join and final group
+road in order. This completes that kilometre only. Subsequent group
+rotation, further contact, fatigue-30 simultaneous splits and full
+route finish still need validation before guided routing.
+
+The next-kilometre front/rear source now accepts a group only when it
+comes from the recorded paid contact state. At km 32 of both low-
+fatigue routes, that three-rider group rotates to one new exposed
+leader; the other two pay lower sheltered demand, with no recovery
+award. All separate solo and bunch roads are still compared. The first
+new measured meeting is between two other rear solos at metre
+31,225.679406, so km 32 remains incomplete. The source does not
+silently move or relabel the group at that contact.
+
+The low-fatigue km-32 source now resolves that first rear pair's
+measured meeting at metre 31,225.679406. The pair pays one exposed
+leader and one sheltered rider, then meets the bunch at metre
+31,451.641668. Both riders individually have enough paid energy,
+holding ability and reserve to enter bunch shelter; each pays for
+the remaining distance, and the bunch's original exposed leader
+remains paid. Rechecking the remaining roads finds no later meeting
+in km 32. All 160 riders receive source-replayed clocks, energy and
+decisions, including the two riders' solo, pair and bunch segments.
+The bunch ends with 133 riders and one front rider remains separate.
+This is not a whole-race or finish calibration.
+
+With the same front break, the low-fatigue 120/260-km source now
+continues from km 32 through clear kilometres and a four-rider rear
+group formed by paid solo-to-group contact in km 36. A detached solo
+then meets the bunch late in km 47. The rider's own paid approach,
+holding ability, remaining energy, committed intent and cheaper bunch
+shelter permit a source-replayed join; all 160 rider states complete
+that kilometre and the bunch grows to 134. Later paid splits reduce
+the bunch, but all riders still have complete kilometre states through
+km 70. In km 71, another solo's paid bunch join precedes a separate
+rear pair meeting at metre 70,523.626011. The source records that
+later event and leaves km 71 incomplete until the remaining contact
+and all other roads are settled. The tired simultaneous-split branch
+still stops at km 26; no varied front race has a validated finish.
+
+The isolated low-fatigue front/rear replay now settles all three km-71
+events: the solo's bunch join, the rear pair's paid meeting and a later
+solo joining that pair. One named leader pays the three-rider road;
+the other two pay sheltered costs. A versioned ordered contact loop
+also records solo-to-bunch passages when the rider cannot hold the
+measured bunch pace, retaining a separate paid solo road. With those
+choices, the same-seed 120-km probe gives all 160 riders a recorded
+state through km 120. The same source also binds three new bunch
+losses in km 186 to their measured split points and energies while an
+old solo meets the bunch earlier in that kilometre. With that event
+ordering, the 260-km probe gives all 160 riders a paid state through
+km 260. The fatigue-30 branch still stops at its simultaneous km-26
+loss contact. A versioned full-race wrapper checks every rider's
+per-kilometre state from km 1 to the observed route end, then replays
+the complete source before reporting all 160 finish clocks and
+energies. The observed finish clock spans are 191.60 seconds over
+120 km and 421.54 seconds over 260 km. These are physical clock
+observations, not official placements. Broader calibration and replay
+across fatigue and roles remain unvalidated. Guided routing stays
+withheld.
+
+A further source counterfactual gives the committed break rider a
+mountain skill of 50 and a precommitted conserve phase from km 41.
+The field's road clocks then physically meet that rider in km 62,
+while 27 rear riders remain on their own paid roads (fatigue 10).
+The versioned boundary records the exact common metre
+61,578.522708 and clock 5,344.741688 seconds, and prices the break
+rider's solo energy only to contact (83.686799 remaining). At fatigue
+30 the same counterfactual meets at metre 61,859.471711 with 26 rear
+riders. The ordered source finds this as the first contact, then
+tests the caught rider's ability against the measured bunch leader.
+At fatigue 10 the rider's 63.314 hold ability is below the leader's
+87.425, so the rider pays a solo slide, with no bunch recovery. Rear
+solo team-19-6 physically catches the former break rider at metre
+61,590.699596. Their committed intents choose a paid pair: team-19-6
+leads and the former break rider pays a 0.8 shelter fraction. At
+fatigue 30 that second contact is at metre 61,886.367831. No later
+contact occurs in km 62, and all 160 riders have replayed clocks,
+energy and decisions at its end.
+
+The all-rear source now continues from that paid catch without
+restoring the former break rider to the bunch. It prices one exposed
+leader and sheltered followers on every rear group, resolves later
+contacts in clock order, and records the next full-field kilometre.
+The new pair meets a larger rear group in km 64 only through its paid
+contact. A precommitted manager rotation also assigns team 0 to lead
+km 96–100 (and km 196–200 on the long route). Without that order,
+the synthetic plan asks team 19 to lead at km 96 despite having no
+rider left in the bunch; the engine refuses instead of substituting
+a rider after the fact.
+
+With that committed relief, the opt-in caught-front replay now checks
+all 160 riders' kilometre states, clocks and energy through the
+observed finish in four same-seed cases: 120/260 km and fatigue
+10/30. The observed finish clock spans are 153.31/154.98 seconds
+on 120 km and 395.20/357.66 seconds on 260 km. The caught rider
+finishes in a rear group formed through later paid contact. These
+observations do not establish realistic finish distributions or
+official placements. Other front catches, rider roles, terrain and
+seeds still need calibration; guided V94 remains separate.
+
+The caught-front branch also replays eight same-seed counterfactuals
+through the observed finish: 120/260 km, fatigue 10/30, with either
+post-catch climbs raised from 6% to 8% or team 3's dropped rider
+committed as sprint captain. The captain change updates its actual
+orders and emergency worker coverage. Every run retains 160 rider
+histories and source-validated finish clocks. The terrain variants
+record 49–78 post-catch contact choices and 1–2 rear pass-throughs;
+the role variants record 53–84 choices and 2–8 pass-throughs. At
+120 km/fatigue 10, the captain finishes at 10,481.26 seconds and
+73.929 energy after the role change, versus 10,660.72 seconds and
+76.284 energy on the harder-terrain probe. These are physical
+counterfactual outcomes, not official results. One seed and one
+catch pattern remain insufficient for whole-race calibration.
+
+A weaker front rider moves the paid bunch catch to km 61. At fatigue
+10 the bunch meets him at metre 60,358.029278; a separate bunch
+worker then loses the climb pace at metre 60,999.759171. The caught
+front replay now accepts this ordered pair of events. It sources the
+worker's partial bunch road, remaining solo road and end energy from
+the physical split completion, then carries that solo into later
+contact checks. All 160 states and observed finish clocks replay at
+120 and 260 km with fatigue 10 and 30. This is an observed split after
+the front catch; split-before-catch and competing contact order still
+refuse until they have their own paid source.
+
+An isolated source discovery now runs the committed front/rear field
+until its first front/bunch contact refusal, then verifies that
+kilometre against the paid ordered-contact boundary. Changing the
+front rider's mountain ability to 45, 50, 52 and 55 discovers catches
+at km 61, 62, 63 and 64 respectively; all four fatigue-10 120-km
+recordings replay to observed finish. A mismatched caller-supplied
+catch kilometre is rejected. A stronger front rider with no contact
+on the 120-km route reports no catch, while a 260-km run without the
+required precommitted relief preserves its km-96 unavailable-worker
+refusal. Discovery does not invent contact, team orders or results.
+
+A separate opt-in full-race recording now chains that source discovery
+to the caught-front and all-rear replay without a caller-supplied catch
+kilometre. It retains the discovery evidence and gives every rider a
+paid state at every kilometre and an observed finish clock. The
+120-km early-catch/same-kilometre-split case has exactly the same 160
+finish clocks and energies as the explicit-kilometre replay. Additional
+120-km catches at km 62 and a 260-km fatigue-30 catch at km 64 also
+validate. This remains a narrow synthetic catch pattern, not guided
+race routing or official results.
+
+A seven-roster same-seed holdout now varies the riders' existing skill,
+form and fatigue pattern before the race and recomputes the named
+worker choices. On the 120-km fatigue-10 front-catch probe, roster 0
+reaches a source-discovered catch and full 160-rider finish. Roster 6
+has no front/bunch contact and the separately validated no-catch race
+finishes with the front 17.46504 seconds clear. Roster 2 originally
+refused several rear solos approaching the just-caught rider in the
+catch kilometre. Rosters 1 and 3 originally refused when a rear solo
+met the front before the bunch did. Roster 4 has a rear
+solo/bunch meeting and then a rear/front meeting before front/bunch
+contact; roster 5 has a rear-pair meeting before front/bunch contact.
+These are distinct paid candidate events. Their fatigue-10 contact
+orders are now replayed, but the holdout still needs broader terrain,
+fatigue and outcome calibration before it can establish a realistic
+whole-race distribution.
+
+The roster-2 fresh race now replays that km-62 chain. A paid first
+contact forms a two-rider rear group; three later solos join at
+metres 61,175.521390, 61,187.341035 and 61,215.108469. A fourth
+solo reaches them at metre 61,267.835462 but its committed goal and
+observed faster road choose a pass-through. The rider remains on a
+separate paid road. The group has one exposed leader, the others pay
+less shelter cost, and all 160 states and observed finish clocks
+replay through 120 and 260 km at fatigue 10. At fatigue 30, two
+disjoint pairs meet at the same clock time in km 26, at
+metres 25,997.398878 and 25,998.740780. They share no rider or road.
+Both contacts retain their paid common split origins and form separate
+groups with one leader each. A distinct kilometre version marks this
+parallel-contact source. At km 62 the bunch catches the front at
+metre 61,372.441377. The former front rider then meets a rear solo on
+his paid slide road. A different rear solo catches an existing
+seven-rider group at metre 61,881.494648. That latter contact is
+settled after the front/rear meeting, keeps its own paid approach,
+choice and single leader, and is matched back to the earlier ordered
+source. A separate versioned contact-kilometre and full-race record
+now replays all 160 rider histories through observed 120- and 260-km
+finishes at fatigue 30. These are synthetic observations only; they
+do not establish a realistic finish distribution.
+The multi-contact kilometre and complete caught race use distinct
+version-2 recording IDs; the earlier one-contact recordings retain
+their version-1 IDs and output shape.
+
+An isolated front-to-rear contact kilometre now resolves roster 1's
+later km-106 meeting after its earlier solo/bunch event. The paid
+front and rear roads meet at metre 105,991.646982; the rear solo
+leads a two-rider group, and both riders' segmented energy and
+decisions reconcile through the kilometre. The 160 end states are
+versioned separately from the historic front-solo recordings. At
+km 107 the new group meets the bunch at metre 106,112.055116. Its
+leader `team-16-5` can pay and hold the bunch pace; the former front
+rider `team-19-1` cannot. The individual choice now moves the first
+into bunch shelter and reprices the latter on a separate solo road
+from the recorded contact. Eleven later paid rear contacts form a
+group again within the kilometre. A separate versioned full-race
+recording replays all 160 riders through 120 and 260 km with observed
+finish clocks and energy at fatigue 10. It requires a caller-supplied
+contact kilometre verified against the paid source. A separate
+discovery now identifies that km-106 front/rear meeting from the
+ordered full-field refusal, replays the contact against its source
+and reaches identical 120/260-km finish clocks and energy without a
+caller-supplied kilometre. The roster-0 front/bunch catch remains a
+different event and is rejected by front/rear discovery. Neither
+recording is a guided-race route. The fatigue-30 attempt at
+the same km-106 contact refuses because that meeting never occurs in
+its paid source.
+
+Roster 3 now finds its own km-68 front/rear contact at metre
+67,598.725665. After that paid group gains a third rider, the bunch
+passes it at metre 67,812.304062. None of its three members can hold
+the measured bunch pace, so they choose to continue as a group with
+one re-priced exposed leader and sheltered followers. The recorded
+contact and their segmented energy replay to 120- and 260-km
+observed finishes for all 160 riders at fatigue 10. This remains an
+opt-in source recording, separate from guided races.
+
+With the front rider's mountain skill at 50, a conserve order from
+km 40 and the recorded worker relief at km 95, fatigue-30 rosters 1
+and 3 have a different mixed contact within their front-catch
+kilometres. The front meets a rear solo first, at
+metres 106,055.059732 and 68,102.574240 respectively. The two paid
+roads form a group with the rear rider as its single leader. The
+repriced group meets the bunch at metres 106,120.093856 and
+68,227.392351, earlier than the old front-solo/bunch candidate.
+At each meeting the rear rider can pay and hold bunch shelter; the
+former front rider cannot and slides onto a separate paid solo road.
+The remaining rear contacts, per-rider decisions, segmented energy
+and observed finishes replay for all 160 riders through both 120 and
+260 km. The mixed boundary, contact kilometre, explicit race,
+discovery and discovered race have separate versions; the previous
+front-to-rear and front/bunch recordings keep their identifiers.
+These are opt-in observations and do not change guided races.
+
+Roster 5's km-67 source now first joins the two rear solos at metre
+66,055.650411, with one paid leader and a sheltered follower. The
+repriced pair remains behind the bunch as the bunch catches the front.
+After the front slides through, its later paid rear contacts include
+the earlier pair catching a three-rider group at metre 66,332.196519.
+Each group contact records its rider choice, approach energy and new
+leader. The contact-kilometre event log starts with the rear-pair
+meeting and keeps the later events in clock order. All 160 riders have
+source-replayed kilometre states and observed finish clocks through
+120 and 260 km at fatigue 10; the same-seed explicit and discovered
+catch sources validate. A distinct version-1 recording identifies
+this pre-catch-pair pattern, while the prior one-contact and chain
+versions remain unchanged. Fatigue 30 yields a different paid chain
+and retains its earlier recording version. This is still synthetic
+calibration evidence, not a guided race or official placing.
+
+Roster 4's km-66 source has a solo/bunch contact at metre
+65,213.679975. The rear rider can hold the measured bunch pace and
+pay for shelter, so he joins the bunch and his earlier rear solo road
+ends there. The previously predicted rear/front contact at metre
+65,424.843695 no longer occurs after repricing. The front/bunch
+contact remains at metre 65,441.778768 and the later rear contacts
+are settled in clock order. The joined rider's decision, energy and
+membership reconcile at the kilometre end, and all 160 riders replay
+to observed 120- and 260-km finishes at fatigue 10. This early bunch
+join has its own versioned kilometre and race records. At fatigue 30
+the same roster presents two early rear/bunch events, at metres
+65,372.577963 and 65,487.755921. Both riders can hold the measured
+bunch pace and pay for shelter. Each join removes its old solo road
+before the next event is measured; the two former front/solo candidates
+therefore disappear. A separate version-2 record keeps both contacts
+in time order and replays all 160 riders to observed 120- and 260-km
+finishes. Neither fatigue case establishes a population-wide finish
+distribution or an official classification.
+
+The next opt-in contact version resolves the tired km-26 boundary at
+the **recorded common split point** (metre 25,999.203884). Both riders
+have paid the bunch to that point; neither is labelled as catching
+the other or assigned an unseen wheel. Their committed efforts choose
+one named volunteer to lead, with a stable tie choice. The two riders
+then pay the remaining group road, one exposed and one sheltered.
+The ordered replay also keeps a named rear rider on a separate road
+when a committed sprint goal makes its observed faster contact a
+pass-through. That decision changes later physical group membership
+and energy in the role counterfactual; the contact is recorded and
+does not silently merge the roads.
+
+The same seeded 160-rider front/rear race now source-replays all
+kilometres and observed finish clocks in **four** distance/fatigue
+cases (120/260 km, fatigue 10/30). The fatigue-30 finish clock spans
+are 182.45 and 400.33 seconds. Four further counterfactuals raise
+later climbs from 6% to 8%, and four change a previously dropped
+rider into team 3's committed sprint captain with matching manager
+orders and emergency worker coverage. All twelve runs retain complete
+paid rider states and recorded contact choices through the observed
+route end. The role change causes a paid pass-through and changes that
+rider's rear group and energy. This synthetic matrix is still one
+seed and does not establish realistic pursuit, break-lead or finish
+distributions. No official placing is inferred and guided V94 remains
+separate.
+
+An opt-in front/rear threat source now reads the complete paid field at
+km 40 before advising team 8 at km 41. It carries each rider's recorded
+energy, the actual front gap and the physically unavailable rear riders
+into the versioned perceived-strength decision. In the 120-km,
+fatigue-10 probe the front gap is 46.76088 seconds and 26 riders are
+outside the bunch. The isolated nominated team judges its capacity
+short; conditional help from teams 9–11 changes the advice to request
+help. A separate, explicitly committed manager chase order pays one
+named team-8 worker at km 41 despite that advice. His energy falls
+from 90.030 to 89.513; the gap becomes 46.65336 seconds, lower than
+the same-seed no-chase kilometre. All 160 rider states remain sourced,
+and removing the manager order makes the chase source refuse. The
+260-km fatigue-30 probe also pays the named worker and reduces its
+observed gap. This is one chase kilometre, not a calibrated pursuit
+or a validated front catch. The source does not move guided races or
+award results.
+
+The opt-in full-field wrapper also replays the five explicitly ordered
+hard-effort chase kilometres (41–45), then continues every rider to the
+120/260-km observed finish in the fatigue-10/30 probes. It records the
+named worker and gap each kilometre. A same-seed counterfactual with
+the **same hard effort and worker** but no chase label has the same
+physical finish gap and worker energy. Thus the label itself grants no
+speed or energy benefit; the committed effort pays the road. The
+120-km gap after those five kilometres is still 46.34448 seconds and
+is 114.33504 seconds at the observed finish (260-km fatigue-30:
+45.32616 and 223.12104 seconds). These cases do not demonstrate a
+successful pursuit or establish realistic chase timing. That
+five-kilometre chase counterfactual alone does not establish a catch,
+and guided routing stays withheld.
+
+The strict same-seed contact matrix uses `physical-20-team-scale-1`,
+front mountain skill 50, the front's conserve order from km 40 and
+the recorded worker relief at km 95. Each cell replays all 160 rider
+states and observed finish clocks and energies to the stated route end;
+the audit now fails if the expected contact branch is absent.
+
+| Roster | Fatigue 10, 120 / 260 km | Fatigue 30, 120 / 260 km |
+| --- | --- | --- |
+| 0 | Front/bunch catch km 62 / 62 | Front/bunch catch km 62 / 62 |
+| 1 | Front/rear group km 106 / 106 | Mixed front/rear then group/bunch km 107 / 107 |
+| 2 | Front/bunch catch km 62 / 62 | Front/bunch catch km 62 / 62 |
+| 3 | Front/rear group km 68 / 68 | Mixed front/rear then group/bunch km 69 / 69 |
+| 4 | Front/bunch catch km 66 / 66 | Front/bunch catch km 66 / 66 |
+| 5 | Front/bunch catch km 67 / 67 | Front/bunch catch km 67 / 67 |
+| 6 | No catch / front/rear group km 188 | No catch / front/bunch catch km 188 |
+
+This is a synthetic seven-roster holdout for one seed. It verifies
+source continuity and finish coverage, but does not calibrate
+population-wide pursuit timing, role behaviour, energy distribution
+or finish spread against real race evidence. V94 remains opt-in and
+separate from guided races.
+
+A further fatigue-50 holdout changes the contact order. Roster 3's
+rear solo team-18-4 first joins the bunch at metre 68,155.556419;
+the front then meets rear solo team-13-1 at metre 68,412.450460.
+The earlier front/bunch candidate at metre 68,710.393814 is repriced
+after those paid contacts. The ordered source records the bunch join
+before the front/rear group, checks each rider's decisions and energy,
+and reaches all 160 observed finishes at 120 and 260 km with identical
+explicit and discovered finish clocks and energies. Roster 1 instead
+meets a rear solo in km 70 at metre 69,568.168036 and reaches all 160
+observed finishes at both distances. These two cases extend the
+synthetic holdout; they do not establish a real race distribution.
+
+At fatigue 50, roster 6 exposes a different paid-energy boundary in
+km 31. Rear solos team-9-3 and team-19-0 pass one another without
+joining, then each meets and joins the bunch in clock order. The
+second contact must price each solo only from its latest paid road
+origin; charging from the kilometre start double-counted energy and
+incorrectly refused the contact. The source now records the passage,
+both joins and all 160 end states. At 120 km the front remains ahead;
+at 260 km the bunch catches it in km 188. Both complete races retain
+all 160 rider decisions, energy histories and observed finish clocks.
+At fatigue 50, roster 5 has an earlier solo/bunch meeting at metre
+66,625.036933. Solo team-5-4 cannot hold the measured bunch pace,
+records a paid passage and stays on its own road. It then meets the
+front at metre 66,807.617287, just before the original front/bunch
+candidate. The repriced front/rear group and subsequent contacts
+replay all 160 riders to observed finishes at both 120 and 260 km.
+Discovery verifies the original candidate within 0.002 metre,
+second and energy units, then records the paid transition event as
+the canonical contact; the two paths have identical finish clocks
+and energies. The pure front/bunch case remains a separate recording.
+
+The same seed's fatigue-50 holdout is complete at both 120 and 260 km:
+
+| Roster | 120 km | 260 km |
+| --- | --- | --- |
+| 0 | Front/bunch catch km 63 | Front/bunch catch km 63 |
+| 1 | Front/rear group km 70 | Front/rear group km 70 |
+| 2 | Front/bunch catch km 62 | Front/bunch catch km 62 |
+| 3 | Early bunch join, then front/rear group km 69 | Same sequence, km 69 |
+| 4 | Front/bunch catch km 67 | Front/bunch catch km 67 |
+| 5 | Solo/bunch passage, then front/rear group km 67 | Same sequence, km 67 |
+| 6 | No catch | Front/bunch catch km 188 |
+
+All fourteen cells source-replay 160 observed finishes. This adds
+fatigue variation to the synthetic contact matrix; realistic outcome
+frequencies and the V94 preview's missing peloton and dropped-rider
+decisions remain release blockers.
+The read-only `audit-v94-rider-decision-coverage.mjs --summary` probe
+still has only 9,034 forward decision rows across seven validated
+120/260-km terrain/fatigue cases, despite 224,000 paid energy rows;
+one eighth case refuses and none of the 374 dropped rider-kilometres
+has a rider decision. Energy coverage therefore cannot be treated as
+decision coverage for the guided or experimental V94 preview.
+Across three seeds the same read-only audit validates 22 of 24 cases
+and refuses two. It finds 668,800 paid energy rows and 26,963 forward
+decision rows, with no rider decision in 2,344 dropped
+rider-kilometres. The coverage gap therefore persists across seeds;
+it cannot be closed by reinterpreting energy entries as choices.
+The stricter `node scripts/audit-v94-rider-decision-coverage.mjs
+--seeds=3 --summary --require-complete` release gate also checks that
+every decision has a choice and names a rider in its frame. It currently
+exits nonzero: 641,837 of 668,800 recorded rider-kilometres have no
+decision, and two cases refuse. A paid turn plan or energy ledger entry
+does not satisfy this gate.
+The read-only three-seed inventory now separates the 641,837 missing
+choices by recorded road group: 207 forward rider-kilometres, 639,286
+peloton rider-kilometres and 2,344 dropped rider-kilometres. All 28,936
+named paid bunch-worker rider-kilometres in completed cases lack a
+recorded rider choice. These workers are a concrete decision-source gap;
+their paid turn plan alone is not a sporting-goal decision. The two
+refused cases have no completed frames in these totals.
+
+The two refusals are the 120-km mountain/fatigue-30 case at km 80 in
+seed 1 and the 260-km mountain/fatigue-30 case at km 220 in seed 2.
+Both reach the existing guard against a fresh attack alongside paid
+pursuit without a shared road-clock contract. The refusal now carries
+its source kilometre; neither case receives an inferred gap or finish.
+The refusal also exposes the committed segment, prior gap, each
+attacker's rider, team, order effort, pre-action energy and abstract
+pressure, plus the ordered paid bunch turns. These are source facts,
+not a rider position or an attacker road clock. At seed 1 km 80 the
+source has four preset-cadence attackers, 18 paid bunch turns and a
+4.28-second prior gap on a descent. A shared contact clock still
+requires recorded attacker launch position and paid travel.
+`node scripts/verify-physical-contact-matrix.mjs` reproduces all 42
+synthetic cells with explicit branch and 160-rider finish assertions.
+It also verifies all 1,276,800 rider-kilometres have a nonempty
+decision with a goal, choice, reason and matching rider ID. The front
+solo source records its rider ID under version 2. The catch-boundary
+source records the same ID and the reason for continuing committed
+break work until paid contact under version 3. This audit covers the
+separate physical prototype. V94 preview and guided races remain
+outside it.
+The matrix's version 4 gate also replays the actual manager effort
+order for each rider and kilometre. All recorded efforts stay within
+that order, and explicit order copies match the source in all 42
+cells. In the earlier recording schema, choice policy versions are
+identified by the enclosing replay sources.
+An opt-in `physicalDecisionVersion: 1` on the committed physical
+start now records the bunch choice source version and the actual
+manager effort on each bunch rider decision. The default recording
+schema is unchanged. The contact matrix enables this source and
+requires an explicit order effort on every decision.
+The same opt-in now versions each decision from the paid rear solo,
+solo continuation and rear group track at its generating source.
+The read-only coverage audit reports missing versions by choice and
+reason. Front solo, rear contact, paid bunch join and slide decisions
+also carry the version of their deciding source or policy. The
+version 6 matrix requires a nonempty version on every recorded
+decision in all 42 cases. Other physical paths are not established
+by this holdout.
+The matrix also checks each explicit `committedTeamStake` and each
+stake-coded decision goal against the team's active source commitment
+on that kilometre. This checks recorded intent against the declared
+sporting goal; action goals such as finishing safely remain distinct.
+The same audit requires each rider state to cite its enclosing source
+kilometre and checks any decision-level kilometre or team ID against
+that rider's recorded frame and roster.
+
+The version 5 gate checks that every rider-kilometre has finite,
+nonnegative energy, a forward-moving observed road clock and a
+physical group ID. It also checks exactly one state for each known
+rider on each sequential source kilometre. The final paid clock and
+energy for each of the 160 riders match the recorded finish in every
+matrix cell. These checks include early drops, later rear contacts
+and caught riders sliding through on their own paid road.
+It is a source-continuity gate, not an independent physics oracle or
+real-race calibration.
+The version 7 matrix additionally checks every kilometre where riders
+from distinct prior physical groups end in one group. Such a merge
+requires a recorded contact event in that kilometre, or the replayed
+front-catch source at the catch kilometre. This is a necessary contact
+condition; detailed event timing remains checked by the paid replay
+sources.
+
+The version 8 gate also examines each newly formed rear group with at
+least two riders. Its kilometre must contain a `join` contact whose
+paid event names at least two members of that group. This includes
+groups formed after simultaneous bunch losses, where the riders shared
+the peloton in the previous frame and a simple prior-group merge check
+would miss their formation.
+
+The read-only `node scripts/audit-v94-physical-input-compatibility.mjs
+--seeds=3 --require-compatible` preflight uses the same prepared V94
+teams and normalized manager orders without running or changing a race.
+It refuses a direct physical replay: 3,420 of 4,560 source kilometres
+have more than one team ordered to rotate at the front, with as many
+as eight in one case. The physical source currently requires exactly
+one front-work team per kilometre. In addition, all 15,200 ordered
+front-team kilometres lack a named helper in the V94 source, while
+the physical source requires one. Even the 1,140 single-team
+kilometres cannot be replayed directly. The V94 intent manifest also
+contains no explicit physical sporting goal and named captain pair
+for any of the 480 team cases; a generated role cannot supply one.
+
+The version 4 read-only preflight includes the first source examples
+with seed, route settings, kilometre and team IDs. For seed 1's
+120-km flat, fatigue-0 case, km 1 names `rival-5`, `rival-11`,
+`rival-14` and `rival-15` as simultaneous front-order teams; each
+`frontWorkRiderId` is absent. The first missing sporting-stake row is
+the manager-controlled `you` team, whose intent has neither an
+explicit sporting goal nor a sporting captain ID. These examples
+identify missing input and do not select a replacement rider or goal.
+
+The read-only physical input preflight also accepts `--explicit-stakes`
+to inspect the opt-in version 5 manifest on the same three seeds. All
+480 team cases then have a committed goal and captain. The remaining
+physical incompatibilities are unchanged: 3,420 of 4,560 race
+kilometres have several teams ordered to the front, and none of the
+15,200 ordered front-team kilometres names a helper. The first case
+still has four simultaneous front teams at km 1. Supplying sporting
+stakes alone therefore cannot select one paid physical leader.
+
+An opt-in V94 `sportingStakes` input now accepts exactly one explicit
+`{teamId, goal, captainId}` per participating team, including the
+manager-controlled team. The new version 5 intent manifest commits and
+source-replays those names and goals; missing teams, unknown captains
+and unsupported goals refuse. The default version 4 manifest and its
+historical recordings are unchanged. This input contract records a
+sporting commitment; V94 tactics do not yet consume it as a rider
+decision, and the same-seed physical input preflight still refuses the
+existing holdout where no such commitments were provided.
+
+When version 5 stakes and the opt-in shared peloton front are both
+committed, `v94-paid-bunch-worker-decisions-1` now records one sourced
+choice for each named, paid front or chase turn. Each row names the rider,
+team, source kilometre, committed sporting goal and captain, current
+manager order, exact road interval, and extra energy paid. Recording
+validation reconstructs these rows from the committed input and turn
+plan and refuses altered or missing rows. A chase choice additionally
+requires its rider in the recorded team chase contribution; this keeps
+emergency responses tied to their actual source even when the ordinary
+manager chase order says to ignore the gap. Version 4 and other V94 pace
+options do not gain this field. The turn plan still selects the workers;
+the sporting goal is recorded as context and does not yet choose who
+works. Sheltered riders and absent front workers still lack individual
+choices, so this is a bounded replay increment, not full decision
+coverage or a physical-race release.
+
+The read-only `audit-v94-rider-decision-coverage.mjs
+--summary --explicit-stakes` mode uses committed `none` goals and each
+team's actual captain. In the seed-1 eight-case matrix, seven races
+validate and one still refuses. The seven completed races contain
+224,000 rider-kilometres: 19,230 have a rider choice, including all
+10,196 paid bunch-worker kilometres; 204,770 remain uncovered
+(62 forward, 204,334 peloton, 374 dropped). The same eight cases without
+explicit stakes still show zero bunch-worker choice rows and 214,966
+uncovered rider-kilometres. This audit counts only recorded choices;
+energy ledger entries do not count as decisions.
+Across three seeds, 22 of 24 races validate and two still refuse;
+55,899 of 668,800 rider-kilometres have recorded choices, including
+all 28,936 named paid bunch-worker kilometres. The other 612,901
+rider-kilometres remain uncovered (207 forward, 610,350 peloton,
+2,344 dropped).
+The same three-seed source inventory identifies all 207 uncovered
+forward rider-kilometres as fresh paid attacks on their launch
+kilometre. None are continuing front riders or unexplained new
+members. The first is `rival-13-5` at km 5 of seed 1's 120-km flat,
+fatigue-0 race, newly entering `road-1`. The existing road-group
+decision list covers riders already ahead at the start of a kilometre,
+so the launch needs its own sourced decision row.
+Opt-in `freshAttackDecisionVersion: 1` requires version 5 sporting
+stakes and road-group turn version 3. Each paid fresh attacker now has
+a versioned launch choice with source kilometre, rider and team,
+committed goal and captain, current manager attack and effort orders,
+the recorded attack reason and pressure, and the applicable extra
+attack cost. GC target activation remains distinguishable from the
+ordinary manager attack order. Validation reconstructs the choice
+from committed orders and the attack trace and rejects forged rows.
+Default and historical recordings do not acquire this field.
+
+The three-seed read-only audit finds exactly 207 fresh-attack choice
+rows in the 22 completed races, with no duplicate rider choices and
+zero uncovered forward rider-kilometres. The two existing race
+refusals remain, as do 610,350 uncovered peloton and 2,344 uncovered
+dropped rider-kilometres. A launch choice does not establish physical
+contact for the later road group or solve those rear-group gaps.
+The follow-up source audit splits the 2,344 uncovered dropped
+rider-kilometres into 15 first losses from the peloton and 2,329
+continuing kilometres already marked dropped. None is a newly
+dropped front rider. The first loss is `rival-14-0` in seed 1's
+260-km flat, fatigue-0 race at km 115: its abstract deficit rises
+from 2.845 to 3.019 seconds, with zero coast delay and no paid
+front turn. That threshold crossing has no within-kilometre road
+coordinate. A loss or return choice cannot be inferred from it as
+physical contact, and continuing detached work still needs a paid
+road clock before it can become a complete rider decision.
+
+An additional opt-in `pelotonDraftCostVersion: 1` requires explicit
+sporting stakes and the shared paid peloton front. It reduces only the
+base work cost for riders already recorded in the peloton at the start
+of a kilometre. A non-leading follower pays 80% of that base cost;
+each named paid leader pays a distance-weighted fraction between 80%
+and 100% according to recorded leading metres. Attack, chase, helper
+and other extra work costs keep their existing price. An unworked
+front grants no discount, and previously dropped or forward riders
+receive none. `pelotonDraftCosts` records the source kilometre,
+prior group, leading metres and applied fraction for replay. This
+does not name a wheel or assert a physical position within the bunch.
+The default and historical V94 recordings retain their old costs.
+
+The three-seed opt-in draft-cost audit validates 23 of 24 races and
+still refuses one. Its completed races include 680,505 discounted
+rider-kilometres out of 710,400; these cost rows are not individual
+decisions. Only 57,397 rider-kilometres have recorded choices, leaving
+653,003 uncovered in that changed set of completed races. This is an
+experimental energy comparison and does not establish whole-race
+physical contact or realistic outcome calibration.
+
+The version 1 audit finds 12 discounted riders who end their kilometre
+in the dropped group, across four of the 23 completed races. The first
+is `rival-14-0` at km 140 of seed 1's 260-km flat, fatigue-0 case.
+The kilometre model cannot identify the metre where shelter ended.
+Opt-in `pelotonDraftCostVersion: 2` therefore refuses that transition
+with the prior and final group, rider ID, source kilometre, leading
+metres and proposed fraction. It preserves version 1 recordings for
+replay. Across the three seeds, version 2 validates 19 of 24 races and
+refuses five; no completed version 2 race contains a discounted drop.
+This strict branch still needs paid within-kilometre loss and contact
+to cover the four additional races.
+
+A same-seed adapter needs an
+explicit, paid, versioned leader decision that resolves competing
+teams and selects an eligible worker from the committed roster using
+perceived strength while retaining every manager order. Arbitrarily
+assigning either would alter the committed source and fail this
+preflight.
+
+### Shared-peloton chase timing holdout
+
+`node scripts/audit-v94-shared-pursuit-timing.mjs` records the first
+front and first paid chase for four seeds, two terrains and two fatigue
+settings in 120-km one-day races with opt-in road-group pace version 3,
+chase turns and a single paid peloton front. Fifteen of 16 cases
+complete; the remaining mountain/fatigue-30 case refuses the combined
+fresh-attack and paid-pursuit clock. Every completed case forms a front
+at km 5 and first pays chase at km 70, exactly 50 km from the finish.
+Only one of those 15 fronts is caught by the finish. The first flat,
+fatigue-0 seed has a 50.42-second lead at km 69 and no paid chase;
+after 51 paid chase kilometres it still leads by 19.14 seconds.
+
+This repeated trigger comes from the existing `remainingKm <= 50`
+one-day protector condition. The preceding estimate sums *potential*
+helper capacities across protector teams even though the opt-in road
+plan permits just one exposed peloton leader at a time. It therefore
+cannot be treated as the attainable coalition road speed. The measured
+front trend and actual paid turn capacity must inform a versioned
+start decision before removing the fixed fallback. This audit does
+not establish a calibrated replacement or justify enabling V94 in
+guided races.
+
+### Opt-in protector sporting pursuit
+
+`protectorSportingPursuitVersion: 1` requires the version 5 intent
+manifest with a goal and named sporting captain for every team, paid
+road-group pace version 3 and the shared peloton front. It allows an
+automatic one-day *protect* pursuit only for a declared
+`sprint_finish` goal while that captain is neither forward nor dropped.
+Explicit all-out chase orders, control teams, GC responses and the
+existing emergency and refusal paths retain their own source rules.
+This version changes the pursuit decision; the old V94 path and
+historical recordings retain their original behaviour.
+
+In the same 120-km flat seed used above, with all teams explicitly
+declaring `none`, the historical path records 408 protector pursuit
+rows and starts paid chase at km 70. Version 1 records zero such rows;
+control teams still pay chase starting at km 99, and the final front
+gap is 47.44 seconds rather than 19.14. Declaring `sprint_finish` for
+every team restores 408 protector rows, km 70 first chase and the
+19.14-second final gap. These all-none and all-sprint stakes are
+synthetic boundary probes, not claims about actual team intentions or
+calibrated race outcomes. They expose that version 5 sporting stakes
+previously annotated paid choices without influencing the protector
+decision. The fixed 50-km trigger remains for eligible sprint teams;
+the road-speed timing problem above is still open.
+
+The read-only three-seed whole-race inventory with
+`--explicit-stakes --protector-sporting-pursuit --summary` validates all 24 synthetic
+all-none cases without a refusal. It covers 729,600 rider-kilometres;
+686,346 still lack an individual choice, including 683,796 in the
+peloton and 2,344 dropped. The first new dropped rider remains
+`rival-14-0` at km 115 of the flat 260-km fatigue-0 case, without a
+paid contact point. The absence of a refusal in this particular
+all-none inventory is not evidence that mixed real goals are safe or
+that V94 is ready for guided races.
+
+### Opt-in observed-pace protector timing
+
+`protectorPursuitTimingVersion: 1` additionally requires the sporting
+pursuit version above. For each eligible sprint protector, the motor
+records a team choice from the previous front's paid lead ability,
+the completed five-kilometre front trend, the team's own available
+helpers and current energy, its named captain and committed chase
+order. A prior front on a different terrain, surface or exposure
+cannot supply a comparable pace. The estimated one-team catch
+distance is a forecast; the actual road gap still moves only through
+the shared paid front turns. Prior chasers use a lower wait threshold
+so a small forecast change does not immediately end their work.
+`protectorPursuitDecisions` records the input abilities, helper IDs,
+projected catch distance, choice and reason. The validator rebuilds
+those rows from the recorded prior kilometre and committed team
+source, and rejects altered forecasts. Historic timing remains on
+its earlier version.
+
+In the same 120-km flat seed with all teams synthetically declaring
+`sprint_finish`, first paid chase advances from km 70 to km 11.
+The final front still leads by 26.81 seconds versus 19.14 under the
+earlier timing rule. Earlier work therefore does not by itself make
+the whole-race result more plausible. This version is an experimental
+decision source, not a calibrated release rule.
+
+The read-only three-seed inventory with synthetic all-sprint stakes,
+`--protector-sporting-pursuit --protector-timing --summary`, validates
+all 24 whole races without a refusal. It source-replays 34,410
+protector timing rows, of which 19,170 choose to chase, across 729,600
+rider-kilometres. It still lacks 650,641 individual rider choices:
+647,342 in the peloton, 3,108 dropped and 191 fresh forward attackers.
+The first uncovered peloton loss is `rival-14-0` at km 124 of the
+260-km flat fatigue-0 case. The timing choices are team decisions and
+do not close those rider-level or physical contact gaps. The synthetic
+all-sprint assumption is a boundary test, not evidence that actual
+teams have that goal.
+
+The separate read-only same-seed comparison runs the earlier and
+observed-pace policies with identical synthetic all-sprint stakes.
+The earlier branch validates 22 of 24 races and refuses two
+simultaneous fresh-attack/paid-pursuit kilometres; the new branch
+validates all 24 in these seeds, without resolving that general
+shared-clock contract. In all 22 paired races, paid chase begins
+earlier with the new rule. Their summed final front gaps fall from
+744.20 to 553.22 seconds, but the earlier branch catches one front
+and the new branch catches none. Thus this holdout does not establish
+a realistic finish distribution or justify default selection.
+
+### Opt-in strict peloton loss contact
+
+`pelotonDropContactVersion: 1` requires the shared paid peloton front.
+If a rider starts a kilometre in the peloton and ends it in the
+dropped group, V94 refuses the preview with the rider ID, kilometre,
+prior and final deficit, energy ledger and paid front turns. The
+end-of-kilometre deficit threshold does not locate a physical loss
+metre or pay the remaining solo road, so the motor cannot safely
+form a rear group from that transition. This guard does not invent
+a contact point, infer a wheel or change historic recordings. The
+recording validator also rejects a completed recording that claims
+this strict version while containing such a transition.
+
+The read-only one-seed, eight-case inventory without sporting stakes
+validates five cases, refuses one combined fresh attack and paid
+pursuit, and refuses two cases for unresolved peloton drop contact.
+This is a refusal gate, not a completed physical loss model or a
+whole-race calibration.
+
+With explicit synthetic all-sprint stakes, the observed-pace protector
+timing and fresh attacker decisions, the same guard validates 18 of
+24 three-seed cases and refuses six at the first unresolved peloton
+drop. The 18 completed cases cover 502,400 rider-kilometres, of which
+445,083 peloton rider-kilometres still lack individual choices. No
+completed case contains a dropped rider because the guard stops at
+the first such transition. These counts describe the strict input
+gate; they do not establish realistic contact or finish outcomes.
+
+### Opt-in peloton follower choices
+
+`pelotonFollowerDecisionVersion: 1` requires explicit version-5
+sporting stakes, the paid shared front, version-1 or version-2 draft
+costs and strict peloton drop contact. For each rider who begins the
+kilometre in the peloton, remains behind the break and does not take
+a named paid front turn, it records a choice before energy payment.
+The row records the rider's perceived cruising ability at current
+reserve, the actual manager effort and chase orders, the committed
+sporting goal and captain, the paid front status, the sourced draft
+fraction and the requested work. The payable-reserve comparison makes
+the choice. A payable rider pays the recorded
+sheltered or unworked peloton demand; an unpayable rider coasts under
+the existing exhaustion rule. The choice now selects that payment
+branch, and the validator reconstructs it from the prior state,
+front, committed source and energy ledger. It is not a wheel or
+position decision. Sporting goals affect the upstream team pursuit
+policy; this follower version records the goal but does not invent
+another rider-level goal effect.
+
+With synthetic all-sprint stakes, observed-pace protector timing,
+fresh attacker choices, draft costs and the strict loss guard, the
+three-seed inventory validates 19 of 24 whole races and refuses five
+at an unresolved peloton loss. The completed cases cover 544,000
+rider-kilometres with exactly one recorded individual choice per
+kilometre, including 484,765 follower rows. None of those completed
+cases contains a dropped rider; the guard stops at the first new
+loss. This is complete decision-row coverage of the accepted
+synthetic cases, not physical contact or finish calibration.
+The paired same-seed run without follower choices accepts the same
+19 cases and refuses the same five, with 484,765 uncovered peloton
+rider-kilometres. The new rows therefore expose the already-paid
+work branch without changing those whole-race outcomes.
+
+### Second physical contact replay seed
+
+The read-only physical field audit and 42-case contact matrix now
+accept a bounded `--race-seed` input. Running the unchanged seven
+synthetic rosters, three fatigue settings and two route lengths with
+`physical-20-team-scale-2` validates all 42 cases: 160 riders and
+1,276,800 rider-kilometres reach the observed route ends. Every
+decision retains its version and source, every rear group formation
+and merger has recorded contact, and the energy, clock and finish
+replay checks report zero discrepancies. The expected contact
+branches and kilometres match the first seed in this matrix.
+
+This second seed changes the observer's race-seed input while the
+synthetic rider attributes, orders, route and manager chase stay the
+same. It is a source replay holdout, not an independent population
+sample or calibration against real finishes. It does not make the
+separate V94 whole-race refusal cases or guided routing safe.
+For the 120-km fatigue-10 roster-0 observer at km 41, the estimated
+front clock changes from 79.456 to 79.730 seconds per kilometre;
+the observed prior front clock and own leader estimate stay fixed.
+Both seeds choose `watch`, so this probe does not demonstrate a
+different tactical action or a different physical outcome.
+
+### Opt-in physical front exposure price
+
+The first-kilometre V94/physical origin audit exposed an energy-price
+split. With the old V94 base cost, all 1,583 physically attached
+riders in 23 replayed synthetic cases differed in paid and ending
+energy, with 55.256 summed absolute paid-energy error. Enabling the
+version-1 peloton draft cost reduced that to 44 mismatches among
+1,528 attached riders in 22 completed cases. Every remaining
+mismatch belonged to a named paid front leader: the V94 steady
+front extra cost was 0.12 per kilometre, while the physical exposed
+leader source charged 0.18 per kilometre.
+
+`pelotonExposureCostVersion: 1` is an additional V94 opt-in requiring
+the sourced draft cost. It prices each named shared-front worker's
+actual leading metres at the physical leader's 0.18 extra cost per
+kilometre. The recorded plan carries the exposure version, and
+replay rebuilds its metre intervals and energy costs. Historic
+shared-front plans retain their original price. With both opt-ins,
+the same first-kilometre audit replays 23 of 24 cases and reports
+zero paid-energy and ending-energy mismatches for all 1,583
+physically attached riders. The remaining case refuses a simultaneous
+fresh attack and paid pursuit that lacks a shared road-clock contract.
+This comparison is limited to kilometre 1 and does not validate
+later losses, catches, finishes or realistic racing outcomes.
+The same comparison exposes a separate pace problem. In the 23
+replayed first kilometres, the physical origin projects 2,097 riders
+as unable to hold the named front while V94 still calls them peloton
+riders. The physical source's speed shelter and V94's consecutive
+kilometre deficit threshold do not describe the same contact rule.
+Energy agreement for the other 1,583 riders cannot justify joining
+the two group states or releasing V94 to guided races.
+
+The isolated physical bunch-origin source now accepts an opt-in
+`followerSpeedVersion: 1` for a diagnostic. The historical source
+added the same two ability points of bunch draft advantage to both
+the exposed leader's speed and the follower's hold speed, cancelling
+the follower advantage in the contact comparison. The opt-in applies
+those existing two points only to the sheltered follower and records
+a distinct origin version. On the same 23 first-kilometre cases,
+projected physical/V94 membership disagreement falls from 2,097 to 1,657
+riders; 2,023 attached riders retain exact paid and ending energy
+agreement. The 46–105 projected losses per case remain far above
+what V94's first-kilometre peloton labels record. This diagnostic
+does not change the default physical replay or assert that two points
+is a calibrated drafting-speed benefit.
+
+### Drafting evidence and the remaining calibration boundary
+
+[Blocken et al. (2018)](https://pure.tue.nl/ws/portalfiles/portal/101844924/1_s2.0_S0167610518303751_main.pdf)
+used CFD with wind-tunnel validation for two tightly packed
+121-rider pelotons. The reported aerodynamic drag varied strongly
+with location: mid-rear riders reached 5–10% of an isolated rider's
+drag at equal speed, while the leading riders had much less shelter.
+That study measures drag under specific configurations, not a
+universal speed bonus, the race engine's ability points, or a
+follower's unknown position. Its authors also identify rolling and
+bearing resistance as relatively more important when aerodynamic
+drag falls.
+
+[Blocken et al. (2021)](https://link.springer.com/article/10.1007/s12283-021-00345-2)
+combined wind-tunnel validation and CFD with a total-power model for
+uphill pacelines. In its 7.5% gradient, 6 m/s example, the second
+rider needed about 7.1% less total power than a solo rider at the same
+speed; the study reports larger savings at higher speed and notes
+limitations including no crosswind and identical rider bodies.
+These findings support terrain- and speed-sensitive shelter, but
+neither paper supplies a defensible mapping from measured drag or
+power into this motor's ability-point contact threshold. The current
+two-point diagnostic and 0.8 energy fraction remain experimental.
+Selecting a release value requires that mapping, source-paid road
+tests across terrain and wind, and whole-race contact and finish
+validation; no rider position or wheel may be inferred to apply a
+position-specific research result.
+In the existing synthetic first-kilometre audit with the two-point
+diagnostic, 556 of 1,280 riders are projected to lose the physical
+bunch in the flat settings, another 556 of 1,280 in the rolling
+settings, and 545 of 1,120 in the seven replayed mountain settings.
+Flat and rolling routes have the same first-kilometre road; their
+equal counts are not independent terrain evidence. The mountain set
+has one refusal and is not directly comparable as a matched population.
+These are model discrepancies, not observed real-race drop rates.
+The origin audit now records the split metre and speed shortfall for
+each of those 1,657 projected losses. All 1,657 occur at metre zero,
+before a paid slice of the first kilometre. The computed bunch speed
+exceeds the rider's hold speed by 0.084252–1.850343 km/h (median
+0.50452 km/h; 90th percentile 1.064107 km/h). The origin source
+assumes that any positive speed shortfall immediately loses the
+starting wheel; it has no measured initial separation or within-turn
+gap integration. Its output therefore cannot prove that these riders
+actually detached at kilometre 1. The comparison establishes a
+contact-model disagreement and identifies the missing physical road
+contract. It is not a calibrated drop count and must not be used to
+override V94's strict loss refusal or infer a wheel position.
+In the separate three-seed, 24-case V94 whole-race decision inventory
+with strict loss contact, draft, follower, fresh-attack and protector
+timing opt-ins, the exposure price accepts the same 19 cases and
+refuses the same five unresolved peloton losses. The accepted races
+retain 544,000 versioned individual rider-kilometre decisions.
+The invariant does not establish a realistic whole-race finish.
+
+### Rechecked classified physical split probe
+
+The read-only `--probe-single-leader --classified` control previously
+expected every fatigue-30 run to refuse a coincident split. That
+assertion became stale after the replay learned to resolve riders
+whose paid solo roads begin at the same recorded metre and clock.
+The probe now validates the current replay instead. In the same
+synthetic field, 120 km at fatigue 10 and 30 yields respectively 39
+and 37 ordered-effort-ceiling losses; 260 km yields 45 and 39.
+Both fatigue-30 runs contain one coincident split pair. All four
+runs replay their sources, retain one paid bunch leader per
+kilometre, and record 160 rider finish clocks. This corrects the
+probe's expectation; it does not calibrate those split counts to
+real racing or change an engine transition.
+
+### Resolved front as a candidate shared input
+
+The raw-order physical preflight finds 3,420 kilometres with several
+teams offering front work and 15,200 team-kilometres without a named
+worker across the three-seed V94 input set. Those counts describe
+manager orders, not the front after V94 has assigned and priced
+individual turns. The read-only
+`audit-v94-resolved-front-compatibility.mjs --seeds=3` instead
+replays each complete V94 recording and examines that resolved plan.
+Of 24 same-seed cases, 22 replayed and two refused the existing
+simultaneous fresh-attack/paid-pursuit road-clock ambiguity. The
+replayed races contain 668,800 rider-kilometre ledger rows and 3,520
+provisional rider finishes. They have 4,180 kilometres of continuous
+named front turns:
+28,936 turns (7,112 front, 21,824 chase), with zero order mismatches
+and zero leaders lacking paid energy. This establishes a sourced
+candidate for comparing leader assignments, while the raw orders
+alone are insufficient physical input. The turn abilities and V94
+group labels still lack a calibrated physical speed/contact contract;
+this audit does not certify a shared clock, rear-group formation,
+realistic finishes or guided routing.
+
+### Multi-kilometre shared-energy boundary
+
+The read-only `audit-v94-rear-origin-multikm.mjs` follows each rider
+only while V94 still labels them peloton and stops comparing after
+the isolated physical origin projects a pace loss. It replays the
+V94 race, uses the same route, roster, manager effort, named turn
+plans, and the opt-in shelter and exposure prices. It neither grants
+a wheel nor turns a projected split into a rear group.
+
+On seed `preview-recorded-road-1`, 120 km, flat, fatigue 0, V94 has
+18,602 peloton rider-kilometres before its first non-peloton labels.
+The physical projection holds 4,140 of those rider-kilometres; 1,508
+match both paid and ending energy within 0.001. Forty-six riders
+first diverge in energy while still projected to hold. Forty-five
+of their first differences coincide with a recorded V94 peloton-rest
+team. The earliest is km 21: the isolated physical source prices the
+steady manager order at 0.13824 energy, while V94's recorded team
+rest prices conserve at 0.082944 from the same 97.24 reserve. The
+other first divergence is a named chase leader on km 102; V94's
+chase-turn extra price is not the isolated origin's ordinary exposed
+leader price. The flat-fatigue-30 and mountain-fatigue-0/30 controls
+show the same earliest rest discrepancy and 45 first rest-associated
+rider differences each. These counts are source-model differences,
+not independent race observations. A shared physical road needs a
+versioned, per-rider applied-effort reason for team rest and the
+actual paid chase-turn price before it can compare later energy or
+claim calibrated contact.
+
+The isolated V94 `pelotonFollowerDecisionVersion: 2` now records the
+manager's original order alongside each follower's applied effort,
+the source of a conserve choice, and the quoted paid demand. The
+recording validator derives rest eligibility from the recorded team
+rest, shelter, support, chase and attack sources; changing either the
+applied effort or its reason without changing the source is refused.
+Version 1 and historical recordings retain their existing shape.
+In the same three-seed, 24-case strict-contact whole-race inventory,
+version 2 accepts 19 races and refuses the same five unresolved
+peloton losses. All 544,000 accepted rider-kilometres have a
+versioned choice; 484,749 are follower decisions and 233,102 of
+those explicitly apply recorded peloton rest. This closes the
+effort-provenance gap in V94's decision replay. Whole-race physical
+speed, contact and finish calibration remains open.
+The focused V1/V2 replay tests, lint, isolated Next.js build and
+authenticated local preview browser check pass; V2 remains opt-in and
+is not routed into guided races.
+
+### Opt-in recorded work on the separate physical road
+
+`runRearRecordedBunchOriginV2` validates and replays a complete V94
+recording before following one named rider from the known starting
+bunch. Its separate `recordedWorkVersion: 1` prices the actual V94
+follower effort, including recorded team rest, and each named front or
+chase turn's paid extra cost. The ordinary physical origin, V1 source,
+historic recordings, and guided race remain unchanged. A projected
+pace loss refuses the V94 binding; it is not evidence of a lost wheel.
+
+The read-only `audit-v94-rear-origin-multikm.mjs --recorded-work=1`
+compared four accepted 20-team, 120 km V94 races: flat fatigue 0/30,
+rolling fatigue 0, and mountain fatigue 30. Across 13,844 physical
+held rider-kilometres, paid demand and ending reserve match the V94
+ledger within 0.001 in every kilometre. The expanded audit also
+matches starting reserve and recovery in every accepted kilometre.
+Those races contain 74,369
+V94 peloton rider-kilometres before a first non-peloton label, and
+the physical road still projects a pace loss for 537 riders. Mountain
+fatigue 0 refuses at km 11 for an unresolved V94 peloton drop. Neither
+the energy match nor the V94 checkpoint labels establish the missing
+physical contact or a whole-field finish.
+
+The same seed on three accepted 260 km cases (flat fatigue 0/30 and
+mountain fatigue 30) has another 21,153 physically held
+rider-kilometres with zero differences in starting reserve, paid
+work, recovery, or ending reserve. The source has 120,306 V94 peloton
+rider-kilometres; the physical road projects loss for 408 riders.
+These are same-source accounting checks, not independent observations
+of race contact. The late route-cap reduction is covered by a full
+260 km replay of rider `rival-1-7`.
+
+`runRearRecordedBunchOriginV3` adds a separate versioned reconciliation
+for each accepted kilometre: reserve before the turn, paid work,
+recovery, and reserve after it must match the replayed V94 source.
+The focused test follows rider `rival-1-5` across all 120 flat
+kilometres, including recorded team rest, and validates every source
+row. V2 and V3 remain opt-in read-only experiments. Focused replay
+tests, lint, an isolated Next.js build, and an authenticated local
+preview browser check passed for each increment. No guided routing or
+production deployment follows from this partial energy agreement.
+
+### First-turn shelter capacity is still not contact calibration
+
+The read-only `audit-v94-first-turn-shelter-capacity.mjs` replays the
+strict V94 source and compares each recorded peloton follower's
+ability at the start of a named first turn with that turn's recorded
+ability. From km 2, only riders labelled peloton in both the prior
+and current frame are sampled, so a newly caught break rider is not silently
+treated as a follower before their contact. It reports the additional
+shelter ability required to equal the front, using the recorded
+applied effort and starting energy.
+This is a model-unit capacity comparison; it neither measures
+separation nor establishes a position or wheel.
+
+In the accepted 260 km flat, fatigue-30 seed, 27,071 of 40,434
+first-turn follower-kilometres require more than the separate physical
+origin's two-point candidate. Even the existing ten-point flat
+shelter value leaves 8,020 above the front. In the matching mountain
+seed, 9,198 of 18,083 hill follower-kilometres require more than the
+existing six-point hill value; 3,901 of 12,085 descent
+follower-kilometres require more than the eight-point descent value.
+The first kilometre has 159 followers: 105 exceed two points in both
+seeds, while 26 exceed ten flat points and 66 exceed six hill points.
+The mountain fatigue-0 strict source refuses at km 11 rather than
+producing a capacity distribution for that complete race.
+The flat and mountain 260 km audits exclude respectively 10 and 15
+transitions from a breakaway into a V94 peloton label. The first
+transition in each run has a `caughtBreakawayRiderIds` marker (flat km 89,
+mountain km 68 for `rival-16-5`); that checkpoint marker is not a
+physical paid bunch contact or a follower decision for the first
+turn. All 25 transitions have such a marker, but the audit still
+does not assign those riders a preceding peloton wheel.
+
+These comparisons use V94's peloton label as a sampling boundary,
+not as physical evidence of continuous contact. A larger fixed
+shelter bonus, including one already present elsewhere in the
+prototype, would still leave source disagreements and cannot be
+selected as a release setting from this audit. Paid within-turn
+separation and contact, followed by whole-race finish checks, remain
+the routing blockers.
+
+### Caught break riders under paired protector timing
+
+The read-only decision inventory can use the `--recorded-road-seeds`
+family to inspect caught break riders without changing race orders.
+With strict peloton-drop contact, V2 follower effort, exposure cost,
+fresh-attack decisions, sporting pursuit and synthetic sprint stakes,
+the earlier
+protector timing accepts 16 of 24 whole races and refuses eight
+unresolved peloton drops. All 464,000 accepted rider-kilometres have
+recorded choices. Ninety-three breakaway-to-peloton checkpoint
+transitions happen before the finish; every caught rider has a
+recorded road-group decision in that kilometre. The first is
+`rival-16-5` at km 75 of a 120 km flat race. The checkpoint catch
+marker does not supply the metre, shared paid road, or postcontact
+physical position.
+
+In the same seed family with observed-pace protector timing enabled,
+15 races pass the strict gate. All 422,400 accepted rider-kilometres
+have choices. The 26 breakaway-to-peloton transitions in this subset
+are finish-line catch markers; none occur earlier. To avoid comparing
+different accepted populations, the read-only protector timing
+comparison with `--recorded-road-seeds --summary` replays both
+policies and compares
+the 15 paired races. The observed policy begins paid chase earlier in
+all 15. The earlier policy records 81 caught-rider transitions before
+the finish and none at the finish; the observed policy records none
+before the finish and 26 at the finish. Each counted transition
+requires a prior breakaway label, a current peloton label, and the
+catch marker; no markers in these paired races fail that check.
+The paired final front-gap
+sum falls from 268.47 to 50.25 seconds, while complete front catches
+at the recorded line rise from two to six races. These synthetic
+outcomes do not establish realistic chase timing or physical catches.
+The marker's location, the paid turn clock and the rider's continuation
+must be reconciled before either policy can be released.
+
+### Versioned forward-group choice provenance
+
+The opt-in `roadGroupRiderDecisionVersion: 1` leaves the historical
+forward-group work choice and road movement intact. For each rider in
+an existing road group it records the deciding source kilometre,
+choice version, committed sporting goal and captain, current effort
+and break-work orders, perceived ability, and energy before work.
+The road-group decision remains the source on a kilometre where the
+rider is caught by the peloton. This version makes the choice
+reviewable; the goal and perceived ability are evidence fields, not
+yet a calibrated threshold that changes whether the rider pulls.
+The turn plan still names one paid leader per road metre. No physical
+contact, position, or official placing is inferred from the added
+fields.
+
+The read-only decision inventory with
+`--road-group-rider-decisions` and the same three recorded-road seeds
+accepted 16 of 24 strict whole races; eight refused unresolved
+peloton-drop contact. All 11,294 forward decision rows in the accepted
+races carry the new version and source fields, including the 93
+caught-rider transitions. All 464,000 accepted rider-kilometres have
+one versioned choice with a source kilometre and sporting goal; none
+are unversioned or uncovered. A focused mixed-stakes recording replays
+its forward choices
+against committed team orders and refuses a forged goal. Historical
+recordings retain their original row format. The remaining strict
+refusals and physical road mismatch still block release.
+
+### Refuse the first unsourced peloton deficit
+
+The opt-in `pelotonDeficitContactVersion: 1` requires the existing
+strict peloton-drop contact gate. It refuses the first positive
+checkpoint deficit for a rider who began the kilometre in the
+peloton with zero deficit. The refusal reports that rider's prior
+and final group and deficit, low-kilometre count, paid energy ledger,
+and named front turns. It supplies no split metre or physical wheel.
+The recording validator rejects such an onset under the same
+committed flag. The historical group model and recordings are
+unchanged when the flag is absent.
+
+With this gate and the versioned forward choices enabled on the same
+three recorded-road seeds, 14 of 24 whole races replay and 10 refuse
+at a deficit onset. The earlier drop-only guard accepted 16 and
+refused eight. Thus two races that reached a recorded finish without
+triggering that drop guard still contain unresolved positive
+peloton deficits.
+All 380,800 rider-kilometres in the 14 accepted races have one
+versioned choice; their 88 caught break riders still lack physical
+contact. The first new refusal is `rival-10-0` at km 3 of a 120 km
+mountain-profile case: the rider remains labelled peloton while the
+checkpoint deficit rises from zero to 0.582 seconds after two named
+paid front turns. The group's consecutive-shortfall counter dates its
+modelled underpace back to km 1; that is a diagnostic window, not a
+physical split metre. This is earlier evidence of the clock mismatch,
+not an inferred contact or an accepted rear-group origin.
+
+### Refuse unsourced caught-break contact
+
+The opt-in `caughtBreakContactVersion: 1` requires the named paid
+road-group and peloton turns. It refuses a caught break rider at the
+first provisional catch checkpoint, reporting the prior road-group
+membership and peloton gap, rider reserves before settlement, the
+provisional gap, and both paid turn
+plans. A finish-line catch is also refused with its source group and
+final rider reserve and paid peloton turns. Neither event records the metre of meeting,
+the rider's subsequent sheltered road, or a paid slide through the
+bunch. A recording claiming this strict version cannot contain a
+caught-break marker. Historical recordings and the default preview
+remain on their earlier contract.
+
+With this catch guard added to the strict peloton-deficit gate, all
+24 races in the same three-seed recorded-road audit refuse: 16 at an
+unresolved caught-break contact and eight at a peloton deficit onset.
+The first caught-break refusal is at km 75 of the 120-km flat,
+fatigue-0 seed-1 case. A separate observed-pace mountain case reaches
+a finish-line catch and is refused there. The zero accepted races
+show that the current V94 checkpoint movement cannot certify a
+whole-race physical road or finish under both contact requirements.
+They do not imply that no rider would finish in a physical model.
+
+### Refuse a named front turn that a rider cannot hold
+
+The opt-in `pelotonHoldCeilingVersion: 1` adds a conservative check
+before V94 moves the road. For each rider who starts the kilometre
+in the peloton, it compares each named paid leader turn with the
+rider's highest perceived ability across existing phases, hard effort,
+and the largest shelter bonus available anywhere in the current
+tuning. That generous ceiling does not assign the rider a wheel or
+claim that the rider actually rode hard. If it is still below the
+leader's paid ability, the preview refuses with the turn interval,
+both abilities, prior reserve, manager effort and committed sporting
+stake. The recording validator recomputes the same upper bound.
+The flag requires the stricter deficit-onset gate; the default and
+historic recordings retain their prior behavior.
+
+In the same three-seed, 24-case audit, all 24 races refuse at the
+first unholdable paid turn in km 1, earlier than their checkpoint
+deficit or caught-break events. In the first nominally flat case,
+`rival-10-0` has 74.2 as its best phase ability at full reserve;
+hard effort plus the deliberately generous 10-point shelter ceiling
+raises this to 87.4. The named leader `rival-1-5` rides the first
+500 metres at ability 90.81. These are source abilities, not a
+calculated gap, split position, or finish. They show why the
+three-kilometre grace counter cannot stand in for physical road
+contact. Within-turn movement and paid continuation remain open.
+
+### First-kilometre paid physical road probe
+
+`v94-physical-first-km-v1.mjs` replays an intact starting bunch from
+the validated V94 recording's first named front-turn plan. It uses the
+existing road-speed formula, committed manager effort, recorded
+sporting stake and captain, perceived cruise and solo strength, and
+terrain shelter allowance. Each turn has one paid leader. Every
+rider records a versioned choice, distance travelled during the
+front's turn clock, and energy paid for that distance. A rider who
+cannot hold the paid front continues as an individual solo. An
+unresolved solo-to-bunch or solo-to-solo meeting refuses; no rear
+group is made from a shared checkpoint label. The validator
+recomputes the trace from the complete recording. Attached riders'
+physical energy payment must reconcile with their recorded V94
+reserve payment.
+
+The read-only `audit-v94-physical-first-km.mjs --seeds=3` replays
+23 of the 24 same-seed first kilometres; one source race already
+refuses its combined fresh attack and paid pursuit. Across the 23
+replayed starts, 2,990 riders have completed the kilometre at the
+front clock and 690 are still on individually priced solo road.
+In the 120-km mountain, fatigue-0 seed-1 case, 79 of 160 riders
+reach km 1 with the front; 81 are behind. `rival-10-0` has covered
+959.403 m when the front reaches 1,000 m, after paying 0.199700
+reserve for its traversed solo road. This distance is calculated
+from the committed turn speeds and rider effort, not an assigned
+wheel or scripted gap.
+
+The turn probe stops at the front's first-kilometre clock. Its
+physical state is kept separate from V94's checkpoint group labels
+and from guided races. The 690 unfinished rider kilometres are
+intermediate physical states, not official drops.
+
+`v94-physical-first-km-completion-v1.mjs` then pays those remaining
+individual solo metres to the same 1,000-metre boundary. It checks
+for any solo-to-solo catch before either rider reaches that boundary
+and refuses if a contact would require a new decision. The already
+attached riders retain their source-reconciled reserve, recovery and
+cap adjustment; each detached rider receives a solo reserve payment,
+zero bunch recovery and a route-bound capacity check. The output
+replays each rider clock and energy component, remains explicitly
+unofficial, and forms no rear group. In the same 23 accepted
+first-kilometre probes, all 3,680 rider kilometres are completed and
+source-replayed without an unpriced solo meeting. `rival-10-0`
+finishes the mountain seed's first kilometre at 96.661 seconds,
+with 0.20815 reserve paid and 99.792 energy after rounding. The
+24th case still refuses the independent simultaneous attack and
+pursuit contract. This is a one-kilometre physical result only;
+subsequent front and solo roads, contacts, and whole-race finishing
+remain unvalidated.
+
+At the first-kilometre boundary, all 690 detached riders in those
+23 probes belong to 63 sets that share the same calculated distance
+and clock. `coincidentSoloSets` records those rider IDs and times,
+while `continuationNeedsContactDecision` stays true. The sets are
+parallel paid solo tracks, not rear groups or assigned wheels.
+Continuing one rider in isolation would ignore the others at the
+same place and time. A subsequent kilometre must resolve their
+actual orders, stakes, shared work and contact before forming any
+rear group or claiming a complete field replay.
+
+For each coincident set, `paidCoLocationObservations` also
+reconstructs the earlier front-clock point from each rider's paid
+first-kilometre track. It records the same calculated distance and
+solo speed for all members, plus each member's reserve cost through
+that clock. Its versioned evidence proves road-clock co-location,
+but `formsRearGroup` remains false. Cooperation, a single paid
+leader and shelter must come from a later recorded decision.
+
+`v94-physical-boundary-choice-v1.mjs` makes a separate, opt-in
+proposal for the next kilometre. It reads each co-located rider's
+committed manager chase and effort order, front-work refusal, team
+sporting goal and named captain. A chase volunteer with an active
+stake may offer the next paid turn; equal effort volunteers use a
+stable rider-ID tie break, which assigns no wheel position. Every
+rider records its own perceived solo and shelter-hold strength and
+whether it would offer work, accept shelter, or fail to hold that
+proposed pace. The proposal nominates one leader only when at least
+one other rider can hold. It does not move riders, charge the next
+metre, grant shelter or form a rear group. Actual paid work and
+ordered contact with the front remain necessary before continuation.
+The same three-seed source audit yields 63 pending proposals across
+the 23 replayed first kilometres, with no contact lacking an eligible
+proposed leader. These are proposals only; none has paid a next-km
+metre or become a rear group.
+
+The same 24-case source audit checks the next kilometre without
+advancing physical riders. In all 23 replayed starts, the km-2
+peloton plan is worked, each named front-turn leader is still in
+the physically attached first-kilometre set, and no source attack
+or break road appears at km 2. This establishes that a named front
+plan is available for the next step. It does not resolve the 63
+coincident solo sets, price their next road, or prove that none can
+meet the front during that kilometre.
+
+`v94-physical-second-front-km-v1.mjs` now replays that named km-2
+front plan for the riders physically attached at km 1. Each turn
+has one paid leader; each included rider records a versioned
+decision from its perceived strength, manager effort and committed
+sporting stake, plus travelled distance and reserve cost. The
+read-only three-seed audit replays the front trace in all 23
+first-kilometre cases and reconciles 2,657 attached second-kilometre
+reserve payments with V94. Another 333 riders leave that front
+during km 2 and remain at partial distances at its clock. In the
+120-km mountain, fatigue-0, seed-2 case, 134 begin km 2 attached
+and 94 still hold at its front clock. The trace does not advance
+the 690 previously detached riders or settle contact between those
+roads and the front, so its front timing is conditional on no rear
+contact. It has no complete km-2 field, rear group,
+recovery, or official result.
+
+`v94-physical-second-rear-km-v1.mjs` takes the boundary proposals
+through the next paid kilometre where the full road remains
+unambiguous. Each accepted rear group has one leader who pays the
+lead cost; riders who can hold its measured pace pay the lower
+shelter cost. Solo riders pay their own road. Pairwise road-clock
+checks refuse a rear/rear or rear/front meeting. Riders dropped from
+the front-turn trace also continue as individually priced solo roads
+through the km-2 boundary, with a versioned completion decision and
+energy payment; each is compared in clock order with
+the paid rear roads and other front drops. A newly discovered
+meeting refuses rather than assigning a gap or shelter. Rear and
+newly dropped riders receive zero bunch recovery, route-bound caps,
+and a complete 160-rider km-2 energy and arrival ledger. The
+three-seed, 24-case audit now completes km 2 for all 160 riders in
+all 23 first-kilometre replays, forming 63 rear groups through
+recorded paid contact. The source-replayed 333 new front drops
+finish independently in 27 coincident arrival sets. The one
+remaining case retains its km-1 source refusal. These simultaneous
+new front-drop arrivals are recorded as contact candidates for the
+next kilometre, not silently grouped.
+This is still an experimental two-kilometre replay with no official
+finish or whole-race claim.
+The same-seed source inventory finds a worked km-3 front plan in all
+23 completed km-2 cases: every named leader remains in the physical
+front, and no source attack or break road appears in that kilometre.
+This provides a source for the next front step, but the 63 existing
+rear groups and 27 new contact-candidate sets still need fresh paid
+decisions and ordered road-clock contact checks.
+
+`v94-physical-third-front-km-v1.mjs` now extends the same versioned
+per-rider, per-turn physical front replay from the completed km-2
+boundary. It requires a continuous paid reserve, the source's named
+leader at the physical front, a committed sporting stake and manager
+effort for each included rider, and reconciliation of attached riders'
+energy with the recorded V94 ledger. The three-seed, 24-case audit
+accepts all 23 km-2 full-field replays: 2,447 riders complete km 3
+at the front clock, and 210 newly detached riders remain at partial
+distances. The one km-1 source refusal is unchanged. This is a
+conditional front trace only. It has not moved the 63 rear groups,
+resolved the 27 km-2 contact-candidate sets, completed the new drops,
+or established a km-3 full-field result. It remains outside the
+guided races and has no official finish.
+
+`v94-physical-third-boundary-choice-v1.mjs` inventories every paid
+rear arrival at 2,000 metres by its rider clock and reserve. It keeps
+the 63 already paid km-2 groups distinct from new contact; 27 sets of
+new front drops also arrive together. At each co-location it records
+each rider's km-3 manager effort, chase and front-work order,
+committed sporting goal and captain, perceived solo and shelter
+strength, and a versioned proposal for one next leader. All 90
+co-locations across the 23 accepted three-seed cases have a proposed
+leader and cover 1,023 rear riders. The proposals assign no wheel,
+move no one, charge no km-3 energy and form no new group. Km-3 rear
+road, contact checks, all new front-drop completions, and any finish
+remain open.
+
+`v94-physical-third-rear-km-v1.mjs` advances those boundary proposals
+through a paid third kilometre. Each formed or continued rear road
+has one paid leader and separately priced shelter riders; other
+riders pay their own solo road. The replay checks rear/rear,
+rear/front, new front-drop/rear and new front-drop/new front-drop
+contact in clock order and refuses an encounter without a paid
+decision. It completes new front drops as individual solos, applies
+zero rear bunch recovery and route-bound energy caps, and verifies
+all 160 rider clocks, distances and energy accounts at 3,000 metres.
+Across the 23 accepted cases in the three-seed audit, all 23 third
+kilometres complete, with 90 paid rear groups and 210 newly detached
+front riders. Twelve simultaneous new-drop arrival sets at 3,000
+metres remain contact candidates. The one first-kilometre source
+refusal remains. This is an experimental three-kilometre replay,
+not a validated whole race or an official finish.
+
+The paid boundary, front and rear rules now also expose a shared
+continuation that consumes a complete prior physical kilometre.
+`v94-physical-fourth-km-v1.mjs` gives km 4 its own versioned
+decisions, preserving the exact km-3 replay and keeping prior traces
+out of each new step's payload. The same three-seed, 24-case audit
+completes the fourth kilometre for all 160 riders in the 23 accepted
+cases, with 102 paid rear groups and no new front drops. The one
+source refusal remains at km 1. `v94-physical-next-km-v1.mjs`
+can apply the same recorded inputs to later kilometres, but must
+refuse when a source front plan, physical contact or paid energy
+cannot be reconciled. No whole-race or finish claim follows from
+the fourth-kilometre result.
+
+All 23 accepted cases in the three-seed audit refuse km 5. Their
+recorded front turn plan is worked, but each frame also has two to
+six fresh attackers and a new break road, which the intact-front
+continuation deliberately excludes. All those attackers start in
+the completed physical peloton and have committed, versioned attack
+decisions. None of the 23 new break roads has a paid turn plan in
+its first kilometre. In the 120-km flat seed-1 example, the source
+puts two attackers in `road-1` with a 27.78-second checkpoint gap.
+That gap cannot substitute for a measured launch road, a single
+paid leader, shelter and ordered physical contact. The next version
+must reconstruct those before km 5 can join the whole-field replay.
+The prior four kilometres remain available and no source gap is
+copied into the physical trace.
+
+`v94-physical-fresh-launch-boundary-v1.mjs` now records a separate
+source-backed launch observation at that 4,000-metre boundary.
+It verifies that every attacker was physically in the completed
+peloton at the same clock and reserve as the recorded V94 energy
+ledger, and it ties each versioned proposal to the actual manager
+attack, effort and break-work order, sporting goal and captain,
+source attack reason, and perceived attack and solo strength. It
+charges zero new distance and energy, grants no break group, gap
+or shelter, and records whether the source has a paid plan for the
+new road. The same three-seed audit accepts all 23 observations,
+covering 70 fresh attacker proposals; none of their newly formed
+source roads has a first-kilometre paid turn plan. A physical launch
+and later contact still need a separate paid road contract.
+
+`v94-physical-fresh-attack-solo-v1.mjs` tests each of those launch
+proposals on its own isolated 1,000-metre road. It derives speed from
+the rider's perceived attack strength and the recorded route, and
+compares its clock with the named paid peloton turns. The source
+energy ledger must cover at least the terrain-priced solo work, and
+the trace checks for a recrossing of the peloton front. A source
+breakaway membership is kept as a claim beside the physical clock;
+it does not grant a shared break road or a wheel. A source-joined
+rider whose paid solo clock is no faster than the peloton front is
+flagged as a calibration mismatch. Coincident solo arrivals remain
+contact candidates, never rear groups. This diagnostic does not move
+the other riders in km 5, resolve rear contact, or establish a finish.
+Across the same three-seed, 24-case matrix, 23 cases yield 70 paid
+individual attack roads. Only 44 riders reach 5,000 metres ahead of
+the paid peloton front; the other 26 are source-classified as having
+joined a break but their physical solo clocks do not support that
+position. Ten coincident solo arrival sets remain ungrouped. The
+one km-1 refusal persists. This mismatch blocks source calibration
+and any promotion to the guided race engine.
+The diagnostic also compares source checkpoint claims with the
+individual paid clocks, without importing the claimed gap into any
+physical road. In the 120-km flat seed-1 case, the source records
+`road-1` at 27.78 seconds; its two individual paid leads are only
+0.31332 seconds and -0.7038 seconds. The comparison records no
+physical group because neither a paid first-kilometre break turn
+nor a later formation decision is present.
+All 23 new source roads have a checkpoint comparison. The largest
+source gap exceeds the fastest individual paid lead in its road by
+33.71936 seconds. This is calibration evidence, not a physical gap.
+
+`v94-physical-fifth-front-km-v1.mjs` continues the named, paid peloton
+front beside those isolated attack roads. It excludes precisely the
+source attackers after verifying their own physical boundary and
+solo work, then makes a versioned decision at each source front turn
+for every remaining attached rider. The two independently derived
+front clocks must agree. A leader still pays alone, while shelter
+and solo pace matching have separate terrain-priced work. It leaves
+rear roads, newly detached riders, attacker contact and the complete
+km-5 field unresolved; the source break gap remains only a comparison.
+The three-seed matrix accepts this conditional front in all 23
+source-valid cases: 2,377 non-attacking riders complete km 5 at the
+front clock, with no new front drops. The one km-1 source refusal
+remains. This front result does not include the previously paid rear
+groups or certify any attacker as a shared break member.
+
+`v94-physical-fifth-km-v1.mjs` now attempts the entire fifth
+kilometre by combining that conditional front with the existing
+paid rear-boundary choices and each fresh attacker's individual paid
+solo road. The continuation checks front/rear, attacker/rear,
+attacker/front, new front-drop/rear and other road crossings before
+settling each rider's distance, clock and energy. A rear group still
+needs its recorded boundary contact and exactly one paid leader; the
+fresh attackers gain no source break wheel or shared group. The
+result explicitly marks the source checkpoint calibration as failed,
+even when a complete physical field can be settled, and awards no
+official result. A later kilometre cannot treat the source's km-5
+break road as physical contact.
+In the three-seed, 24-case matrix, the 23 source-valid cases all
+complete the full fifth kilometre for 160 riders, with 102 paid rear
+groups and 70 individual fresh-attack solo roads. No contact refusal
+occurs in those cases; the one original km-1 source refusal remains.
+The 26 attacker/front classification mismatches and the unearned
+source checkpoint gaps remain explicit, so this is not a calibrated
+whole-race continuation.
+
+`v94-physical-sixth-source-boundary-v1.mjs` inspects each source km-6
+road-group turn plan against the 5,000-metre clocks and physical road
+IDs of the riders it names. It moves and charges no rider. A source
+plan for several riders can attach without a new formation decision
+only to a physically formed prior group; coincident solo arrivals
+still need a paid formation decision.
+In the flat seed-1 case, the source's `road-1` plans turns for two
+riders whose paid arrival clocks differ by 1.01712 seconds. That
+source group therefore cannot be continued as one physical road at
+km 6, regardless of its checkpoint gap.
+The three-seed matrix finds 23 source km-6 road plans after the 23
+completed physical fifth kilometres. All 23 name riders whose paid
+5,000-metre clocks differ, and none can attach as one physical group.
+The largest within-plan arrival spread is 1.52592 seconds. The audit
+leaves all those source plans unadvanced and retains the one original
+km-1 source refusal.
+The generic physical continuation now refuses km 6 with those
+unattachable source road plans and includes the prior physical
+version, named leaders and arrival-clock spread in its evidence.
+It cannot silently carry the source's `road-1` into the next paid
+kilometre.
+
+`v94-physical-sixth-rider-boundary-v1.mjs` now records one
+versioned km-6 decision proposal per paid km-5 finisher. Each row
+retains its physical road ID, 5,000-metre clock and reserve; it reads
+the actual next-kilometre manager effort, chase, front-work, attack
+and break-work order, committed sporting goal and captain, and the
+rider's perceived cruise and solo ability on the recorded route.
+Relative time uses the paid peloton front clock. Source break
+membership and named source turns are labeled as claims, not granted
+positions, wheels or groups. Every proposal pays zero new distance
+and energy until a new physical road plan resolves the km-6 source
+conflict.
+The same three-seed matrix accepts 3,680 such rider proposals across
+the 23 paid fifth-kilometre fields. Seventy have a source break
+membership claim, while only 44 have a clock ahead of the paid
+peloton front. None of these proposals forms a group or advances km 6.
+
+`v94-physical-sixth-forward-contact-probe-v1.mjs` quotes a separate
+km-6 solo speed and terrain work demand for each rider whom the
+source claims is in its break. It starts from that rider's own paid
+km-5 clock and reserve, then compares individual proposed worldlines
+for a same-boundary co-location or a later meeting. The probe grants
+zero new distance, energy, shared work or group formation; any
+meeting is only a contact candidate needing a paid decision. It
+does not assume the source break gap or move the peloton and rear
+roads. In the flat seed-1 case, the two quoted source members start
+1.01712 seconds apart, and their individual km-6 solo estimates do
+not meet within the next 1,000 metres.
+Across the 23 paid fifth-kilometre cases, all 70 source-claimed break
+riders have payable individual solo quotes. Twenty-four rider pairs
+share a paid boundary clock and are recorded as possible contacts;
+no two distinct solo worldlines meet later in km 6. None of those
+pairwise co-locations proves that an entire source break group exists.
+The source's full-kilometre energy payment is compared with the
+quoted solo minimum separately before any physical work is charged.
+All 70 quotes fit both the rider's paid boundary reserve and the
+source's recorded full-kilometre energy payment. That affordability
+does not establish a shared group, complete km-6 energy attribution,
+or contact with the peloton.
+
+`v94-physical-sixth-boundary-choice-v1.mjs` inventories all paid
+5,000-metre rear arrivals for km 6. It retains existing rear-group
+leader proposals and treats any coincident fresh-attack solos as a
+separate contact candidate. For those forward riders it uses the
+actual break-work and effort orders, perceived strength and payable
+leader/shelter quotes to propose at most one next leader, while
+recording each committed sporting stake. The candidate follower list
+is an eligibility check, not an assigned wheel. It forms no group,
+moves no rider and spends no km-6 energy. Riders who arrive at
+different clocks remain on different roads even if the source calls
+them one break.
+The three-seed matrix accepts 112 paid-contact choice sets at the
+sixth-kilometre boundary: 102 continuing rear sets and 10 coincident
+fresh-forward sets. Each has one proposed payable leader and at
+least one eligible follower, but all 112 remain unformed until work
+and contact are settled on a km-6 road. The one km-1 source refusal
+remains unchanged.
+
+`v94-physical-sixth-front-km-v1.mjs` can conditionally continue the
+named peloton front through km 6 when its recorded turns are solely
+explicit front work, with no source chase turn or new attack. It
+requires the source break riders to remain separate paid attack solos
+at the prior physical boundary and excludes their invalid source
+group plan. Each included peloton rider makes a versioned decision
+against one named leader per turn and pays leader, shelter or solo
+pace-match work. The three-seed matrix accepts 16 of 23 source-valid
+fronts, covering 1,652 attached rider-kilometres without a new front
+drop. Seven fronts refuse because the source energy ledger charges
+less than physical paid work; for one flat seed-3 case it records
+0.085248 source versus 0.14208 paid reserve for rival-1-1. This is
+a front-only trace: forward/rear contacts, all rear finishes, source
+gap calibration and any official result remain unresolved.
+
+`v94-physical-sixth-km-v1.mjs` combines that conditional front with
+the recorded boundary contact choices and individually paid rear and
+forward roads. A three-seed matrix completes all 160 riders in 8 of
+the 23 source-valid cases and records 36 physically paid rear groups.
+All 16 source break riders in those completed cases remain on paid
+individual solo roads; none is added to a group from a source label.
+Eight cases stop at measured rear/front contact between 5,167 and
+5,257 metres, and seven stop at the source/front energy mismatch.
+The original combined attack/pursuit source refusal at km 1 remains.
+Each completed km-6 trace retains the source break rider IDs as claims,
+the failed source checkpoint flag, paid individual finish clocks,
+energy and group origin, and `officialResults: false`. It carries
+actual break-work orders in each paid rear/solo decision. It neither
+accepts the scripted source gap nor converts a source break group
+into a physical group without a paid contact leader.
+
+`v94-physical-seventh-km-v1.mjs` continues from a fully paid km 6
+when every source break rider still has an individual paid solo road.
+It refuses a boundary co-location involving one of those riders
+until a break-work leader can be chosen, and retains the source group
+only as a membership claim. The three-seed matrix completes km 7
+for the same 8 cases as km 6: 160 rider finishes per case, 36 paid
+rear groups in total and 16 source break riders still solo. The
+other cases retain their earlier km-1 or km-6 refusals.
+
+`v94-physical-unattached-source-next-km-v1.mjs` repeats that guarded
+paid continuation from km 8 while the recorded plan still has only
+named front work, no new attack or chase, and source break riders
+remain on separate solo roads. In the three-seed matrix, all 8 cases
+that completed km 7 continue through km 19 with 160 paid rider
+finishes per kilometre.
+
+At km 20 the source adds two flat-course or three mountain-course
+attackers to its existing break label. The optional mixed-fresh
+solo replay checks their actual launch orders, strength, sporting
+stakes and source-paid energy, then prices each attacker's individual
+road. It records the old riders' separate paid start clocks beside
+the new solo finish clocks and treats the source gap as a claim. The
+three-seed matrix prices 20 new attack solos across the same 8 cases.
+`v94-physical-mixed-fresh-km-v1.mjs` combines these roads with the
+named paid front and rear field; all 8 cases complete 160 rider
+finishes at km 20, with no source break group formed.
+
+At the km-21 boundary, the new attack solos can share an actual paid
+arrival clock. `v94-physical-forward-boundary-choice-v1.mjs` quotes
+one payable break-work leader and lower shelter cost from their
+committed orders without assigning a wheel or forming a group. In a
+flat seed-1 case rival-16-5 is proposed to lead rival-8-5, with
+0.31312 leader versus 0.13184 shelter reserve quoted. The ordinary
+ordered-effort front refuses km 21 for all 8 km-20 full fields because
+at least one attached rider's source energy charge is below physical
+paid work (for one case, 0.085248 versus 0.14208). The source's
+recorded `pelotonRestTeamIds` explains this difference: the team
+order is `steady`, but the recorded ease uses `conserve` effort.
+
+`v94-physical-recorded-rest-km-v1.mjs` is a separate conditional
+replay that requires the measured ordinary-energy refusal and an
+explicit recorded source rest decision. It records both manager and
+effective effort per rider, prices the lower rest work, and lets
+riders fall off the named paid front when reduced effort cannot hold
+the pace. The three-seed matrix completes km 21 in 4 flat cases,
+with 134 newly detached front riders in total, 18 paid rear
+groups and 8 source break riders in newly paid contact groups. Four
+mountain cases refuse when a fresh front drop physically meets a
+rear solo between 20.10 and 20.17 km. Source rest can depend on the
+uncalibrated source race context, so this conditional replay makes
+no official result or source-gap claim.
+
+Continuing those four flat cases with the same seed and paid roads
+reaches km 27 in both no-fatigue cases and km 24 in both 30-fatigue
+cases. The next kilometre refuses a measured collision between an
+existing paid rear group and a solo at 27.052 km or 24.156 km,
+respectively. No catch or new group is inferred from that crossing.
+The refusal includes both paid roads' leaders, members, prior group
+identities, boundary and finish clocks, and speeds so a later
+contact decision can use the actual riders and movement.
+`v94-physical-mid-km-contact-choice-v1.mjs` replays that refusal,
+prices each rider's existing paid role up to the measured crossing,
+and quotes possible single-leader and sheltered work for the
+remaining distance from actual reserve, orders and sporting stakes.
+It is a proposal only: `formsRearGroup` stays false and the
+kilometre remains incomplete until the subsequent metres are paid
+and checked against every road.
+In the four flat source-valid crossings, the solo `rival-6-5`
+volunteers for the next paid turn and the 18 riders on the existing
+rear road can hold its quoted sheltered pace. These are the same
+physical participants at 24.156 or 27.052 km across both route
+lengths, and no contact group has been formed.
+`v94-physical-mid-km-contact-fragment-v1.mjs` then pays the
+previous role up to that crossing and the selected single leader
+and 18 sheltered riders over the remaining metres. It records each
+rider's before, contact and after reserve with cap adjustment and
+one shared finish clock; every sheltered rider must still hold the
+leader's pace on end-of-fragment energy. The result is expressly a fragment:
+other road contacts are unchecked, and `fullFieldKilometre` is
+false. It cannot feed the next whole-race kilometre yet.
+Focused same-seed audits validate the 19-rider fragment in all four
+flat crossings at both route lengths and both fatigue settings.
+The paid fragment finishes at clock 2285.852255 for no fatigue and
+2080.978688 for 30 fatigue; these are local road clocks, not
+official stage times.
+
+`v94-physical-mid-km-contact-road-audit-v1.mjs` checks both paid
+prefixes and the new contact fragment against every other rear road
+and the front. The four flat crossings have 8 or 9 rear roads, two
+front segments, no new front drops and no other contact. Therefore
+`v94-physical-mid-km-contact-full-field-v1.mjs` settles all 160
+riders at km 25 or 28 with 19 riders in the newly paid contact
+group. The ordinary continuation refuses a mixed forward/rear
+boundary choice because the physical group contains a source break rider
+and other rear riders. That shared work choice must be derived from
+their actual orders before continuation. Source groups and official
+results remain unadopted.
+
+`v94-physical-forward-boundary-choice-v1.mjs` now permits that
+mixed choice only when the previous group is itself the verified
+paid contact group. It reads break-work orders for the source break
+rider and chase/front-work orders for the other members, quotes one
+payable leader with lower shelter cost, and still leaves group
+formation pending. The separate
+`v94-physical-mixed-paid-next-km-v1.mjs` then pays those turns.
+All four flat cases complete all 160 riders in the next kilometre:
+km 29 without fatigue or km 26 with 30 fatigue, for both route
+lengths. The initial mixed group remains physically paid throughout;
+source membership remains a claim rather than a scripted physical
+position or official result.
+
+The mixed paid group can keep its provenance across successive
+kilometres. The same-seed 120 km flat cases complete all 160 riders
+through km 69 (including another paid meeting of two rear groups at
+km 34 without fatigue or km 27 with 30 fatigue). At km 70 the source
+records 13 chaser team IDs, but its paid peloton turn plan also names
+26 individual chase leaders. All 26 are physically in the peloton at
+the km-69 boundary. The guarded replay verifies each named turn
+against its team's chase contribution, charges the recorded chase
+exposure cost and records a per-rider `paid_chase_turn`. Both 120 km
+flat cases finish all 160 riders through km 74. The four source break
+riders remain physically split across one solo and two paid rear
+groups. The 260 km flat cases reach km 84 without fatigue and km 88
+with 30 fatigue; the next source frame has no breakaway
+riders while the four previously claimed break riders still occupy
+one solo and two paid rear groups in the no-fatigue paid km-84 field.
+The source disappearance is not a physical catch.
+These are source-plan refusals. No scripted catch or group transfer
+is used to bypass them. The earlier km-70 refusal was an overly broad
+chase guard, not absent rider-level chase evidence.
+
+`v94-physical-post-source-break-km-v1.mjs` separately drops the
+ended *source membership claim* while retaining all four riders on
+their paid rear roads. It requires an empty source break, attack and
+road-group frame, actual boundary choices, verified named chase turns
+when a chase is recorded, and any source-recorded front rest needed
+to reconcile energy. Both 120 km flat cases complete every rider
+through km 79. At km 80 the source names four new attackers; their
+individual departures are paid as solo roads. Both cases then finish
+all 160 riders through km 83 and refuse a rear/front contact at km 84
+until that meeting is physically settled. In the no-fatigue seed-1
+case, the paid `solo-rival-6-7` road starts 0.133 seconds ahead of the
+peloton at the km-83 boundary; a named chase turn catches it at
+83,272.177 metres. The refusal records the solo's rider, reserve,
+prior road, speed and clock together with the front turn's leader and
+work kind. `v94-physical-front-catch-km-v1.mjs` checks all other paid
+roads for meetings, then charges this rider's solo work to the catch
+and sheltered work over the remaining named front turns. Both 120 km
+flat cases finish all 160 riders at km 84 with the caught rider in the
+peloton. Source break membership remains a separate claim. The next
+kilometre keeps the source claim alongside the physical fact. It
+continues the caught rider in the bunch from his own paid reserve,
+with his own manager effort and shelter cost, while the source energy
+ledger remains a calibration comparison. Before the next contact
+settlement, the 120 km flat cases finished all 160 riders through
+km 107 without fatigue or km 110 with 30 fatigue. No source break
+label moves the caught rider back onto a rear road. At km 108 without
+fatigue, three paid rear roads meet simultaneously at 107,263.845 m.
+The first pair reported by the rear replay omits `solo-rival-8-5`;
+the version 2 contact choice expands the measured crossing to all
+three roads before selecting one payable leader and shelter roles.
+The version 2 fragment and road audit then settle the whole 160-rider
+field through km 108, including the caught rider's independent
+physical reserve in the peloton. The same three-road settlement
+continues the 30-fatigue case through km 111. The next kilometres,
+109 and 112 respectively, contain a mixed source-break and rear
+group at an already paid boundary. The caught-rider continuation
+accepts that group only while its recorded contact fragment or
+forward-boundary provenance covers every member; each next kilometre
+still prices one leader and shelter independently. In the seed-1
+120 km flat calibration, both fatigue settings now reach km 120 with
+160 paid finishes at each kilometre after the catch. They carry no
+official placings or awards. The seed-1 no-fatigue unit trace also
+checks all 160 riders across every km 1-120 transition for continuous
+reserve, increasing clock, physical distance and the paid energy
+equation. The other same-seed courses and seeds remain separate
+calibration cases.
+In seed 3, the km-6 source energy charge for an attached rider is
+smaller than the ordered front effort. The version 2 sixth-front
+replay uses the recording's explicit rest teams and front-rest rider
+decisions, then verifies the paid front charge against the source.
+This clears the energy mismatch without changing manager orders. The
+whole-field replay now reaches a measured front-drop/rear contact at
+km 6 and refuses there until the piecewise meeting is settled. The
+first seed-3 crossing has 17 co-located paid front-drop riders,
+including `rival-1-1`, meeting the separate `rival-10-5` solo at
+5,092.928 m. The refusal retains
+the measured road paths and source road decisions so a later
+resolver can decide paid contact without assuming a rear group.
+The version 1 front-drop contact choice prices all 18 riders to that
+meeting from their own physical reserves. `rival-10-5` is willing to
+lead under his recorded break order; all 17 co-located drops can hold
+shelter at their quoted start and end reserves under their recorded
+effort. The version 1 fragment prices the 18 riders to the boundary,
+but it grants no complete km-6 field. A separate version 1 road probe
+finds the proposed group's next meeting with 13 other co-located
+front drops at 5,849.655 m. That second meeting needs its own paid
+choice before km 6 can be accepted. The version 1 second-contact
+choice quotes the existing leader and all 30 sheltered riders from
+their own paid reserves. Its fragment prices every member of that
+31-rider road to the km-6 boundary. The version 1 whole-field
+settlement audits the remaining rear roads against each other, the
+contact road and the front segments. With no further measured
+intersection, it records 160 continuous paid finishes at km 6,
+including all 30 front drops that joined the solo at the two
+physical contacts. It grants no official result or source break
+road. At km 7 the forward-boundary choice accepts that recorded
+mixed group, quotes break-work willingness and each shelter, then
+replays a new paid kilometre. Recorded front rest settles the
+source charge. The same physical group is retained only while its
+paid prior contact or boundary choice proves membership. The
+seed-3 flat 120 km, fatigue-0 trace reaches km 79 with 160
+continuous paid finishes per kilometre through km 7-79. Km 80
+contains a fresh source attacker joining the old source break
+label. The version 3 mixed-fresh replay checks the older source
+riders against their paid rear-group membership, prices the new
+solo launch, retains the prior mixed group's paid boundary choice
+and uses recorded front rest. The field then continues with 160
+paid finishes per kilometre through km 95. Km 96 has a measured
+rear-group contact at 95,101.683 m between a three-rider group and
+a 31-rider group. Both roads have paid km-95 origins. The existing
+version 2 mid-km contact choice finds all 34 riders, quotes
+`rival-10-5` as the sole willing paid leader and 33 payable
+shelters, and the fragment prices the rest of km 96. The road
+audit finds no further contact or front drop, so the full-field
+settlement accepts all 160 paid finishes. Forward boundary work
+then carries the physical group through km 113 with all-rider
+energy and clock continuity. At km 114 the source break label
+loses one of its six riders. The version 1 partial-withdrawal
+replay verifies the exact five remaining source members, keeps the
+departing rider on his paid solo road, and prices the front and
+rear field without a physical transfer. The mixed paid continuation
+then reaches km 120 with 160 unique paid finishes at every km
+through 114-120; the former source member remains recorded as such.
+This finishes the seed-3 flat 120 km, fatigue-0 physical replay,
+without official placings or awards. The same seed at fatigue 30
+diverges at km 6: a paid solo passes 17 simultaneous front drops
+at 5,050.667 m, then another 17 at 5,062.259 m. The first
+contact quote gives the drops no payable shelter under their
+recorded effort and strength, so the group fragment correctly
+refuses. The version 1 no-join choice records all 17 separate
+continuations at the first overtake. It then quotes 17 payable
+shelters at the second measured contact. The version 1 fragment
+prices that second group's leader and shelters to the km-6
+boundary. The version 1 whole-field audit checks those roads
+against the front, the remaining rear roads and the 17 unjoined
+drops. It accepts 160 paid km-6 finishes; the first 17 keep solo
+roads. Km 7 pays a new boundary choice. The fatigue-30 replay
+continues through km 120 with 160 continuous paid finishes every
+kilometre. Its measured rear-road contacts at km 82 and 91 use
+the existing paid mid-km choice, fragment and audit. The source
+break loses one rider at km 111, and the partial-withdrawal replay
+keeps his physical solo road. The trace issues no official result
+or awards. Other whole-race same-seed cases, finish validation and
+release gates remain open. Seed
+2 separately reaches a solo/front contact at km 6. Its solo starts
+behind the paid front at the boundary, then catches it at 5,256.575
+m. The version 2 contact replay records that direction and charges
+solo work to the meeting plus shelter over the remaining named front
+turns. It completes all 160 riders without adopting the source break
+road. The caught rider remains physically in the peloton while the
+source break claim continues. Km 7 through 19 and km 20's fresh
+attack replay retain that distinction. Recorded source rest resolves
+the km-21 front charge, and the seed-2 flat 120 km no-fatigue case
+reaches km 77 with 160 paid finishes per kilometre. At km 78 the
+source break claim ends. The version 2 post-break replay keeps the
+already caught rider in the peloton from his own paid reserve and
+the other former break riders on their physical rear roads. It
+settles all 160 riders through km 79. A new source attack at km 80
+requires its own paid launch and source-claim transition. The version 2
+post-break fresh replay pays those four new attackers as separate solo
+roads at km 80, while the previously caught former break rider stays
+in the peloton on his own physical reserve. The version 4 unattached
+continuation carries both the current source-break claim and that
+former caught rider through km 83. At km 84, another source-break solo
+meets the paid front. Version 3 of the front-catch replay charges his
+work before contact and shelter afterward, then carries the former
+caught rider from his prior physical reserve rather than resetting him
+to the source ledger. The same-seed 120 km flat no-fatigue case now has
+160 reconciled physical finishes through km 85. The same replay then
+continues without another contact refusal through the 120 km finish.
+The seed-2 fatigue 0 and 30 tests check all 160 riders at every kilometre
+from 1 through 120, including every transition's physical distance,
+increasing clock, reserve continuity and paid energy equation. This
+is a pair of complete same-seed physical traces, not a multi-seed
+finish validation or official result.
+The separate version 1 whole-race validator checks the seed-1
+fatigue-0 and seed-2/3 fatigue-0/30 flat 120 km traces against all
+120 source kilometres and 160 committed riders. It requires one
+unofficial finish per rider per kilometre, exact distance, increasing
+clocks, continuous reserve and the paid energy equation. Each accepted
+trace covers 19,200 rider kilometres. A forged final reserve is
+rejected. This checks trace completeness and accounting; source gap
+calibration, sporting finish order and official results remain open.
+The version 1 whole-race source-gap audit compares each recorded
+break road checkpoint with its members' individual paid clocks. It
+does not assign the source gap to a physical road. For seed 1,
+flat 120 km without fatigue, 111 group checkpoints cover 414 rider
+comparisons; the largest source gap exceeds even the best individual
+paid lead by 32.62904 seconds. All five complete traces are now
+audited for comparable source checkpoints. This discrepancy remains
+an explicit calibration failure.
+Both 260 km flat cases
+complete every rider through km 89. At km 90 the source
+introduces two new attackers (`rival-19-7` and `rival-6-7`), so the
+post-break replay refuses until their departure is physically paid.
+The 120 km cases retain the earlier four riders on their rear roads
+while the named peloton chase proceeds.
+
+`v94-physical-post-break-fresh-km-v1.mjs` prices those two km-90
+departures as separate solo roads while the former break riders
+retain their rear positions. Both 260 km flat cases then complete
+all 160 riders through km 99. At km 100 the source names
+`rival-16-5` and `rival-8-5` as new attackers even though they are
+already on paid rear roads. The front launch guard refuses rather
+than moving them to the peloton or assigning a scripted gap.
+The km-100 diagnostic now names the first refused rider and his
+physical boundary: `rival-16-5` is on `solo-rival-16-5` at 99,000 m,
+with 79.082 physical reserve versus 79.194 in the source ledger.
+The source calls this a `preset_cadence` launch. The replay records
+that mismatch in refusal evidence; it does not turn the rear road
+into a peloton launch or claim the source road-3 gap as physical.
+The version 1 detached-preset continuation now handles this precise
+source-only cadence case in the 260 km flat, fatigue-0 seed. Both
+named riders retain their paid rear roads. Their decisions record
+physical reserve, perceived solo and attack strength, current team
+orders and sporting stakes, and decline the source's *front* launch
+without spending energy or moving distance at the boundary. The
+ordinary physical rear choices pay km 100 for all 160 riders, while
+source break membership remains a separate claim. A forged explicit
+manager attack still refuses this path. Km 101 then pays all 160
+riders with the source's recorded front rest; former break identity
+persists even when those riders were never physically caught.
+The 30-fatigue 260 km path has a separate paid road contact at km 25;
+its subsequent paid continuation is described below.
+
+The fatigue-0 seed-1 continuation now carries all 160 paid riders
+from km 102 through the 260 km boundary. Two measured rear-road
+contacts at km 123 and 139 use the existing paid contact fragment and
+whole-field audit. The source withdraws two claimed break riders at
+km 209; they retain physical rear roads. The same automatic preset
+attempt returns at km 220 and is again declined from those roads.
+The source break claim ends at km 257 without assigning a physical
+catch from that label. The version 1 whole-race validator accepts
+41,600 rider kilometres with continuous reserve, distance and clocks.
+The source gap audit remains a comparison; no official finish is awarded.
+Of 374 source group checkpoints covering 878 rider comparisons,
+60 claim a larger lead than any member's paid individual clock.
+The largest excess is 27.95292 seconds. This whole-race mismatch
+still blocks promotion despite the complete physical energy replay.
+The first mismatch has a concrete origin at km 5: the source gives
+two fresh attackers a 27.78-second road-1 gap from attack pressure
+with zero source chase power. The paid peloton nevertheless has two
+named front turns, and the faster attacker's measured lead at that
+boundary is only 0.31332 seconds. The source's pressure-derived gap
+is therefore not a distance earned on those paid roads. Matching
+that number by assigning it to the physical riders would fabricate
+their position; a calibrated V94 source must instead derive its
+road claims from the paid clocks and contacts.
+At the fatigue-0 finish, 87 of 160 source finish claims disagree with
+the paid clocks; the largest difference is 1,125.602364 seconds for
+`rival-10-0`. These are finish calibration errors despite complete
+energy and distance accounting.
+
+Before the payable-rear continuation, the same seed at fatigue 30
+paid all 160 riders through km 251,
+including the km-25 road contact. Km 252 has a measured reserve
+refusal: `rival-10-0` reaches the boundary in
+`paid-contact-km251-8` with 0.316 reserve, but its recorded
+steady-effort leader turn demands 0.3496. The replay names the rider,
+road, role, effort and shortfall and refuses to grant the remaining
+work or speed for free. This path needs a versioned depleted-rider
+choice with paid speed and contact resolution before it can claim a
+260 km finish. The fatigue-0 whole-race result did not validate this
+fatigue-30 path.
+The separate `v2-rear-depleted-travel-1` quote now applies the
+existing exhaustion coast factor to the rider's own road: it spends
+at most available reserve, records unmet demand and slows the rider's
+clock. It does not yet choose a replacement leader, settle followers'
+clocks or join roads at contact by itself; a separate guarded
+boundary decision is required for the km-252 replay.
+The opt-in payable rear boundary and mixed continuation now resolve
+that specific km-252 turn: `rival-10-0` cannot fund another leader
+turn, so `rival-14-0` takes the payable lead with three payable
+followers. `rival-10-0` continues on a separate solo road. From km
+253, depleted solo decisions spend only available reserve and use
+the slower coast clock; the prior versions retain their refusal.
+This fatigue-30 trace pays all 160 riders through km 260. At km 259
+the paid rear group overtakes the depleted solo `rival-10-1` at
+258,628.40438 m. The solo has no reserve to pay for shelter over
+the remaining road, so a versioned contact receipt keeps the two
+roads separate, with neither free speed nor a fabricated group.
+The whole-race validator accepts 41,600 rider kilometres with
+continuous reserve, clock and distance; a forged pass-through group
+claim fails source replay. The source-gap audit compares 379 group
+checkpoints and 896 rider leads. In 57 checkpoints the source gap
+exceeds even the best individual paid lead, by up to 25.61068
+seconds. This calibration failure still blocks promotion. The
+trace has no official result or placing.
+The version 1 finish-source audit compares every source finish claim
+with each rider's paid clock relative to the paid front. In this
+fatigue-30 seed, 74 of 160 claims differ beyond the accounting
+tolerance. The largest difference is `rival-10-0`: the source calls
+him a bunch finisher, while his paid solo road reaches the line
+1,473.221217 seconds after the front. This is a source/physical
+classification conflict, not a wheel-order question. The audit
+does not turn either claim into an official placing.
+The separate version 1 paid-finish view groups riders only when their
+last physical road and finish clock agree. A shared rear road must
+have its paid group receipt in the final kilometre; deleting that
+receipt makes the finish invalid. The fatigue-30 260 km trace has 13
+such roads. Four riders share the first paid road, the bunch reaches
+the finish 130.922269 seconds later, and the last solo road arrives
+1,604.143486 seconds after the first. These are measured clock
+differences and road memberships, with no wheel order, official
+places or awards.
+The opt-in `v94-physical-whole-race-replay-1` now assembles the
+versioned kilometre decisions into one reproducible physical trace
+and returns the complete-race validation, source-gap audit,
+finish-source audit and paid-finish roads together. It has been
+checked on five flat 120 km same-seed cases (seed 1 fatigue 0,
+seeds 2 and 3 fatigue 0/30) and both flat 260 km seed-1 cases
+(fatigue 0/30), plus one rolling 120 km seed-1 fatigue-0 case.
+All eight reach 160 finish clocks and retain
+their explicit source-calibration failure. Contact, source rest,
+detached automatic presets and depleted solo continuations use
+their existing guarded versions. This is a research replay library;
+the ordinary guided race and production preview do not consume it.
+Mountain 120 km seed 1 at fatigue 0 and 30 currently refuses at
+km 21: a front rider drops into a measured rear solo road at
+20,169.291339 m or 20,100.309376 m respectively. The paid km-6
+front-drop settlement is specific to that earlier case and cannot
+be reused for this later climb contact. The missing kilometre
+requires its own versioned paid contact and subsequent whole-field
+audit before a mountain finish can be claimed.
+
+Callers of the experimental preview can request
+`physicalFirstKmVersion: 1` to receive this completed physical first
+kilometre as a separate `physicalFirstKm` result. It requires the
+named peloton-front plan and committed sporting stakes. It does not
+change the V94 recording, guided-race policy, provisional finish or
+default API response. The opt-in result is source-replayed and has no
+official placing or whole-race claim.
+
+## Whole-race physical replay update (2026-11-05)
+
+The later opt-in `v94-physical-whole-race-replay-5` supersedes the
+km-21 mountain refusal described above. All ten same-seed whole-race
+cases now reach their route boundary with 160 paid rider finishes per
+kilometre: two 260 km flat cases, five 120 km flat cases, one 120 km
+rolling case, and both 120 km mountain fatigue cases. The 120 km
+mountain traces validate 19,200 continuous rider kilometres each;
+the 260 km flat traces validate 41,600 each. The physical finish view
+includes every rider and awards no official result.
+
+At mountain km 21 with fatigue 30, the same rear solo actually crosses
+33 dropped front riders in three measured contact batches. The first
+13 cannot hold and pay shelter, and pass separately. The later 17 and
+three can pay, forming one group with a single paid leader and 20
+sheltered riders. No rear group is created for the 13 pass-throughs.
+Subsequent source break labels remain distinct from physical road
+membership. Recorded paid contact lets rear riders regroup at km 102;
+at km 114 two solo riders cross but cannot form a payable pair, so
+both continue on separately paid roads. The older refusal guards
+still reject unpaid contact, unsupported source membership and
+unpayable work.
+
+Completion of distance and energy replay does **not** pass same-seed
+source calibration. In the 120 km mountain fatigue-0 case, 49 source
+group checkpoints exceed the best individual paid lead, with a maximum
+excess of 27.44668 seconds; 119 source finish claims differ from paid
+clocks, by up to 498.307936 seconds. With fatigue 30 the corresponding
+counts are 38 checkpoints and 109 finish claims, with maximum excess
+25.07512 seconds and maximum finish difference 460.811973 seconds.
+The first excess in both cases is at km 5. The source gives road-1 a
+27.76 or 25.42 second gap, while the best paid individual lead is
+only 0.31332 or 0.34488 seconds. The source model converts abstract
+attack pressure to gap seconds in `tactics.mjs`; the physical model
+prices each attacker's road and the named peloton turns. Assigning the
+source gap to those riders would invent an untraveled position.
+Calibration therefore remains an explicit release blocker. V94 stays
+separate from guided races and production until the physical clocks,
+contact decisions and finish claims can be reconciled without
+inserting source gaps as movement.
+
+The version 1 paid rider decision audit now checks every physical
+rider kilometre for a versioned choice and sporting goal on a paid
+front road, rear road or physical catch. Contact group traces carry
+the chosen paid leader or shelter role, committed team effort and
+sporting stakes alongside the energy receipt. All ten whole-race
+cases pass this audit (160 riders per kilometre; 19,200 decisions in
+each 120 km case and 41,600 in each 260 km case). Removing one
+contact rider's choice makes the audit refuse km 32 by rider ID.
+Version 2 of that audit also requires the committed effort and a
+finite perceived ability in each accepted paid decision. Contact
+fragments now carry the measured ability used to select the leader
+or verify shelter, and a caught rider records shelter ability at
+contact. Removing the ability from a contact decision also refuses
+km 32 by rider ID. This establishes decision input coverage, while
+the source gap and finish clock mismatches above still block
+guided-race promotion.
+
+Version 3 compares the recorded effort and sporting goal with the
+committed kilometre order and team intent. Forging either on a paid
+contact rider fails at km 32 with that rider ID. The physical trace
+therefore documents which inputs actually governed each accepted
+decision; the independent source clock calibration still fails.

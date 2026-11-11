@@ -28,3 +28,6 @@
 .identity-victory p:not(.identity-eyebrow) { line-height: 1.7; color: #58674f; }
 @media(max-width:700px) { .identity-hero,.identity-victory { grid-template-columns: 1fr; }.identity-race-art { transform: none; }.identity-victory > div { padding: 24px; } }
 @media(max-width:700px) { .club-roster .club-rider-art .club-rider-portrait .rider-avatar { width:125px!important; height:125px!important; } }
+
+.club-race-readiness { display: flex; flex-wrap: wrap; align-items: center; column-gap: 16px; row-gap: 6px; }
+.club-race-readiness > span { display: inline-flex; align-items: baseline; gap: 5px; }
