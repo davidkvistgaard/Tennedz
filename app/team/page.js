@@ -29,12 +29,12 @@ function NextRace({ gender }) {
   const next = nextTeamRace(calendar.events,gender,now+calendar.offset);
   const raceDate=next?.scheduled_at??next?.deadline;
   const action=next?.team_ready?"Review lineup":next?"Set up team":"Open race calendar";
-  return <section className="club-race" aria-label="Next race">
-    <p className="identity-eyebrow">NEXT CHAPTER · {gender==="M"?"MEN":"WOMEN"}</p>
-    <h2>{calendar.loading?"Loading your next race…":next?.name || (calendar.error?"Calendar unavailable":"The road is waiting")}</h2>
+  return <section className="club-race" aria-labelledby="club-next-race-label">
+    <p id="club-next-race-label" className="identity-eyebrow">NEXT RACE · {gender==="M"?"MEN":"WOMEN"}</p>
+    <h2>{calendar.loading?"Loading…":next?.name || (calendar.error?"Calendar unavailable":"The road is waiting")}</h2>
     {next&&<p className="club-race-date">{next.scheduled_at?"Race day":"Entry deadline"} · {new Date(raceDate).toLocaleDateString("en-GB",{weekday:"long",day:"numeric",month:"long",timeZone:"UTC"})}{next.race_tier?` · T${next.race_tier}`:""}</p>}
     {next&&<div className="club-race-readiness"><span>Team <strong>{next.team_count??0}/{next.team_size??8}</strong></span><span>{next.team_ready?"Entered":"Lineup needed"}</span></div>}
-    <p>{calendar.error || (next ? `Entries close ${new Date(next.deadline).toLocaleString("en-GB",{timeZone:"UTC",day:"numeric",month:"long",hour:"2-digit",minute:"2-digit"})} UTC.` : calendar.loading?"":"There are no open one-day races for this squad yet. Get to know your riders and check the calendar for your next race.")}</p>
+    <p>{calendar.error || (next ? `Entries close ${new Date(next.deadline).toLocaleString("en-GB",{timeZone:"UTC",day:"numeric",month:"long",hour:"2-digit",minute:"2-digit"})} UTC.` : calendar.loading?"":"There are no open one-day races for this squad yet.")}</p>
     <Link className="btn" href={next?`/team/run?event_id=${encodeURIComponent(next.id)}&gender=${gender}`:"/team/calendar"}>{action} ↗</Link>
   </section>;
 }
@@ -61,7 +61,7 @@ export default function TeamPage() {
   return <TeamShell compact>
     <div className="club-heading"><div><p className="identity-eyebrow">TEAM OFFICE · MY TEAM</p><h1>{team.name}</h1></div><div className="club-actions"><button className="btn" disabled={busy} onClick={reload}>Refresh</button><button className="btn" disabled={busy} onClick={signOut}>Sign out</button></div></div>
     <p role="status" className="club-status">{status}</p>
-    <div className="club-overview"><NextRace gender={gender}/><section className="club-stats" aria-label="Team overview"><div><span>Team budget</span><strong>{format(team.budget)}</strong><small>Coins: {format(team.coins)}</small></div>{[["M","Men"],["F","Women"]].map(([g,label])=><div key={g}><span>{label} · {riders.filter(r=>r.gender===g).length} riders</span><strong>{format(teamRating(riders,g))}</strong><small>team rating · race points</small></div>)}</section></div>
+    <div className="club-overview"><NextRace gender={gender}/><section className="club-stats" aria-label="Team overview"><div><span>Coins</span><strong>{format(team.coins)}</strong><small>Gems: {format(team.gems)}</small></div>{[["M","Men"],["F","Women"]].map(([g,label])=><div key={g}><span>{label} · {riders.filter(r=>r.gender===g).length} riders</span><strong>{format(teamRating(riders,g))}</strong><small>team rating · race points</small></div>)}</section></div>
     <section aria-labelledby="club-roster-title"><div className="club-roster-title"><h2 id="club-roster-title">The people behind the team</h2><p>Two squads. Their own races. One shared ambition.</p></div>
       <div className="club-toolbar"><div className="club-genders" role="group" aria-label="Choose squad"><button aria-pressed={gender==="M"} onClick={()=>changeSquad("M")}>Men</button><button aria-pressed={gender==="F"} onClick={()=>changeSquad("F")}>Women</button></div><label>Search riders<input type="search" value={query} onChange={e=>setQuery(e.target.value)} placeholder="Find a name…"/></label><label>Specialty<select value={specialty} onChange={e=>setSpecialty(e.target.value)}><option value="all">All riders</option><option value="sprint">Sprinters</option><option value="mountain">Climbers</option><option value="hills">Puncheurs</option><option value="cobbles">Classics riders</option><option value="timetrial">Time triallists</option></select></label><label>Sort by<select value={sort} onChange={e=>setSort(e.target.value)}>{SKILLS.map(([key,label])=><option key={key} value={key}>{label}</option>)}</select></label><label>Order<select value={direction} onChange={e=>setDirection(e.target.value)}><option value="DESC">High → low</option><option value="ASC">Low → high</option></select></label></div>
       <p className="small" aria-live="polite">{visible.length} riders · {gender==="M"?"Men’s squad":"Women’s squad"}</p>
