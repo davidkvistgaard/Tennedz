@@ -1212,3 +1212,15 @@ without changing recorded motor fields. The 64 MiB
 compact bound leaves little headroom for other races. The V1 archive
 decoder remains available for historic experimental recordings. The
 storage change does not settle finish ties or hosted runtime cost.
+
+The same synthetic game-starter-profile event with a selective attack
+initially stopped at kilometre 1: an attack choice on a clear own lane
+was admitted even though the rider's paid speed could not reach the
+required separation. The V15 shared-road rule now checks paid runway
+for both an own-lane attempt and a passing-corridor attempt. When
+runway is insufficient it records a refusal and keeps the choice
+distinct from a physical departure. Two seeds in each category now
+complete and replay all 14,400 decisions and 120 finishes per race,
+with no fabricated attack departure. A focused 16-rider regression
+covers this case;
+previous shared-road versions retain their behavior.

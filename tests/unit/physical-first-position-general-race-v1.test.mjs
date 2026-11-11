@@ -12,6 +12,8 @@ import {advancePhysicalFirstPositionSharedRoadKmV11,
   '../../lib/engine/v2/physical-first-position-shared-road-km-v1.mjs';
 import {runPhysicalFirstWholeRaceProbeV1} from
   '../../lib/engine/v2/physical-first-whole-race-probe-v1.mjs';
+import {replayRearEnergyCapV1} from
+  '../../lib/engine/v2/rear-energy-cap-source-v1.mjs';
 import {recordPhysicalFirstPositionGeneralRaceV1,
   replayPhysicalFirstPositionGeneralRaceV1,
   recordPhysicalFirstPositionGeneralRaceV2,
@@ -49,6 +51,40 @@ test('a connected start records every rider without an attack',()=>{
   assert.throws(()=>
     replayPhysicalFirstPositionGeneralRaceV1(
       request,forged),/differs from paid movement/);
+});
+
+test('V7 records a chosen attack without launch when paid runway is insufficient',()=>{
+  const request=prepareSyntheticPositionCatchV1({
+    teamCount:2,kmCount:20,
+    profile:'hill_then_mountain',
+    oneTimeAttack:true});
+  request.input.positionPassingCorridorCount=1;
+  const actor=request.input.teams[0].riders[6];
+  actor.flat=0;
+  actor.hills=0;
+  actor.mountain=0;
+  actor.sprint=0;
+  delete actor.acceleration;
+  delete actor.positioning;
+  request.input.start.riders.find(row=>
+    row.riderId===actor.id).reserve=
+    replayRearEnergyCapV1({rider:actor,
+      kilometres:request.input.kilometres,
+      throughKm:0}).initialCap;
+  const race=recordPhysicalFirstPositionGeneralRaceV7(
+    request);
+  assert.equal(race.completedThroughKm,20);
+  assert.equal(race.decisionCount,320);
+  assert.equal(race.finishCrossings.length,16);
+  assert.equal(race.steps[0].attackChoices.find(row=>
+    row.riderId===actor.id)?.choice,
+  'attempt_paid_attack');
+  assert.equal(race.attackDepartureEvents.length,0);
+  assert.equal(race.steps[0].sharedRoad.attackRefusal?.reason,
+    'insufficient_paid_attack_runway');
+  assert.deepEqual(
+    replayPhysicalFirstPositionGeneralRaceV7(
+      request,race),race);
 });
 
 test('membership-only contact events preserve paid movement and finish',()=>{
