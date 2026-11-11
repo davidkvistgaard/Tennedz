@@ -29,6 +29,12 @@ Their local end-to-end diagnostic elapsed times were 131.6–153.0 seconds,
 including replay and JSON measurements, so this is not a hosted function
 runtime benchmark. A tie-free mountain fixture cannot clear the finish gate
 for a different route profile.
+In a repeat of the alternating men's no-attack control, all four tied groups
+(ten riders in total) had identical recorded starter sporting profiles within
+each group, including skills, form, fatigue and leadership. This explains why
+the synthetic field can produce indistinguishable paid crossings; it does
+not justify sorting the tied riders by ID or assigning official places. The
+diagnostic now reports profile equality for every tie group.
 
 A separate new-seed same-input holdout covered both categories, flat and
 mountain routes, and selective and all-helper chase orders (eight 120-rider

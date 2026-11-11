@@ -70,6 +70,16 @@ replayPhysicalFirstPositionGeneralRaceV7(request,race);
 const tiedRiders=new Set(
   race.finaleFinishTieObservations.flatMap(row=>
     row.riderIds));
+const profileKeys=[...skills,'form','fatigue',
+  'leadership'];
+const tieProfileGroups=race.finaleFinishTieObservations
+  .map(row=>({
+    clockSeconds:row.clockSeconds,
+    riderIds:row.riderIds,
+    matchingSportingProfiles:new Set(
+      row.riderIds.map(id=>JSON.stringify(
+        profileKeys.map(key=>byId.get(id)?.[key]))))
+      .size===1}));
 const sectionBytes=Object.fromEntries(
   Object.entries(race).map(([key,value])=>
     [key,Buffer.byteLength(JSON.stringify(value))]));
@@ -116,6 +126,7 @@ console.log(JSON.stringify({
   paidSprintPasses:race.finaleSprintPassEvents.length,
   tieGroups:race.finaleFinishTieObservations.length,
   tiedRiders:tiedRiders.size,
+  tieProfileGroups,
   replayVerified:true,
   officialResults:race.officialResults,
 }));
