@@ -73,6 +73,15 @@ There were no sprint attempts because no team had a committed sprint goal.
 These results support replay integrity for that input, but not an official
 finish order or sporting calibration across new orders and seeds.
 
+A direct, unchanged men/mountain holdout on seed
+`viewer-release-holdout-2` produced 11 finish-clock tie observations. The
+first two riders both crossed at exactly `10835.80537419145` seconds; two
+more crossed at exactly `10836.80824399145`. The crossing recorder retains
+full numeric precision and calls times tied within `1e-6` seconds, so these
+are identical model crossing times rather than display rounding. Sorting
+the tied rider IDs would invent an official order. The finish solver still
+describes its crossing order as non-official.
+
 ## Hosted check
 
 The branch Preview uses an isolated test Supabase project. A normal
