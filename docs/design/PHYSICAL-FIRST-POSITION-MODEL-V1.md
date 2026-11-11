@@ -1113,7 +1113,7 @@ validation of selected riders, actual orders, sporting stakes,
 names, bibs and team styles. A named abstract start grid is
 included in the new positional input hash; the bridge never
 assigns positions to old recordings. The V7 motor computes the
-race, the V2 viewer projection replays it, and a content hash
+race, the versioned viewer projection replays it, and a content hash
 seals the transport document. Men's and women's 16-rider,
 20 km game-shaped fixtures validate and reject a changed
 viewer frame. A separate 120-rider, 120 km game-shaped
@@ -1123,12 +1123,15 @@ checks transport integrity, not a substitute for a full motor
 replay. The separate race-bundle API keeps the V7 request and
 ledger, replays them and verifies that they reproduce the
 sealed viewer projection. A forged energy entry fails that
-check. Retaining the bundle for a later audit still requires
-separate persistence. The read-only
+check. A separate experimental archive retains the bundle
+for later audit. The read-only
 loader refuses changed game snapshots or entry rows before
-or after simulation. This bridge is not connected to official
-races, persistence or a hosted WebGL viewer and does not
-publish results.
+or after simulation. A later, separate experimental database
+schema and protected local routes persist a replayable archive and
+serve the sealed viewer document with a shared clock. The schema
+has not been applied to the hosted database, and this bridge is
+not connected to official races or guided gameplay. It does not
+publish official results.
 The game-shaped bridge now resolves a missing stored seed or
 locked weather using the same deterministic fallback as the
 current official engine, and seals explicit provenance for each
@@ -1169,3 +1172,25 @@ sprint choices, 39–45 sprint passes, full decision/crossing/frame
 coverage and at least one unresolved finish tie. These
 experimental stakes are not the unmodified Motor Lab generator
 or an official game result.
+The V3 viewer adapter keeps the complete V7 recording as authority
+while bounding the displayed `pelotonia.viewer.v1` document. A
+150-rider, 120 km mixed attack-and-sprint stress race has more than
+2,200 all-rider finale frames and over 25 MB of raw finale position
+projection per tested seed. V3 selects only recorded frames, retaining
+the first sample at or after each rider's measured finish crossing.
+It declares the displayed sample count and refuses an oversized
+feed or document. Four synthetic whole-race cases, two seeds in
+each category, complete and replay with 18,000 decisions and 150
+finishers each. Their complete viewer projections measure about
+3.26–3.33 MB. The motor archives remain complete and separate.
+V1/V2 recordings retain their original export and verification
+behavior. These cases still contain unresolved model-clock ties;
+the transport change does not validate an official finish.
+An additional read-only diagnostic copies the game's starter sporting
+profiles into labelled synthetic 120-rider V7 events. Three seeds in
+each category complete and replay all 14,400 decisions and 120
+finish crossings, with no model-clock tie in any of the six races.
+This differs materially from equal-rating test fixtures, but is
+not a persisted roster, a varied-order sample, or proof that all
+future events have an unambiguous winner. No official result is
+published by this diagnostic.
