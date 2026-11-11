@@ -5,7 +5,33 @@ import { useAuth } from "../../components/AuthProvider";
 import { api } from "../../../lib/api";
 
 export default function AccountSettings() {
-  const { session } = useAuth();
+  const { session, refresh } = useAuth();
+  const [nameDraft, setNameDraft] = useState(null);
+  const [nameBusy, setNameBusy] = useState(false);
+  const [nameFeedback, setNameFeedback] = useState(null);
+  const teamName = session?.team?.name ?? "";
+  const name = nameDraft ?? teamName;
+
+  async function changeTeamName(event) {
+    event.preventDefault();
+    setNameFeedback(null);
+    setNameBusy(true);
+    try {
+      const saved = await api("/api/team/name", {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ name }),
+      });
+      setNameDraft(saved.name);
+      await refresh();
+      setNameFeedback({ message: "Team name saved." });
+    } catch (cause) {
+      setNameFeedback({ error: true, message: cause.message || "Could not save your team name. Please try again." });
+    } finally {
+      setNameBusy(false);
+    }
+  }
+
   const [current, setCurrent] = useState("");
   const [next, setNext] = useState("");
   const [confirmation, setConfirmation] = useState("");
@@ -39,7 +65,17 @@ export default function AccountSettings() {
         <p className="identity-eyebrow">YOUR ACCOUNT</p>
         <h2 id="account-details-title">Manager profile</h2>
         <p>Signed in as <strong>{session?.user?.display_name || "Manager"}</strong>.</p>
-        <p className="account-settings-note">Your team and riders stay connected to this account when you change its password.</p>
+        <form id="team-name" onSubmit={changeTeamName} aria-busy={nameBusy}>
+          <label className="studio-field">Team name
+            <input type="text" required minLength={3} maxLength={40} value={name} disabled={nameBusy}
+              onChange={event => { setNameDraft(event.target.value); setNameFeedback(null); }}/>
+          </label>
+          <button className="btn primary" type="submit" disabled={nameBusy || name.trim() === teamName}>
+            {nameBusy ? "Saving…" : "Save team name"}
+          </button>
+          {nameFeedback && <p className={nameFeedback.error ? "account-settings-error" : "account-settings-success"}
+            role={nameFeedback.error ? "alert" : "status"}>{nameFeedback.message}</p>}
+        </form>
       </section>
       <section className="studio-panel" aria-labelledby="password-title">
         <p className="identity-eyebrow">ACCOUNT SECURITY</p>

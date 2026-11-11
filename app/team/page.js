@@ -59,7 +59,7 @@ export default function TeamPage() {
   async function signOut(){setBusy(true);try{await logout();}catch{setStatus("Could not sign out. Please try again.");setBusy(false);}}
   if(!team) return null;
   return <TeamShell compact>
-    <div className="club-heading"><div><p className="identity-eyebrow">TEAM OFFICE · MY TEAM</p><h1>{team.name}</h1></div><div className="club-actions"><button className="btn" disabled={busy} onClick={reload}>Refresh</button><button className="btn" disabled={busy} onClick={signOut}>Sign out</button></div></div>
+    <div className="club-heading"><div><p className="identity-eyebrow">TEAM OFFICE · MY TEAM</p><h1>{team.name}</h1></div><div className="club-actions"><Link className="btn" href="/team/settings#team-name">Change team name</Link><button className="btn" disabled={busy} onClick={reload}>Refresh</button><button className="btn" disabled={busy} onClick={signOut}>Sign out</button></div></div>
     <p role="status" className="club-status">{status}</p>
     <div className="club-overview"><NextRace gender={gender}/><section className="club-stats" aria-label="Team overview"><div><span>Coins</span><strong>{format(team.coins)}</strong><small>Gems: {format(team.gems)}</small></div>{[["M","Men"],["F","Women"]].map(([g,label])=><div key={g}><span>{label} · {riders.filter(r=>r.gender===g).length} riders</span><strong>{format(teamRating(riders,g))}</strong><small>team rating · race points</small></div>)}</section></div>
     <section aria-labelledby="club-roster-title"><div className="club-roster-title"><h2 id="club-roster-title">The people behind the team</h2><p>Two squads. Their own races. One shared ambition.</p></div>
