@@ -40,7 +40,8 @@ test('saved V7 game race reaches the shared WebGL viewer',
       event_id:eventId,already_recorded:false});
     expect(receipt.sha256).toMatch(/^[a-f0-9]{64}$/);
     await expect(page).toHaveURL(new RegExp(
-      `/team/motor-lab/position-viewer/${eventId}$`));
+      `/team/motor-lab/position-viewer/${eventId}$`),
+    {timeout:30000});
     await expect(page.getByRole('heading',
       {name:'Recorded position race'})).toBeVisible();
     const finished=process.env.

@@ -52,7 +52,8 @@ export default function ViewerPreviewScene({feed,coverage,mode='recorded',
       });
     }),[feed,mode]);
   const situation=useMemo(()=>sampler(time),[sampler,time]);
-  const positionInspection=coverage?.exactFinalePositionSamples===true;
+  const positionInspection=mode==='position'&&
+    Number.isInteger(coverage?.recordedBoundaryFrames);
   const beforeStartCount=positionInspection?
     situation.positions.filter(row=>row.distance<0).length:0;
   const positionNote=positionInspection?
@@ -63,7 +64,10 @@ export default function ViewerPreviewScene({feed,coverage,mode='recorded',
         'The riders have finished at recorded times. Their finish '+
         'coordinates overlap here; no official placing is inferred.':
         'Longitudinal positions are recorded. Metric lane '+
-        'coordinates are unavailable, so the scene uses one road line.':
+        'coordinates are unavailable, so the scene uses one road line.'+
+        (coverage?.exactFinalePositionSamples===false?
+          ' The finale display samples recorded frames; exact '+
+          'finish clocks remain in the race evidence.':''):
     groupOnlyPositions?
       'These riders share a recorded road position. Their individual '+
       'lanes and order were not recorded.':null;
@@ -273,6 +277,11 @@ export default function ViewerPreviewScene({feed,coverage,mode='recorded',
             coverage.recordedContactEvents} recorded contacts.`:''}
           {mode==='position'?` ${coverage.paidRiderKilometres} paid rider-kilometres; ${
             coverage.recordedBoundaryFrames} recorded boundary frames.`:''}</p>
+        {mode==='position'&&coverage.exactFinalePositionSamples===false?
+          <p>{coverage.renderedFinaleFrames} of {
+            coverage.recordedFinaleFrames-1} recorded finale frames are
+            displayed. The complete motor recording and exact finish
+            clocks remain available as race evidence.</p>:null}
         <p>{mode==='exhibition'?
           'All positions, groups, gaps, route and events are fictional. This mode tests the viewer appearance only.':
           mode==='split'?

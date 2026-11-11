@@ -1,5 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
+import {createHash} from 'node:crypto';
 import {validateFeed} from '@pelotonia/race-viewer/data';
 import {createGameSnapshotPaidViewerDocumentV1,
   GAME_SNAPSHOT_PAID_VIEWER_VERSION} from
@@ -19,6 +20,8 @@ import {encodeGameSnapshotPositionRaceArchiveV1,
 import {createPhysicalGameRaceDocumentV1,
   loadPhysicalGameRaceDocumentV1} from
   '../../lib/viewer/physical-game-race-source-v1.mjs';
+import {adaptPhysicalFirstPositionRaceV2} from
+  '../../lib/viewer/physical-first-position-adapter-v1.mjs';
 
 const skills={sprint:65,flat:65,hills:65,mountain:65,
   cobbles:65,timetrial:65,endurance:65,strength:65,
@@ -144,6 +147,42 @@ test('saved position bundle retains a replayable motor record',()=>{
   assert.throws(()=>
     verifyGameSnapshotPositionRaceBundleV1(wrongKit),
   /changed its viewer projection/);
+});
+
+test('saved V2 position bundles still replay under the V3 exporter',()=>{
+  const {snapshot,manifest}=fixture('M');
+  const bundle=createGameSnapshotPositionRaceBundleV1(
+    snapshot,manifest);
+  const old=adaptPhysicalFirstPositionRaceV2({
+    request:bundle.request,race:bundle.race,
+    raceId:bundle.document.raceId,
+    category:bundle.presentation.category,
+    teamStyles:bundle.presentation.teamStyles,
+    riderNumbers:bundle.presentation.riderNumbers,
+    fixtureKind:'committed_game_snapshot',
+    teamKitSource:'committed-game-manifest',
+    riderNumberSource:'committed-game-manifest'});
+  const payload={...bundle.document,
+    adapterVersion:old.version,feed:old.feed,
+    finishEvidence:old.finishEvidence,
+    coverage:old.coverage,
+    source:{...old.source,
+      inputBridgeVersion:
+        bundle.document.source.inputBridgeVersion,
+      validatedKm:bundle.document.source.validatedKm,
+      validatedRiderKilometres:
+        bundle.document.source.validatedRiderKilometres}};
+  delete payload.sha256;
+  const canonical=value=>Array.isArray(value)?
+    value.map(canonical):value&&typeof value==='object'?
+      Object.fromEntries(Object.keys(value).sort().map(key=>
+        [key,canonical(value[key])])):value;
+  const sha256=createHash('sha256').update(
+    JSON.stringify(canonical(payload))).digest('hex');
+  const historical={...bundle,
+    document:{...payload,sha256}};
+  assert.equal(verifyGameSnapshotPositionRaceBundleV1(
+    historical),historical);
 });
 
 test('compressed V7 archive replays its original motor and viewer document',()=>{

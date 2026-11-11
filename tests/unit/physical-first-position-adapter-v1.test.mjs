@@ -6,7 +6,9 @@ import {prepareSyntheticPositionCatchV1} from
   './synthetic-position-catch-fixture-v1.mjs';
 import {recordPhysicalFirstPositionGeneralRaceV7} from
   '../../lib/engine/v2/physical-first-position-general-race-v1.mjs';
-import {adaptPhysicalFirstPositionRaceV1} from
+import {adaptPhysicalFirstPositionRaceV1,
+  adaptPhysicalFirstPositionRaceV3,
+  PHYSICAL_FIRST_POSITION_VIEWER_ADAPTER_V3_VERSION} from
   '../../lib/viewer/physical-first-position-adapter-v1.mjs';
 
 const makeRecord=(category='men',riderCount=16,
@@ -69,6 +71,40 @@ for(const riderCount of [16,30,150])
     assert.equal(sampler(0).positions.length,riderCount);
     assert.equal(sampler(feed.duration).positions.length,riderCount);
     assert.ok(commentaryAt(feed,0).every(event=>event.time<=0));
+    if(riderCount===150){
+      const v3=adaptPhysicalFirstPositionRaceV3({
+        ...source,fixtureKind:'synthetic_motor_lab'});
+      const recordedTimes=new Set([
+        0,...source.race.steps.map(step=>
+          step.sharedRoad.clockSeconds),
+        ...source.race.tail.positionFrames.map(row=>
+          row.clockSeconds)]);
+      assert.equal(v3.version,
+        PHYSICAL_FIRST_POSITION_VIEWER_ADAPTER_V3_VERSION);
+      assert.ok(v3.feed.frames.every(frame=>
+        recordedTimes.has(frame.time)));
+      const finaleRows=source.race.tail.positionFrames.slice(1);
+      const displayedTimes=new Set(v3.feed.frames.map(frame=>
+        frame.time));
+      for(const crossing of source.race.finishCrossings){
+        const milestone=finaleRows.find(row=>
+          row.clockSeconds>=crossing.clockSeconds);
+        assert.ok(milestone);
+        assert.ok(displayedTimes.has(milestone.clockSeconds));
+      }
+      assert.equal(v3.feed.frames.at(-1).time,
+        v3.feed.duration);
+      assert.ok(v3.feed.frames.every(frame=>
+        frame.positions.length===riderCount));
+      assert.ok(v3.coverage.viewerFeedBytes<=3_500_000);
+      assert.equal(v3.coverage.viewerFeedBytes,
+        Buffer.byteLength(JSON.stringify(v3.feed)));
+      assert.equal(v3.coverage.renderedFinaleFrames,
+        v3.feed.frames.length-21);
+      assert.equal(v3.coverage.exactFinalePositionSamples,
+        v3.coverage.renderedFinaleFrames===
+        source.race.tail.positionFrames.length-1);
+    }
   });
 
 test('V7 export rejects forged motor movement and missing identity',()=>{
