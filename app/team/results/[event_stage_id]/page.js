@@ -212,7 +212,7 @@ export default function ResultsPage({ params }) {
                     <h2>Rider results</h2>
                     <p className="small">
                       {winterPoints
-                        ? "The winner earns one point per starter in this division. Each following place earns one less, with zero for last place."
+                        ? "The winner earns one point per starter in this division. Each following place earns one less, with one point for last place."
                         : "The first 20 riders earn rider points. These points contribute to your team’s rating in this race category."}
                     </p>
                     <div className="table-scroll">

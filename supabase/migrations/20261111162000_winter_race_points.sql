@@ -46,7 +46,7 @@ begin
         or (r->>'points')::integer < 0 or (not winter_points and (r->>'points')::integer > 100)
         or (winter_points and ((r->>'position')::integer not between 1 and starters
           or (r->>'points')::integer is distinct from
-            case when (r->>'position')::integer=starters then 0 else starters-(r->>'position')::integer+1 end))
+            starters-(r->>'position')::integer+1))
         or (r->>'time_sec')::numeric <= 0 then
         raise exception using errcode='PT400', message='Ugyldigt rytterresultat.';
       end if;

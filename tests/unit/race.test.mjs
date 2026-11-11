@@ -47,7 +47,7 @@ test("winter races score every rider by field size and sum only the top 30 for t
     return {id,name:id,riders,entry:{selected_riders:riders.map(r=>r.id),captain_id:riders[0].id}};
   });
   const [division]=buildRace(s).divisions;
-  assert.deepEqual(division.results.map(r=>r.points),[...Array.from({length:71},(_,i)=>72-i),0]);
+  assert.deepEqual(division.results.map(r=>r.points),Array.from({length:72},(_,i)=>72-i));
   for(const team of division.teams){
     const expected=division.results.filter(r=>r.team_id===team.team_id&&r.position<=30)
       .reduce((sum,r)=>sum+r.points,0);
