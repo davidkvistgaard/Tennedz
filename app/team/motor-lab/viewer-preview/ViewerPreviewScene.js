@@ -34,8 +34,10 @@ export default function ViewerPreviewScene({feed,coverage,mode='recorded',
     viewerRef.current?.setZoom(.35);
   },[cycleKey]);
   const time=stats?.time??0;
-  const publishedFinish=mode==='split'&&finishEvidence&&
-    time>=finishEvidence.publishedAt?finishEvidence:null;
+  // The server releases this evidence after the recorded finish. Keep it
+  // visible across replay cycles; renderer stats are not a publication clock.
+  const publishedFinish=(mode==='split'||mode==='position')&&
+    finishEvidence?finishEvidence:null;
   const riderNames=useMemo(()=>new Map(feed.riders.map(rider=>
     [rider.id,rider.name])),[feed]);
   const sampler=useMemo(()=>createSampler(feed),[feed]);
@@ -151,7 +153,8 @@ export default function ViewerPreviewScene({feed,coverage,mode='recorded',
             <span>{String(index+1).padStart(2,'0')}</span>
             <strong>{group.label}</strong>
             <small>{group.count} {group.count===1?'rider':'riders'}</small>
-            <b>{index===0?'LEAD':mode==='split'?'—':
+            <b>{index===0?'LEAD':
+              mode==='split'||mode==='position'?'—':
               Number.isFinite(stats?.gaps?.[group.id])?
               `+${clockLabel(stats.gaps[group.id])}`:'—'}</b>
           </button>)}
@@ -265,13 +268,17 @@ export default function ViewerPreviewScene({feed,coverage,mode='recorded',
       {error?<p role="alert" className="race-theatre-error">{error}</p>:null}
       <details className="race-theatre-data"><summary>Data coverage and limitations</summary>
         <p>{mode==='exhibition'?'Visual fixture':'Adapter'} {version};
-          {coverage.boundaryFrames} display frames.
+          {coverage.boundaryFrames??coverage.renderedFrames} display frames.
           {mode==='split'?` ${coverage.paidRiderKilometres} paid rider-kilometres; ${
-            coverage.recordedContactEvents} recorded contacts.`:''}</p>
+            coverage.recordedContactEvents} recorded contacts.`:''}
+          {mode==='position'?` ${coverage.paidRiderKilometres} paid rider-kilometres; ${
+            coverage.recordedBoundaryFrames} recorded boundary frames.`:''}</p>
         <p>{mode==='exhibition'?
           'All positions, groups, gaps, route and events are fictional. This mode tests the viewer appearance only.':
           mode==='split'?
             'Longitudinal positions between motor crossings are interpolated. Group gaps are not presented as exact simultaneous positions. Lanes, canonical geography, helmets and official results are absent. Trees, ground and spectators are synthetic.':
+          mode==='position'?
+            'Each rider has recorded longitudinal positions at race start, every kilometre boundary and finale samples. Movement between samples is interpolation. Metric lane coordinates, canonical geography and official results are absent. Scenery is synthetic.':
           'Within-kilometre movement is interpolation between recorded states. Lanes, canonical geography, helmets and official results are absent. Trees, ground and spectators are synthetic visual presentation.'}</p>
       </details>
       <output className="race-theatre-diagnostics" hidden

@@ -5,6 +5,8 @@ import { randomUUID } from "node:crypto";
 import {v2BrowserRecordingLock} from './v2-browser-recording-fixture.mjs';
 import {physicalGameViewerFixture,physicalViewerEventId} from
   './physical-game-viewer-fixture.mjs';
+import {positionGameViewerFixture,positionViewerEventId} from
+  './position-game-viewer-fixture.mjs';
 
 const sessions = new Map();
 const clubKits = new Map();
@@ -34,6 +36,17 @@ const physicalViewerRecordedAt=physicalViewerFixture?
   new Date(Date.now()+(process.env.
     PELOTONIA_E2E_PHYSICAL_VIEWER_FINISHED==='true'?-600000:60000))
     .toISOString():null;
+const positionViewerFixture=process.env.PELOTONIA_E2E_POSITION_VIEWER===
+  'true';
+const positionViewerTeamCount=Number(process.env.
+  PELOTONIA_E2E_POSITION_VIEWER_TEAMS??2);
+const positionViewerCategory=process.env.
+  PELOTONIA_E2E_POSITION_VIEWER_CATEGORY??'men';
+const positionViewerData=positionViewerFixture?
+  positionGameViewerFixture({teamCount:positionViewerTeamCount,
+    category:positionViewerCategory}):null;
+const positionViewerDocument=positionViewerData?.document;
+let positionViewerRecordedAt=null;
 let v2LockedAt = null;
 let v2RecordedAt = null;
 let v2RecordedHeader = null;
@@ -101,6 +114,46 @@ const server = http.createServer(async (req, res) => {
         race_id:physicalViewerDocument.raceId,
         duration:physicalViewerDocument.feed.duration,
         events:physicalViewerDocument.feed.events});
+    }
+    if (positionViewerFixture && url.pathname ===
+      '/rest/v1/rpc/recovery_position_viewer_broadcast_source_v1') {
+      if(body.p_event!==positionViewerEventId||
+        !positionViewerRecordedAt)return send(200,null);
+      return send(200,{recorded_at:positionViewerRecordedAt,
+        race_id:positionViewerDocument.raceId,
+        duration:positionViewerDocument.feed.duration,
+        events:positionViewerDocument.feed.events});
+    }
+    if (positionViewerFixture && url.pathname ===
+      '/rest/v1/rpc/recovery_race_snapshot') {
+      if(body.p_event!==positionViewerEventId)return send(200,null);
+      return send(200,positionViewerData.snapshot);
+    }
+    if (positionViewerFixture && url.pathname ===
+      '/rest/v1/rpc/recovery_save_position_race_recording_v1') {
+      const invalid={event:body.p_event!==positionViewerEventId,
+        snapshot:body.p_snapshot?.event?.id!==positionViewerEventId,
+        entries:body.p_entries?.length!==positionViewerData.rows.length,
+        document:body.p_document?.sha256!==
+          positionViewerDocument.sha256,
+        archive:body.p_archive_metadata?.viewerDocumentSha256!==
+          positionViewerDocument.sha256,
+        body:typeof body.p_archive_base64!=='string'||
+          body.p_archive_base64.length<100};
+      if(Object.values(invalid).some(Boolean)){
+        console.error('V7 fixture save mismatch',invalid);
+        return send(400,{code:'PT400',
+          message:'The saved position race does not match its inputs.'});
+      }
+      if(positionViewerRecordedAt)return send(409,{code:'PT409',
+        message:'The position race has already been recorded.'});
+      positionViewerRecordedAt=new Date(Date.now()+
+        (process.env.PELOTONIA_E2E_POSITION_VIEWER_FINISHED===
+          'true'?-600000:60000)).toISOString();
+      return send(200,{event_id:positionViewerEventId,
+        sha256:positionViewerDocument.sha256,
+        recorded_at:positionViewerRecordedAt,
+        already_recorded:false});
     }
     if (v2RecordingFixture && url.pathname === "/rest/v1/rpc/recovery_save_v2_recorded_candidate") {
       if (body.p_event !== v2PreviewEventId || body.p_contract?.schemaVersion !== 1 ||
@@ -198,6 +251,18 @@ const server = http.createServer(async (req, res) => {
         `eq.${physicalViewerEventId}`?{
           document:physicalViewerDocument,
           recorded_at:physicalViewerRecordedAt}:null);
+    if (positionViewerFixture && table ===
+      'recovery_position_race_recordings')
+      return send(200,positionViewerRecordedAt&&
+        url.searchParams.get('event_id')===
+        `eq.${positionViewerEventId}`?{
+          document:positionViewerDocument,
+          recorded_at:positionViewerRecordedAt}:null);
+    if (positionViewerFixture && table ===
+      'recovery_physical_entry_inputs')
+      return send(200,url.searchParams.get('event_id')===
+        `eq.${positionViewerEventId}`?
+        positionViewerData.rows:[]);
     if (noContestFixture && table === "recovery_two_phase_voids")
       return send(200, noContestCancelled ? [{
         event_id: twoPhaseEventId, reason: "INCOMPLETE_ENTRY_SCAN", decided_by: ids.alice,
@@ -359,9 +424,11 @@ const child = spawn(process.execPath, ["node_modules/next/dist/bin/next", "start
   PELOTONIA_V2_SETTLEMENT_ENABLED: v2SettlementFixture ? "true" : "false",
   PELOTONIA_PHYSICAL_VIEWER_PREVIEW_ENABLED:
     physicalViewerFixture?'true':'false',
+  PELOTONIA_V7_POSITION_PREVIEW_ENABLED:
+    positionViewerFixture?'true':'false',
   SUPABASE_URL: "http://127.0.0.1:54329", SUPABASE_ANON_KEY: "fixture-anon", SUPABASE_SERVICE_ROLE_KEY: "fixture-service-role",
   NEXT_PUBLIC_SUPABASE_URL: "", NEXT_PUBLIC_SUPABASE_ANON_KEY: "", APP_ORIGIN: "http://localhost:3100", ADMIN_USER_IDS: ids.alice,
-  RECOVERY_ALLOW_GAME_WRITES: noContestFixture || v2SaveFixture || v2LockFixture || v2RecordingFixture || physicalViewerFixture ? "true" : "false",
+  RECOVERY_ALLOW_GAME_WRITES: noContestFixture || v2SaveFixture || v2LockFixture || v2RecordingFixture || physicalViewerFixture || positionViewerFixture ? "true" : "false",
   PELOTONIA_AUTOPILOT_ENABLED: noContestFixture ? "true" : "false",
 } });
 const stop = () => { child.kill(); server.closeAllConnections(); server.close(); };

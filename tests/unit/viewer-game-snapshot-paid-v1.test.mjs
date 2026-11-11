@@ -8,7 +8,8 @@ import {createGameSnapshotPositionViewerDocumentV1,
   verifyGameSnapshotPositionViewerDocumentV1,
   loadGameSnapshotPositionViewerDocumentV1,
   createGameSnapshotPositionRaceBundleV1,
-  verifyGameSnapshotPositionRaceBundleV1} from
+  verifyGameSnapshotPositionRaceBundleV1,
+  loadGameSnapshotPositionRaceRecordingV1} from
   '../../lib/viewer/game-snapshot-position-viewer-v1.mjs';
 import {manifestFromCommittedPhysicalEntriesV1} from
   '../../lib/viewer/committed-physical-manifest-v1.mjs';
@@ -189,11 +190,14 @@ test('saved race input remains fixed through V7 projection',async()=>{
       rider_numbers:entry.riderNumbers};
   });
   let snapshotReads=0,entryReads=0;
-  const document=await loadGameSnapshotPositionViewerDocumentV1({
+  const stored=await loadGameSnapshotPositionRaceRecordingV1({
     readSnapshot:async()=>{snapshotReads++;return snapshot;},
     readEntries:async eventId=>{
       assert.equal(eventId,snapshot.event.id);
       entryReads++;return rows;}});
+  const document=stored.bundle.document;
+  assert.deepEqual(stored.snapshot,snapshot);
+  assert.deepEqual(stored.entries,rows);
   assert.equal(snapshotReads,3);
   assert.equal(entryReads,2);
   assert.equal(document.feed.riderCategory,'women');

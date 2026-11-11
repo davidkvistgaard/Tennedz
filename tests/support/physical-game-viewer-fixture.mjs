@@ -13,7 +13,7 @@ const fixtureUuid=(teamNumber,riderNumber=0)=>{
   return `${team}-0000-4000-8000-${rider}`;
 };
 
-export function physicalGameViewerFixture({teamCount=2,
+export function physicalGameViewerInputsV1({teamCount=2,
   category='men'}={}){
   if(!Number.isInteger(teamCount)||teamCount<2||teamCount>18||
     !['men','women'].includes(category))
@@ -55,5 +55,10 @@ export function physicalGameViewerFixture({teamCount=2,
       accent:'#ffffff',pattern:'band'},
     rider_numbers:Object.fromEntries(team.riders.map((rider,n)=>
       [rider.id,index*8+n+1]))}));
+  return {snapshot,rows};
+}
+
+export function physicalGameViewerFixture(options){
+  const {snapshot,rows}=physicalGameViewerInputsV1(options);
   return createPhysicalGameRaceDocumentV1(snapshot,rows);
 }
