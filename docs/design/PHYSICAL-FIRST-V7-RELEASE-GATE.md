@@ -72,6 +72,19 @@ the route retries a failed read once. The save itself is never retried.
 Recomputing the race in a page request would make the shared
 clock and viewer load depend on server execution time.
 
+The same 18-team mountainous starter control was also run with a
+committed, five-kilometre selective-attack order for one team and a
+`break_stage` stake; all other teams kept sprint stakes. Both categories
+completed and replayed 17,280 decisions and 144 finishes, without an
+unpaid attack departure or a finish-clock tie in these synthetic cases.
+The men's race recorded 44,392 contact observations and occupied
+73,479,812 compact JSON bytes (5,904,245 gzip bytes); the women's
+recorded 44,424 contacts, one refused attack and 73,990,469 compact
+JSON bytes (5,882,948 gzip bytes). The complete local archive checks
+took 161,840 and 166,916 ms respectively. This adds an order variation
+to the archive evidence, but it does not establish official placings
+for other rosters or hosted recording capacity.
+
 The exporter marks the fixture synthetic, keeps the full replayed
 motor ledger as authority, uses recorded road IDs and event clocks,
 and sends no official results. Finish evidence is separate and has

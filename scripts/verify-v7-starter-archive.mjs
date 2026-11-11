@@ -13,10 +13,13 @@ import {encodeGameSnapshotPositionRaceArchiveV2,
 const category=process.argv[2]??'men';
 const profile=process.argv[3]??'flat';
 const teamCount=Number(process.argv[4]??15);
+const orderProfile=process.argv[5]??'sprint_control';
 if(!['men','women'].includes(category))
   throw new Error('Choose a valid category.');
 if(!['flat','hill_then_mountain'].includes(profile))
   throw new Error('Choose a valid route profile.');
+if(!['sprint_control','selective_attack'].includes(orderProfile))
+  throw new Error('Choose a valid order profile.');
 if(!Number.isInteger(teamCount)||
   teamCount<2||teamCount>20)
   throw new Error('Choose 2–20 eight-rider teams.');
@@ -59,8 +62,14 @@ const manifest={version:GAME_SNAPSHOT_PAID_VIEWER_VERSION,
         chase:'selective',
         frontWork:index===0?'rotate':'sit_in',
         frontWorkRiderId:index===0?
-          team.riders[1].id:null}},
-    stake:{sportingGoal:'sprint_finish',
+          team.riders[1].id:null},
+      ...(orderProfile==='selective_attack'&&index===0?
+        {phases:[{atKm:5,attack:'selective',
+          attackRiderId:team.riders[6].id},
+        {atKm:10,attack:'none'}]}:{})},
+    stake:{sportingGoal:orderProfile===
+      'selective_attack'&&index===0?
+        'break_stage':'sprint_finish',
       sportingCaptainId:team.riders[6].id},
     riderNumbers:Object.fromEntries(team.riders
       .map((rider,riderIndex)=>
@@ -114,7 +123,8 @@ if(bundle.race.decisionCount!==teamCount*8*120||
 console.log(JSON.stringify({
   version:'v7-starter-archive-control-1',
   source:'synthetic_game_shaped_starter_profiles',
-  category,teamCount,elapsedMs:Date.now()-started,
+  category,teamCount,orderProfile,
+  elapsedMs:Date.now()-started,
   buildElapsedMs:builtAt-started,
   encodeElapsedMs:encodedAt-builtAt,
   decodeElapsedMs:decodedAt-encodedAt,
@@ -122,6 +132,9 @@ console.log(JSON.stringify({
   decisions:bundle.race.decisionCount,
   finishers:bundle.race.finishCrossings.length,
   contactEvents:bundle.race.contactEvents.length,
+  attackDepartures:bundle.race.attackDepartureEvents.length,
+  attackRefusals:bundle.race.attackRefusals.length,
+  finishTieGroups:bundle.race.finaleFinishTieObservations.length,
   finaleFrames:bundle.race.tail.positionFrames.length,
   rawBundleBytes:Buffer.byteLength(
     JSON.stringify(bundle)),
