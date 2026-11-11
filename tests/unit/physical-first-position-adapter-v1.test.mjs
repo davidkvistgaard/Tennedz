@@ -9,12 +9,15 @@ import {recordPhysicalFirstPositionGeneralRaceV7} from
 import {adaptPhysicalFirstPositionRaceV1} from
   '../../lib/viewer/physical-first-position-adapter-v1.mjs';
 
-const makeRecord=(category='men',riderCount=16)=>{
+const makeRecord=(category='men',riderCount=16,
+  {attack=false}={})=>{
   const request=prepareSyntheticPositionCatchV1({
     teamCount:Math.ceil(riderCount/8),riderCount,
-    kmCount:20,profile:'hill_then_mountain'});
+    kmCount:20,profile:'hill_then_mountain',
+    oneTimeAttack:attack});
   request.input.positionPassingCorridorCount=1;
-  request.input.teams[0].orders.baseline.attack='none';
+  if(!attack)
+    request.input.teams[0].orders.baseline.attack='none';
   request.input.stakes[0].sportingGoal='sprint_finish';
   for(const team of request.input.teams)
     for(const rider of team.riders){
@@ -78,4 +81,19 @@ test('V7 export rejects forged motor movement and missing identity',()=>{
   delete missing.request.input.teams[0].riders[0].name;
   assert.throws(()=>adaptPhysicalFirstPositionRaceV1(missing),
     /committed, complete field/);
+});
+
+test('commentary waits for a paid departure, not its order',()=>{
+  const source=makeRecord('men',16,{attack:true});
+  assert.equal(source.race.attackDepartureEvents.length,1);
+  const {feed}=adaptPhysicalFirstPositionRaceV1(source);
+  const departure=source.race.attackDepartureEvents[0];
+  const event=feed.events.find(row=>
+    row.type==='paid_attack_departure');
+  assert.equal(event.time,departure.observedAtClockSeconds);
+  assert.equal(event.riderId,departure.toRiderId);
+  assert.equal(commentaryAt(feed,event.time-.001)
+    .some(row=>row.text===event.label),false);
+  assert.equal(commentaryAt(feed,event.time)
+    .some(row=>row.text===event.label),true);
 });
