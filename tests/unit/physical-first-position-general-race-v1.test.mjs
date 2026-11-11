@@ -602,3 +602,31 @@ test('V7 replays caught attackers and early climb drops through finish',()=>{
   assert.deepEqual(replayPhysicalFirstPositionGeneralRaceV7(
     request,race),race);
 });
+
+test('a requested front worker does not become leader without a paid pass',()=>{
+  const prepared=preparePhysicalFirstSplitMotorInputV1(
+    'men',{terrain:'flat',chase:'selective',
+      attack:'selective',seed:'preview-recorded-road-1'});
+  const request={input:{...prepared.input,
+    positionModelVersion:
+      PHYSICAL_FIRST_POSITION_START_V2_VERSION,
+    positionPassingCorridorCount:1},
+  grid:{laneCount:4,wheelSpacingM:2.5,
+    laneStaggerM:.08}};
+  const race=recordPhysicalFirstPositionGeneralRaceV7(request);
+  const refused=race.steps.findIndex(step=>
+    step.frontPassRefusal?.reason===
+      'no_payable_front_pass');
+  assert.ok(refused>=0);
+  const prior=refused===0?race.start:
+    race.steps[refused-1].sharedRoad;
+  const step=race.steps[refused];
+  assert.notEqual(step.leaderPlan.leaderRiderId,
+    prior.leaderRiderId);
+  assert.equal(step.frontPassRefusal.riderId,
+    step.leaderPlan.leaderRiderId);
+  assert.equal(step.sharedRoad.leaderRiderId,
+    prior.leaderRiderId);
+  assert.equal(step.sharedRoad.frontPassEvent,
+    null);
+});

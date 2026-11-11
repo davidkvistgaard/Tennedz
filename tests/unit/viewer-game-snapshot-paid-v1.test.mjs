@@ -12,6 +12,9 @@ import {createGameSnapshotPositionViewerDocumentV1,
   '../../lib/viewer/game-snapshot-position-viewer-v1.mjs';
 import {manifestFromCommittedPhysicalEntriesV1} from
   '../../lib/viewer/committed-physical-manifest-v1.mjs';
+import {encodeGameSnapshotPositionRaceArchiveV1,
+  decodeGameSnapshotPositionRaceArchiveV1} from
+  '../../lib/viewer/game-snapshot-position-archive-v1.mjs';
 import {createPhysicalGameRaceDocumentV1,
   loadPhysicalGameRaceDocumentV1} from
   '../../lib/viewer/physical-game-race-source-v1.mjs';
@@ -140,6 +143,35 @@ test('saved position bundle retains a replayable motor record',()=>{
   assert.throws(()=>
     verifyGameSnapshotPositionRaceBundleV1(wrongKit),
   /changed its viewer projection/);
+});
+
+test('compressed V7 archive replays its original motor and viewer document',()=>{
+  const {snapshot,manifest}=fixture('F');
+  const bundle=createGameSnapshotPositionRaceBundleV1(
+    snapshot,manifest);
+  const archive=encodeGameSnapshotPositionRaceArchiveV1(bundle);
+  const repeat=encodeGameSnapshotPositionRaceArchiveV1(bundle);
+  assert.deepEqual(repeat.metadata,archive.metadata);
+  assert.deepEqual(repeat.body,archive.body);
+  assert.ok(archive.body.length<
+    archive.metadata.uncompressedBytes);
+  assert.equal(archive.metadata.eventId,
+    snapshot.event.id);
+  assert.deepEqual(decodeGameSnapshotPositionRaceArchiveV1(
+    archive),bundle);
+  const changed=Buffer.from(archive.body);
+  changed[changed.length-1]^=1;
+  assert.throws(()=>decodeGameSnapshotPositionRaceArchiveV1({
+    metadata:archive.metadata,body:changed}),
+  /metadata changed/);
+  assert.throws(()=>decodeGameSnapshotPositionRaceArchiveV1({
+    metadata:{...archive.metadata,
+      viewerDocumentSha256:'0'.repeat(64)},
+    body:archive.body}),/another document/);
+  assert.throws(()=>decodeGameSnapshotPositionRaceArchiveV1({
+    metadata:{...archive.metadata,
+      uncompressedBytes:100*1024*1024},
+    body:archive.body}),/metadata changed/);
 });
 
 test('saved race input remains fixed through V7 projection',async()=>{
