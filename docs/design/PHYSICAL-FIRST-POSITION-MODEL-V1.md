@@ -1095,3 +1095,46 @@ road contact. The first caught attacker ends the kilometre on
 a recorded rear road rather than being silently inserted into
 the peloton. All 320 rider decisions, 304 intermediate passages,
 16 finishes and the complete finale frame set replay exactly.
+The three-seed, 36-case unmodified Motor Lab selective-attack
+matrix now also completes and replays under V7 and source V2:
+all 36 have complete rider-kilometre decisions, intermediate
+passages, finish crossings and finale-frame rider coverage.
+Peloton membership agrees at the compared checkpoints, but
+24 cases differ in named front leader and all 36 in attack
+choice detail. The maximum final reserve difference is 3.349
+and maximum source group-clock versus paid-wheel finish
+difference is 9.674 seconds. Every case has at least one
+unresolved model-clock finish tie. This measures continuity
+and discrepancy; it is not an accepted sporting calibration.
+`motor-lab-game-position-viewer-document-v1` is a separate
+experimental bridge from an unfinished, committed one-day game
+snapshot and its saved entry manifest. It reuses the existing
+validation of selected riders, actual orders, sporting stakes,
+names, bibs and team styles. A named abstract start grid is
+included in the new positional input hash; the bridge never
+assigns positions to old recordings. The V7 motor computes the
+race, the V2 viewer projection replays it, and a content hash
+seals the transport document. Men's and women's 16-rider,
+20 km game-shaped fixtures validate and reject a changed
+viewer frame. The hash checks transport integrity, not a
+substitute for the retained full motor replay. The read-only
+loader refuses changed game snapshots or entry rows before
+or after simulation. This bridge is not connected to official
+races, persistence or a hosted WebGL viewer and does not
+publish results.
+The V7 tie diagnostic on the current flat, no-attack 120-rider
+fixture reports 23 two-rider model-clock ties in each category.
+All 23 pairs occupy the same recorded longitudinal distance
+in different lanes at the sample immediately before crossing;
+none shares a lane. Sorting their rider IDs or rounding clocks
+differently would manufacture an official place. A future
+position or classification contract must resolve such cases
+from declared physical evidence, or retain an explicit tie.
+The complete three-seed, 72-case V7 matrix with no-attack and
+selective-attack orders now finishes and replays in both the
+source comparison and positional recorder, with full decisions,
+intermediate crossings, finish crossings and finale-frame rider
+coverage. A separate 12-case repeated-attack seed also passes
+those checks. These 84 cases establish continuity for the
+selected Motor Lab generator inputs, not universal coverage
+for arbitrary game events, a validated winner or release.

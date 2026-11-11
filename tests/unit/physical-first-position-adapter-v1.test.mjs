@@ -87,6 +87,13 @@ test('commentary waits for a paid departure, not its order',()=>{
   const source=makeRecord('men',16,{attack:true});
   assert.equal(source.race.attackDepartureEvents.length,1);
   const {feed}=adaptPhysicalFirstPositionRaceV1(source);
+  const paid=source.race.steps[1].sharedRoad.positions.find(row=>
+    row.riderId==='team-0-7');
+  const projected=feed.frames[2].positions.find(row=>
+    row.riderId==='team-0-7');
+  assert.equal(projected.distance,paid.distanceM);
+  assert.equal(projected.groupId,paid.roadId);
+  assert.equal(feed.frames[2].gaps,undefined);
   const departure=source.race.attackDepartureEvents[0];
   const event=feed.events.find(row=>
     row.type==='paid_attack_departure');

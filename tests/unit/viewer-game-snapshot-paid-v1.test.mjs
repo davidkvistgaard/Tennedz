@@ -4,6 +4,10 @@ import {validateFeed} from '@pelotonia/race-viewer/data';
 import {createGameSnapshotPaidViewerDocumentV1,
   GAME_SNAPSHOT_PAID_VIEWER_VERSION} from
   '../../lib/viewer/game-snapshot-paid-viewer-v1.mjs';
+import {createGameSnapshotPositionViewerDocumentV1,
+  verifyGameSnapshotPositionViewerDocumentV1,
+  loadGameSnapshotPositionViewerDocumentV1} from
+  '../../lib/viewer/game-snapshot-position-viewer-v1.mjs';
 import {manifestFromCommittedPhysicalEntriesV1} from
   '../../lib/viewer/committed-physical-manifest-v1.mjs';
 import {createPhysicalGameRaceDocumentV1,
@@ -63,6 +67,74 @@ for(const category of ['M','F'])
     assert.equal(document.finishEvidence.entries.length,16);
     assert.equal(document.input.officialResults,false);
   });
+
+for(const category of ['M','F'])
+  test(`${category} future game snapshot exports V7 positions`,()=>{
+    const {snapshot,manifest}=fixture(category);
+    const document=createGameSnapshotPositionViewerDocumentV1(
+      snapshot,manifest);
+    assert.deepEqual(verifyGameSnapshotPositionViewerDocumentV1(
+      document),document);
+    assert.deepEqual(validateFeed(document.feed),document.feed);
+    assert.equal(document.feed.synthetic,false);
+    assert.equal(document.feed.results,undefined);
+    assert.equal(document.feed.riders.length,16);
+    assert.equal(document.feed.frames[0].positions.length,16);
+    assert.equal(document.feed.frames.at(-1).positions.length,16);
+    assert.equal(document.finishEvidence.entries.length,16);
+    assert.equal(document.coverage.paidRiderKilometres,320);
+    assert.equal(document.coverage.officialResults,false);
+    assert.equal(document.input.positionGridVersion,
+      'motor-lab-abstract-position-grid-1');
+    assert.equal(document.source.replayed,true);
+    assert.throws(()=>
+      createGameSnapshotPositionViewerDocumentV1(
+        {...snapshot,finished:true},manifest),
+    /unfinished game race/);
+    const changed=structuredClone(document);
+    changed.feed.frames[1].positions[0].distance+=1;
+    assert.throws(()=>
+      verifyGameSnapshotPositionViewerDocumentV1(changed),
+    /changed or lacks paid evidence/);
+  });
+
+test('saved race input remains fixed through V7 projection',async()=>{
+  const {snapshot,manifest}=fixture('F');
+  const rows=manifest.entries.map(entry=>{
+    const team=snapshot.teams.find(item=>
+      item.id===entry.teamId);
+    return {event_id:snapshot.event.id,
+      team_id:entry.teamId,
+      schema_version:'physical-entry-input-v1',
+      selected_riders:team.entry.selected_riders,
+      captain_id:team.entry.captain_id,
+      orders:entry.orders,stake:entry.stake,
+      team_style:entry.style,
+      rider_numbers:entry.riderNumbers};
+  });
+  let snapshotReads=0,entryReads=0;
+  const document=await loadGameSnapshotPositionViewerDocumentV1({
+    readSnapshot:async()=>{snapshotReads++;return snapshot;},
+    readEntries:async eventId=>{
+      assert.equal(eventId,snapshot.event.id);
+      entryReads++;return rows;}});
+  assert.equal(snapshotReads,3);
+  assert.equal(entryReads,2);
+  assert.equal(document.feed.riderCategory,'women');
+  assert.equal(document.source.validatedRiderKilometres,320);
+  let changedReads=0;
+  await assert.rejects(loadGameSnapshotPositionViewerDocumentV1({
+    readSnapshot:async()=>++changedReads===3?
+      {...snapshot,finished:true}:snapshot,
+    readEntries:async()=>rows}),
+  /changed during position simulation/);
+  let changedEntries=0;
+  await assert.rejects(loadGameSnapshotPositionViewerDocumentV1({
+    readSnapshot:async()=>snapshot,
+    readEntries:async()=>++changedEntries===2?
+      rows.slice().reverse():rows}),
+  /changed during position simulation/);
+});
 
 test('saved physical entries become a complete paid viewer race',()=>{
   const {snapshot,manifest}=fixture('F');
