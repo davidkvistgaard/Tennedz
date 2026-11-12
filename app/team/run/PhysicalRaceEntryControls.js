@@ -6,10 +6,12 @@ const empty=()=>({roadCaptainId:"",helperIds:[],effort:"",
   chase:"",attack:"",attackRiderId:"",frontWork:"",
   frontWorkRiderId:"",sportingGoal:"",sportingCaptainId:""});
 
-export default function PhysicalRaceEntryControls({eventId,teamId,
+export default function PhysicalRaceEntryControls({eventId,teamId,gender,
   selected,captain,riders,locked,valid,savedEntry,onSaved}){
   const [form,setForm]=useState(empty);
   const [busy,setBusy]=useState(false);
+  const [defaultBusy,setDefaultBusy]=useState(false);
+  const [defaultTactics,setDefaultTactics]=useState(null);
   const [message,setMessage]=useState("");
   useEffect(()=>{
     const order=savedEntry?.orders;
@@ -26,6 +28,14 @@ export default function PhysicalRaceEntryControls({eventId,teamId,
       sportingCaptainId:savedEntry.stake?.sportingCaptainId??""}:empty());
   },[eventId,savedEntry]);
   useEffect(()=>setMessage(""),[eventId]);
+  useEffect(()=>{
+    if(!teamId||!['M','F'].includes(gender))return;
+    let active=true;
+    api(`/api/team/default-race-plan?gender=${gender}`)
+      .then(result=>{if(active)setDefaultTactics(result.tactics);})
+      .catch(()=>{});
+    return()=>{active=false;};
+  },[teamId,gender]);
   const lineup=riders.filter(rider=>selected.includes(rider.id));
   const helpers=lineup.filter(rider=>form.helperIds.includes(rider.id));
   const ready=valid&&form.roadCaptainId&&
@@ -39,6 +49,8 @@ export default function PhysicalRaceEntryControls({eventId,teamId,
     (form.frontWork==='sit_in'||
       !form.frontWorkRiderId||
       form.helperIds.includes(form.frontWorkRiderId));
+  const defaultReady=form.effort&&form.chase&&form.attack&&
+    form.frontWork&&form.sportingGoal;
   function set(key,value){setForm(previous=>({...previous,[key]:value}));
     setMessage("");}
   function toggleHelper(id){
@@ -78,6 +90,37 @@ export default function PhysicalRaceEntryControls({eventId,teamId,
       setMessage('Your lineup and physical race orders are saved.');
     }catch(error){setMessage(error.message);}
     finally{setBusy(false);}
+  }
+  async function saveDefault(){
+    if(!defaultReady||defaultBusy)return;
+    setDefaultBusy(true);setMessage('');
+    try{
+      await api('/api/team/default-race-plan',{
+        method:'POST',headers:{'Content-Type':'application/json'},
+        body:JSON.stringify({kind:'tactics',gender,tactics:{
+          effort:form.effort,chase:form.chase,attack:form.attack,
+          front_work:form.frontWork,
+          sporting_goal:form.sportingGoal}})});
+      setDefaultTactics({effort:form.effort,chase:form.chase,
+        attack:form.attack,front_work:form.frontWork,
+        sporting_goal:form.sportingGoal});
+      setMessage('Your default one-day tactics are saved for this category.');
+    }catch(error){setMessage(error.message);}
+    finally{setDefaultBusy(false);}
+  }
+  function loadDefault(){
+    if(!defaultTactics||locked)return;
+    setForm(previous=>({...previous,
+      effort:defaultTactics.effort,chase:defaultTactics.chase,
+      attack:defaultTactics.attack,
+      attackRiderId:defaultTactics.attack==='none'?'':
+        previous.attackRiderId||captain,
+      frontWork:defaultTactics.front_work,
+      frontWorkRiderId:defaultTactics.front_work==='sit_in'?'':
+        previous.frontWorkRiderId,
+      sportingGoal:defaultTactics.sporting_goal,
+      sportingCaptainId:captain}));
+    setMessage('Your default tactics are loaded. Save this race to use them.');
   }
   return <form className="card physical-entry" onSubmit={save}
     aria-label="Physical race tactics">
@@ -157,6 +200,13 @@ export default function PhysicalRaceEntryControls({eventId,teamId,
       disabled={locked||busy||!ready}>
       {busy?'Saving…':locked?'Deadline passed':
         'Save lineup and race tactics'}</button>
+    <button className="btn" type="button" onClick={saveDefault}
+      disabled={locked||busy||defaultBusy||!defaultReady}>
+      {defaultBusy?'Saving…':'Save these choices as my default tactics'}
+    </button>
+    {defaultTactics?<button className="btn" type="button"
+      onClick={loadDefault} disabled={locked||busy||defaultBusy}>
+      Load my default tactics</button>:null}
     {message?<p role="status" className="form-message">{message}</p>:null}
   </form>;
 }
