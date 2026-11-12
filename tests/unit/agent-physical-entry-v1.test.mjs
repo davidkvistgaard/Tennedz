@@ -34,11 +34,14 @@ function fixture({tag='winter-2026',lineup=riderIds}={}){
   const calls=[];
   const db={from(name){return {select(){return this;},eq(){return this;},
     async maybeSingle(){return {data:tables[name],error:null};}};},
-  auth:{admin:{async getUserById(id){assert.equal(id,userId);
-    return {data:{user:{id:userId,
-      app_metadata:{pelotonia_agent:tag}}},error:null};}}}};
+  };
   const rpc=async(dbArg,name,args)=>{
-    assert.equal(dbArg,db);calls.push({name,args});
+    assert.equal(dbArg,db);
+    if(name==='recovery_is_winter_agent_v1'){
+      assert.equal(args.p_user,userId);
+      return tag==='winter-2026';
+    }
+    calls.push({name,args});
     return {ok:true,team_id:teamId};};
   return {db,rpc,calls};
 }
