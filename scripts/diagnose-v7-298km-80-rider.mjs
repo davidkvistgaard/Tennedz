@@ -3,6 +3,7 @@
 // stage profile is a read-only snapshot, not canonical geography.
 import seedrandom from 'seedrandom';
 import {readFileSync} from 'node:fs';
+import {generateLockedWeather} from '../lib/weather/weatherModel.js';
 import {starterPack} from '../lib/onboarding/starter.mjs';
 import {GAME_SNAPSHOT_PAID_VIEWER_VERSION} from
   '../lib/viewer/game-snapshot-paid-viewer-v1.mjs';
@@ -22,6 +23,7 @@ const attack=process.argv[6]??'none';
 const frontWork=process.argv[7]??'rotate';
 const conserveTeams=Number(process.argv[8]??0);
 const attackTeams=Number(process.argv[9]??teamCount);
+const eventInputFile=process.argv[10]??null;
 if(!/^[A-Za-z0-9-]{1,64}$/.test(seed))
   throw new Error('Supply a bounded synthetic seed.');
 if(!['conserve','steady','hard'].includes(effort))
@@ -38,6 +40,24 @@ if(!Number.isInteger(conserveTeams)||conserveTeams<0||
 if(!Number.isInteger(attackTeams)||attackTeams<0||
   attackTeams>teamCount)
   throw new Error('Supply zero to ten explicitly attacking teams.');
+const observedEvent=eventInputFile?
+  JSON.parse(readFileSync(eventInputFile,'utf8')):null;
+if(observedEvent&&(
+  !/^[0-9a-f-]{36}$/.test(observedEvent.event_id)||
+  !/^[0-9a-f]{32}$/.test(observedEvent.seed)||
+  !/^[A-Z]{2}$/.test(observedEvent.country_code)||
+  !/^\d{4}-\d{2}-\d{2}$/.test(observedEvent.game_date)||
+  !/^\d{4}-\d{2}-\d{2}T/.test(observedEvent.deadline)||
+  observedEvent.weather_locked!==null&&
+    typeof observedEvent.weather_locked!=='object'))
+  throw new Error('Observed event inputs are incomplete.');
+const raceWeather=observedEvent?
+  observedEvent.weather_locked??generateLockedWeather({
+    event_id:observedEvent.event_id,
+    country_code:observedEvent.country_code,
+    game_date_iso:observedEvent.game_date,
+    deadline_iso:observedEvent.deadline}):
+  {temp_c:16,wind_kph:0,precipitation_mm:0};
 const observedRoute=routeSource==='observed-sunday-20261111'?
   JSON.parse(readFileSync(new URL(
     './observed-sunday-stage-profile-20261111.json',import.meta.url),
@@ -57,14 +77,13 @@ const teams=Array.from({length:teamCount},(_,index)=>{
       captain_id:riders[6].id}};
 });
 const snapshot={event:{id:'synthetic-sunday-capacity',
-  kind:'one_day',gender:'M',seed,
-  weather_locked:{temp_c:16,wind_kph:0,
-    precipitation_mm:0}},
+  kind:'one_day',gender:'M',seed:observedEvent?.seed??seed,
+  weather_locked:raceWeather},
 stage:{distance_km:distanceKm,
   profile_points:observedRoute?.profile_points??
     [[0,80],[distanceKm,80]],
   keypoints:observedRoute?.keypoints??[]},
-teams,game_date:'2026-11-15'};
+  teams,game_date:observedEvent?.game_date??'2026-11-15'};
 const manifest={version:GAME_SNAPSHOT_PAID_VIEWER_VERSION,
   eventId:snapshot.event.id,
   entries:teams.map((team,index)=>({
@@ -104,6 +123,12 @@ console.log(JSON.stringify({
   fixture:'synthetic_sunday_capacity_only',
   seed,effort,routeSource,chase,attack,frontWork,
   conserveTeams,attackTeams,
+  raceInputSource:observedEvent?
+    'read-only-observed-event-inputs':'synthetic-calm',
+  weatherProvenance:observedEvent?
+    observedEvent.weather_locked?
+      'event-locked-weather':'official-engine-deterministic-fallback':
+    'synthetic-calm',
   distanceKm,teams:teamCount,
   riders:teamCount*8,
   decisions:bundle.race.decisionCount,

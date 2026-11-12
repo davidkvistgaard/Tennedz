@@ -8,12 +8,17 @@ test('every existing database race message has an English application translatio
   const folder = new URL('../../supabase/migrations/', import.meta.url);
   const messages = new Set(readdirSync(folder).flatMap(name => [...readFileSync(new URL(name, folder), 'utf8').matchAll(/message\s*=\s*'([^']*)'/g)].map(m => m[1])));
   assert.ok(messages.size > 20);
+  const untranslated = [];
   for (const message of messages) {
     const translated = raceErrorMessage(message);
+    if (/could not be completed/.test(translated)) {
+      untranslated.push(message);
+      continue;
+    }
     assert.notEqual(translated, message);
-    assert.doesNotMatch(translated, /could not be completed/);
     assert.doesNotMatch(translated, /[æøå]/i);
   }
+  assert.deepEqual(untranslated, [], `Missing translations: ${untranslated.join(', ')}`);
   assert.equal(raceErrorMessage('internal database details'), 'The race request could not be completed. Please refresh and try again.');
 });
 

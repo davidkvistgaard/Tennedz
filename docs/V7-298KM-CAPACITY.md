@@ -3,7 +3,7 @@
 This is a synthetic 10-team, 80-rider **men's** fixture made from starter
 profiles. It is not the entered Milano-Sanremo field, weather, kit, manager
 orders, results or official classification. Run it with
-`node scripts/diagnose-v7-298km-80-rider.mjs <seed> <effort> <routeSource> [chase] [attack] [frontWork] [conserveTeams] [attackTeams]`.
+`node scripts/diagnose-v7-298km-80-rider.mjs <seed> <effort> <routeSource> [chase] [attack] [frontWork] [conserveTeams] [attackTeams] [eventInputFile]`.
 The seventh argument assigns `conserve` to that many teams and the named
 effort to the others. The eighth assigns the named attack order to that many
 teams; the others order no attack. These are explicit synthetic test orders,
@@ -12,6 +12,11 @@ never generated manager orders for the real race.
 read-only snapshot of the production game's stage profile, kept in
 `scripts/observed-sunday-stage-profile-20261111.json` for repeatability.
 That profile is game data, not a claim about canonical geography.
+The optional `eventInputFile` is a local, ignored JSON file containing the
+read-only event ID, race seed, country, game date, deadline and locked weather
+if present. When locked weather is absent, the probe calls the game's existing
+deterministic weather model. It still uses synthetic rider profiles and test
+orders; the observed seed stays out of committed source and printed results.
 In a read-only check on 2026-11-12, the 80 entered production riders had aggregate
 flat 39.8 and endurance 39.5 on average, with form 40 and fatigue 0. The
 seed-2 synthetic field averaged flat 38 and endurance 40, also with form 40
@@ -100,3 +105,18 @@ for synthetic riders and orders. It does not validate the entered field,
 submitted tactics, finish ranking, automated race dispatch or publication
 on tennedz.eu. The finish currently records unresolved tie observations and
 does not issue official points or awards.
+
+Using the read-only Sunday event seed, game date and deterministic weather
+fallback with the same synthetic 80-rider field, all ten `conserve` teams
+completed all 23,840 decisions and 80 crossings. This run recorded 963 paid
+contact events and eight unresolved finish-tie observations, with 410 viewer
+frames and a 2,842,203-byte compressed archive. The local race plus viewer
+took 112.5 s and archive encoding 68.7 s. This is evidence for those exact
+synthetic orders under the game's event weather, not a result for the real
+entered riders or the agent-managers' eventual tactics.
+With one `conserve` and nine `steady` teams on those same observed event
+inputs, the synthetic field again completed 23,840 decisions and 80 crossings.
+It recorded 536 paid contacts, eight unresolved finish-tie observations, 397
+viewer frames and a 2,808,180-byte compressed archive. Race plus viewer took
+99.5 s and archive encoding 50.2 s locally. The all-`steady` refusal above
+still applies; this mixed-order run does not remove that limit.

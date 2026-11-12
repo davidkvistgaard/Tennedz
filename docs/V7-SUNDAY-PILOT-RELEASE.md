@@ -29,6 +29,16 @@ to this pilot; the stored engine version is V8.
   decisions and 80 line crossings against a read-only snapshot of the current
   production profile. It did not assign official placings or points. This is
   performance evidence, not a prediction of Sunday's tactics.
+- A second 298 km, 80-rider probe used the read-only Sunday event seed and
+  game-date weather fallback with synthetic riders and explicit `conserve`
+  test orders. It completed all 23,840 paid decisions and 80 crossings. The
+  observed event seed is held only in an ignored local input file, not in the
+  repository or this release note. See `docs/V7-298KM-CAPACITY.md`.
+- The isolated Next production build and four authenticated local WebGL2
+  browser checks passed with a protocol fixture: 16 men at the published
+  finish, 16 women before publication, and published 120-rider men's and
+  women's races. The fixture never contacts the live database. It proves the
+  viewer path and shared publication clock, not hosted race execution.
 
 ## Production prerequisites
 
