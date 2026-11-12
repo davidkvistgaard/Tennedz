@@ -99,7 +99,10 @@ is restricted to entered teams after finalization. The shared clock releases
 commentary and finish events only when their recorded time arrives.
 On the observed 298 km profile, an all-`steady` synthetic field refuses
 unpayable movement at km 252, while one `conserve` and nine `steady` teams
-complete on the same seed. Other seeds, rider profiles and agent orders may
+complete on the same seed. With the read-only Sunday event seed and game-date
+weather fallback, the same synthetic all-`steady` order refuses at km 250,
+while all-`conserve` and one-`conserve`/nine-`steady` complete. Other rider
+profiles and agent orders may
 still refuse. Do not bypass the paid-movement guard or treat this probe as a
 guarantee for Sunday's actual choices.
 If a manager changes their lineup or captain while saving physical tactics,

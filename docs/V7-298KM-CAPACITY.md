@@ -120,3 +120,8 @@ It recorded 536 paid contacts, eight unresolved finish-tie observations, 397
 viewer frames and a 2,808,180-byte compressed archive. Race plus viewer took
 99.5 s and archive encoding 50.2 s locally. The all-`steady` refusal above
 still applies; this mixed-order run does not remove that limit.
+An all-`steady` run with the observed event seed and game-date weather
+fallback refused at **km 250**: a synthetic rear rider assigned a paid leader
+leg had 0.199 energy before a 1,000 m terrain-priced segment. The recorder
+stopped at km 249 rather than allowing unpaid travel. This is a concrete
+Sunday-order risk; the real field and submitted tactics may behave differently.
