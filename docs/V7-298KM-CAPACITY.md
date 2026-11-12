@@ -134,3 +134,9 @@ It produced 410 viewer frames and a 2,958,909-byte compressed archive; race
 plus viewer construction took 129.8 s and archive encoding 65.8 s locally.
 An attack order did not become a recorded attack. This capacity probe cannot
 predict the nine agent-managers' actual orders or the entered riders' outcome.
+
+With nine synthetic teams ordering `conserve` and one ordering `hard` on the
+same event inputs, the recorder refused unpaid travel at km 252. The hard
+team's synthetic rear rider had 0.259 energy before an 849.364 m paid leader
+leg. This is one more explicit mixed-order failure; it does not establish a
+universal safe effort level for the real field.
