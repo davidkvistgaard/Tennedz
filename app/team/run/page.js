@@ -13,6 +13,8 @@ import RaceOrders from "../../components/RaceOrders";
 import PhysicalRaceEntryControls from "./PhysicalRaceEntryControls";
 import { draftOrders } from "../../../lib/race/orders.mjs";
 
+import { usesWinterPoints } from "../../../lib/race/winter-points.mjs";
+
 const skills = {
   sprint: "Sprint",
   flat: "Flat roads",
@@ -409,7 +411,7 @@ export default function RunPage() {
                   <p>
                     {event.engine_version===
                       'physical-first-position-general-race-8'?
-                      'Watch the saved V7 test race. Finish crossings are recorded, but official results and points are not available.':
+                      'Watch the saved V7 test race. A winter points preview appears after the shared finish; official points are not awarded.':
                       'Follow your division in the viewer, or go straight to the results.'}
                   </p>
                   <Link className="btn primary" href={`/team/view/${event.id}`}>
@@ -447,6 +449,8 @@ export default function RunPage() {
                         <p className="small">
                           Eight riders and one captain. {physicalEntry?.enabled?
                             'Your saved race tactics determine what your riders attempt.':
+                            usesWinterPoints(stage)?
+                            'Your team scores the points earned by its riders in the top 30.':
                             'Your captain’s time determines your team’s placing.'}
                         </p>
                       </div>

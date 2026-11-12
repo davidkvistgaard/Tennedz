@@ -1,4 +1,5 @@
 "use client";
+import { WINTER_POINTS_ENGINE } from "../../../../lib/race/winter-points.mjs";
 import { use, useEffect, useState } from "react";
 import { useSearchParams } from "next/navigation";
 import Link from "next/link";
@@ -63,6 +64,7 @@ export default function ResultsPage({ params }) {
       });
     return () => abort.abort();
   }, [eventId, division, revealed]);
+  const winterPoints = data?.event.engine_version === WINTER_POINTS_ENGINE;
   const mine = data?.teams.find((t) => t.team_id === teamId);
   if(divisions?.viewer_kind==="position")return (
     <TeamShell title="Race recording">
@@ -70,8 +72,9 @@ export default function ResultsPage({ params }) {
         <p className="eyebrow">Recorded V7 race</p>
         <h2>Watch the recorded finish</h2>
         <p>The viewer shows the motor’s recorded rider positions and line
-          crossings. Official placings and points are not available for this
-          experimental race.</p>
+          crossings. After the shared replay reaches the finish, it shows an
+          illustrative winter points preview. Official placings and awarded
+          points are not available for this experimental race.</p>
         <Link className="btn primary"
           href={`/team/motor-lab/position-viewer/${eventId}`}>
           Open race viewer →
@@ -120,8 +123,9 @@ export default function ResultsPage({ params }) {
                   </p>
                   <h2>{data.event.name}</h2>
                   <p className="small">
-                    Your team’s placing follows your captain’s time. Points are adjusted
-                    by division.
+                    {winterPoints
+                      ? "Teams are ranked by points earned by their riders in the top 30 of this division."
+                      : "Your team’s placing follows your captain’s time. Points are adjusted by division."}
                   </p>
                 </div>
                 <label>
@@ -187,9 +191,9 @@ export default function ResultsPage({ params }) {
                           <tr>
                             <th scope="col">Pos.</th>
                             <th scope="col">Team</th>
-                            <th scope="col">Gap</th>
+                            {!winterPoints && <th scope="col">Gap</th>}
                             <th scope="col">Points</th>
-                            <th scope="col">Division multiplier</th>
+                            {!winterPoints && <th scope="col">Division multiplier</th>}
                           </tr>
                         </thead>
                         <tbody>
@@ -207,18 +211,13 @@ export default function ResultsPage({ params }) {
                                   <span className="own-chip">Your team</span>
                                 )}
                               </td>
-                              <td>
-                                {formatGap(t.time_sec - data.teams[0].time_sec)}
-                              </td>
+                              {!winterPoints && <td>{formatGap(t.time_sec - data.teams[0].time_sec)}</td>}
                               <td>
                                 <strong>{t.points}</strong>
                               </td>
-                              <td>
-                                {Number(t.multiplier).toLocaleString("en-GB", {
-                                  maximumFractionDigits: 3,
-                                })}
-                                ×
-                              </td>
+                              {!winterPoints && <td>{Number(t.multiplier).toLocaleString("en-GB", {
+                                maximumFractionDigits: 3,
+                              })}×</td>}
                             </tr>
                           ))}
                         </tbody>
@@ -228,8 +227,9 @@ export default function ResultsPage({ params }) {
                   <section className="card results-table">
                     <h2>Rider results</h2>
                     <p className="small">
-                      The first 20 riders earn rider points. These points
-                      contribute to your team’s rating in this race category.
+                      {winterPoints
+                        ? "The winner earns one point per starter in this division. Each following place earns one less, with one point for last place."
+                        : "The first 20 riders earn rider points. These points contribute to your team’s rating in this race category."}
                     </p>
                     <div className="table-scroll">
                       <table className="table">
