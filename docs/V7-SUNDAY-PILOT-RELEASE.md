@@ -43,8 +43,8 @@ to this pilot; the stored engine version is V8.
   finish, 16 women before publication, and published 120-rider men's and
   women's races. The fixture never contacts the live database. It proves the
   viewer path and shared publication clock, not hosted race execution.
-- Before the compression-only change, the bounded unit suite passed
-  1,037/1,037 tests on 2026-11-12. It excluded
+- Both before and after the compression-only change, the bounded unit suite
+  passed 1,037/1,037 tests on 2026-11-12. It excluded
   only `engine-v2-v93-heterogeneous-field.test.mjs`, a historical V93 stress
   file that stayed CPU-active without completion for over twenty minutes in
   the unbounded full run. That excluded file is not a passed gate.
