@@ -6,19 +6,21 @@ import {assertTeamId,AuthError} from
 import {rpc,uuid} from '../../../../lib/race/server';
 import {preparePhysicalEntryV1} from
   '../../../../lib/race/physical-entry-v1.mjs';
+import {physicalEntryEnabledForEventV1} from
+  '../../../../lib/race/physical-entry-target-v1.mjs';
 
-function enabled(){
-  if(process.env.PELOTONIA_PHYSICAL_ENTRY_ENABLED!=='true')
+function enabled(eventId){
+  if(!physicalEntryEnabledForEventV1(eventId,process.env))
     throw new AuthError('PHYSICAL_ENTRY_DISABLED',
       'Physical race entry is not available yet.',404);
 }
 
 export const POST=protectedRoute(async(req,context,auth)=>{
-  enabled();
-  requireGameWrites();
   const body=await req.json().catch(()=>({}));
   assertTeamId(body.team_id,auth.team.id);
   const eventId=uuid(body.event_id);
+  enabled(eventId);
+  requireGameWrites();
   if(!Array.isArray(body.selected_riders)||
     body.selected_riders.length!==8)
     throw new AuthError('INVALID_LINEUP','Select eight riders.',400);
@@ -58,8 +60,8 @@ export const POST=protectedRoute(async(req,context,auth)=>{
 });
 
 export const GET=protectedRoute(async(req,context,auth)=>{
-  enabled();
   const eventId=uuid(new URL(req.url).searchParams.get('event_id'));
+  enabled(eventId);
   const {data,error}=await auth.db
     .from('recovery_physical_entry_inputs')
     .select('schema_version,selected_riders,captain_id,orders,stake,team_style,rider_numbers')
