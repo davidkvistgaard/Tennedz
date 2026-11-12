@@ -26,7 +26,11 @@ UTC. It requires private `CRON_SECRET`,
 `PELOTONIA_WINTER_AGENT_TACTICS_ENABLED=true`, the existing exact-event
 physical-entry flag and game-write setting. It checks that the specific
 men's event is open before its deadline and verifies each owner has Auth
-`app_metadata.pelotonia_agent = winter-2026`. It never touches a human team
+`app_metadata.pelotonia_agent = winter-2026`. A service-role-only,
+read-only database function checks that protected Auth metadata, because
+the Auth Admin endpoint cannot read the nine created accounts' nullable
+token fields. This path does not change their login data. The database
+rechecks the cohort inside the commit transaction. It never touches a human team
 or replaces committed tactics. The database rechecks the unchanged lineup
 and saves the version, reason, orders and stake atomically with V7 input.
 Repeated runs skip saved teams. This schedule and policy apply only to
@@ -65,7 +69,7 @@ event and team IDs under a server-only signing key; each team receives a
 different token. The route refuses a missing or short signing key.
 
 Before writing, the server checks that the team is already entered in this
-event, its Supabase Auth owner has
+event, its Supabase Auth owner has (through the protected read-only function)
 `raw_app_meta_data.pelotonia_agent = 'winter-2026'`, and the submitted
 eight riders and captain exactly match the existing entry. It reads the
 game's saved club kit and route, uses `preparePhysicalEntryV1` to validate

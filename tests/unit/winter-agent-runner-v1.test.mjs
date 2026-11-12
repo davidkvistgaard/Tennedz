@@ -34,12 +34,12 @@ function fixture({already=false,tag='winter-2026',closed=false}={}){
       return Promise.resolve({data:table==='teams'?data.teams[key]:
         data[table],error:null});},
     then(resolve){return Promise.resolve({data:data[table],
-      error:null}).then(resolve);}};return query;},
-  auth:{admin:{async getUserById(id){return {data:{user:{id,
-    app_metadata:id==='agent-user'?{pelotonia_agent:tag}:{} }},
-    error:null};}}}};
+      error:null}).then(resolve);}};return query;}};
   const rpc=async(dbArg,name,args)=>{
-    assert.equal(dbArg,db);calls.push({name,args});
+    assert.equal(dbArg,db);
+    if(name==='recovery_is_winter_agent_v1')
+      return args.p_user==='agent-user'&&tag==='winter-2026';
+    calls.push({name,args});
     return {ok:true};};
   return {db,rpc,calls,teamId};
 }
