@@ -1,8 +1,44 @@
 # Agent-manager V7 entry contract
 
 The nine agent-managers for Sunday's Milano-Sanremo must make their own
-explicit choices. This repository provides the authenticated game API and
-manager form; it does not schedule or impersonate the external agents.
+explicit choices. The player continues to use the authenticated game form.
+The optional server-to-server route below accepts agent-authored choices;
+it does not generate tactics or schedule the external ChatGPT Work agents.
+
+## Server-to-server agent route
+
+`POST /api/agent/physical-entry` accepts the same
+`physical-entry-request-v1` JSON body as the player endpoint. It is enabled
+only for the configured physical-entry event. An agent sends
+`Authorization: Bearer v1.<64 lowercase hex characters>` without browser
+cookies or an `Origin` header. The token is a SHA-256 HMAC of the exact
+event and team IDs under a server-only signing key; each team receives a
+different token. The route refuses a missing or short signing key.
+
+Before writing, the server checks that the team is already entered in this
+event, its Supabase Auth owner has
+`raw_app_meta_data.pelotonia_agent = 'winter-2026'`, and the submitted
+eight riders and captain exactly match the existing entry. It reads the
+game's saved club kit and route, uses `preparePhysicalEntryV1` to validate
+and normalize the explicit order and sporting goal, then calls
+`recovery_join_agent_event_physical_v1`. That wrapper locks and rechecks the
+existing lineup in the same transaction before calling the player's
+`recovery_join_event_physical_v1` RPC. The database still checks owner,
+deadline, category, rider eligibility and fee atomically.
+No endpoint permits an agent token to edit the human entrant.
+
+The server requires a randomly generated
+`PELOTONIA_AGENT_ENTRY_SIGNING_KEY` (at least 32 characters) in its
+deployment environment. With that variable and the configured event ID in a
+private operator shell, `node scripts/issue-v7-agent-token.mjs <team-id>`
+derives one agent's token. The key and derived bearer tokens must never be
+placed in the repository, a browser bundle or a ChatGPT message. Provision
+each token to its corresponding Work agent by a private secret mechanism.
+Work must call the route before the deadline and check the successful
+response. The game does not currently provide a Work agent scheduler or
+token-provisioning UI, so the route alone does not make the nine submissions
+automatic. Do not mark the race ready until the database has nine tagged-agent
+inputs plus the player's separately saved input.
 
 ## Read and submit
 
