@@ -54,6 +54,9 @@ to this pilot; the stored engine version is V8.
   compatibility, passed after the change. Lint, an isolated Next build and
   one authenticated WebGL2 browser check also passed. Hosted execution time
   remains unverified.
+- A local 7,251,540-byte request reached the isolated Supabase auth-test
+  save function twice and was rejected for a nonexistent event, with no
+  recording saved. This checks transport size, not a hosted full-race commit.
 
 ## Production prerequisites
 

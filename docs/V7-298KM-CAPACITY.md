@@ -149,3 +149,11 @@ For the same Sunday-seed all-`conserve` synthetic run, compression took
 eight unresolved tie observations and 410 viewer frames remained unchanged.
 The isolated hosted function duration is still unmeasured; this is a local
 codec benchmark, not a guarantee that the 300 s production limit will hold.
+
+A 7,251,540-byte RPC request, matching the approximate viewer document plus
+base64 archive transport size, reached the isolated Supabase auth-test
+project's save function twice in 3.5–3.8 s. Both calls used random
+nonexistent event IDs, returned the expected database `PT404`, and the
+post-check found no saved recording. This verifies the data API accepted
+that request size from the local client. It does not prove that a full
+80-rider transaction or the hosted Vercel function will finish in time.
