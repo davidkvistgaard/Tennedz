@@ -140,3 +140,12 @@ same event inputs, the recorder refused unpaid travel at km 252. The hard
 team's synthetic rear rider had 0.259 energy before an 849.364 m paid leader
 leg. This is one more explicit mixed-order failure; it does not establish a
 universal safe effort level for the real field.
+
+The V2 archive codec now uses gzip level 6 instead of level 9; it retains
+the same lossless format and validates both old and new compression levels.
+For the same Sunday-seed all-`conserve` synthetic run, compression took
+36.8 s instead of 68.7 s locally, while the archive grew from 2,842,203 to
+2,975,934 bytes (4.7%). All 23,840 decisions, 80 crossings, 963 contacts,
+eight unresolved tie observations and 410 viewer frames remained unchanged.
+The isolated hosted function duration is still unmeasured; this is a local
+codec benchmark, not a guarantee that the 300 s production limit will hold.
