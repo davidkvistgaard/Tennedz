@@ -3,6 +3,7 @@
 import { useEffect, useMemo, useState } from "react";
 import SmallButton from "./SmallButton";
 import { Pill } from "./ui";
+import {api} from '../../lib/api';
 
 function storageKey(teamId) {
   return `tennedz_lineup_presets_v1_${teamId}`;
@@ -24,6 +25,7 @@ function savePresets(teamId, presets) {
 
 export default function LineupPresets({
   teamId,
+  gender,
   riders,
   selectedIds,
   setSelectedIds,
@@ -32,11 +34,21 @@ export default function LineupPresets({
 }) {
   const [presets, setPresets] = useState([]);
   const [newName, setNewName] = useState("");
+  const [serverDefault,setServerDefault]=useState(null);
+  const [defaultMessage,setDefaultMessage]=useState('');
 
   useEffect(() => {
     if (!teamId) return;
     setPresets(loadPresets(teamId));
   }, [teamId]);
+  useEffect(()=>{
+    if(!teamId||!['M','F'].includes(gender))return;
+    let active=true;
+    api(`/api/team/default-race-plan?gender=${gender}`)
+      .then(result=>{if(active)setServerDefault(result.lineup);})
+      .catch(error=>{if(active)setDefaultMessage(error.message);});
+    return()=>{active=false;};
+  },[teamId,gender]);
 
   const selectedSet = useMemo(() => new Set(selectedIds), [selectedIds]);
 
@@ -79,6 +91,34 @@ export default function LineupPresets({
     setNewName("");
   }
 
+  async function saveServerDefault(){
+    if(selectedIds.length!==8||!selectedIds.includes(captainId)){
+      setDefaultMessage('Choose eight riders and their captain first.');
+      return;
+    }
+    try{
+      await api('/api/team/default-race-plan',{
+        method:'POST',headers:{'Content-Type':'application/json'},
+        body:JSON.stringify({kind:'lineup',gender,
+          selected_riders:selectedIds,captain_id:captainId})});
+      setServerDefault({selected_riders:[...selectedIds],
+        captain_id:captainId});
+      setDefaultMessage('Your default one-day team is saved.');
+    }catch(error){setDefaultMessage(error.message);}
+  }
+
+  function loadServerDefault(){
+    const ids=serverDefault?.selected_riders;
+    if(!Array.isArray(ids)||ids.length!==8||
+      ids.some(id=>!riders.some(rider=>rider.id===id))){
+      setDefaultMessage('Your saved default team is not eligible here.');
+      return;
+    }
+    setSelectedIds(ids);
+    setCaptainId(serverDefault.captain_id);
+    setDefaultMessage('Your default team is loaded.');
+  }
+
   return (
     <div className="card" style={{ padding: 14 }}>
       <div style={{ display: "flex", justifyContent: "space-between", gap: 10, flexWrap: "wrap" }}>
@@ -90,6 +130,20 @@ export default function LineupPresets({
         </div>
         <Pill tone="info">{presets.length} presets</Pill>
       </div>
+
+      <div className="hr" />
+
+      <div className="small">Your default one-day team is saved to your
+        account for this category. It is used only after you enter a race
+        and leave its lineup incomplete.</div>
+      <div style={{display:'flex',gap:8,flexWrap:'wrap',marginTop:10}}>
+        <SmallButton onClick={saveServerDefault}>
+          Save selected eight as default</SmallButton>
+        {serverDefault?<SmallButton onClick={loadServerDefault}>
+          Load my default team</SmallButton>:null}
+      </div>
+      {defaultMessage?<p role="status" className="small">
+        {defaultMessage}</p>:null}
 
       <div className="hr" />
 

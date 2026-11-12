@@ -247,6 +247,21 @@ export default function RunPage() {
       setBusy(false);
     }
   }
+  async function useDefaultEntry(){
+    if(!eventId||!team?.id||locked||busy)return;
+    setBusy(true);setNotice('');
+    try{
+      const result=await api('/api/event/join-default',{
+        method:'POST',headers:{'Content-Type':'application/json'},
+        body:JSON.stringify({event_id:eventId,team_id:team.id})});
+      setSelected(result.entry.selected_riders);
+      setCaptain(result.entry.captain_id);
+      setSaved(result.entry);
+      setPhysicalEntry({enabled:true,entry:result.entry});
+      setNotice('Your default team and race tactics are saved. You can change them before the deadline.');
+    }catch(error){setNotice(error.message);}
+    finally{setBusy(false);}
+  }
   return (
     <TeamShell compact>
       <div className="race-calendar">
@@ -491,8 +506,21 @@ export default function RunPage() {
                         );
                       })}
                     </div>
+                    {physicalEntry?.enabled&&!physicalEntry.entry&&!locked?
+                      <div className="lineup-save">
+                        <button className="btn" type="button"
+                          disabled={busy} onClick={useDefaultEntry}>
+                          {busy?'Saving…':'Enter with default team and tactics'}
+                        </button>
+                        <p className="small">Your saved defaults are used first.
+                          If none fit, the game selects eligible riders and a
+                          documented neutral tactic. No other team is entered.</p>
+                        {notice?<p role="status" className="form-message">
+                          {notice}</p>:null}
+                      </div>:null}
                     {physicalEntry?.enabled?<PhysicalRaceEntryControls
                       eventId={eventId} teamId={team?.id}
+                      gender={event?.gender}
                       selected={selected} captain={captain}
                       riders={available.filter(eligible)}
                       locked={locked} valid={valid}
@@ -607,9 +635,10 @@ export default function RunPage() {
                         })}
                       </div>
                       <details className="lineup-presets">
-                        <summary>Saved lineups in this browser</summary>
+                        <summary>Default team and saved lineups</summary>
                         <LineupPresets
                           teamId={team?.id}
+                          gender={event?.gender}
                           riders={available.filter(eligible)}
                           selectedIds={selected}
                           setSelectedIds={choose}
