@@ -1,9 +1,57 @@
 # Agent-manager V7 entry contract
 
-The nine agent-managers for Sunday's Milano-Sanremo must make their own
-explicit choices. The player continues to use the authenticated game form.
-The optional server-to-server route below accepts agent-authored choices;
-it does not generate tactics or schedule the external ChatGPT Work agents.
+The nine ChatGPT Work-created managers for Sunday's Milano-Sanremo have
+accounts, teams and entered lineups, but no verified running Work jobs.
+The player continues to use the authenticated game form. For this one pilot,
+Tennedz can submit an explicit, versioned tactical plan for each tagged
+agent team. This deterministic game policy is not an independent Work
+agent decision.
+
+## Automatic Sunday policy
+
+`winter-agent-tactics-v1` reads each agent's entered eight riders and
+captain, actual rider ratings, saved flat route and club kit. It retains
+that lineup and captain. The strongest support rider by
+leadership/endurance/flat becomes road captain. A sprint captain gets a
+`sprint_finish` goal, early conservation and a selective chase with
+unnamed helper rotation from about 50 km to go. The engine selects one
+available paid leader at a time. A captain better at hills than sprinting
+gets an explicit `none` goal and conserves on this flat route. Both plans
+switch to steady effort at 5 km to go. An order is not a recorded attack,
+contact or result. The cautious policy is a Sunday test choice, not a
+general model of agent-manager personalities.
+
+The production cron calls `/api/cron/winter-agent-tactics` daily at 02:00
+UTC. It requires private `CRON_SECRET`,
+`PELOTONIA_WINTER_AGENT_TACTICS_ENABLED=true`, the existing exact-event
+physical-entry flag and game-write setting. It checks that the specific
+men's event is open before its deadline and verifies each owner has Auth
+`app_metadata.pelotonia_agent = winter-2026`. It never touches a human team
+or replaces committed tactics. The database rechecks the unchanged lineup
+and saves the version, reason, orders and stake atomically with V7 input.
+Repeated runs skip saved teams. This schedule and policy apply only to
+event `109a9235-44e6-d390-1fa9-aec19b65cf3b`, not later races.
+
+## Read-only whole-race check, 2026-11-12
+
+The calibration script `scripts/audit-winter-agent-pilot-v1.mjs` used a
+private read-only snapshot of the ten entered teams, their 80 selected
+riders, current route and event data, plus a private list of the nine
+Auth-tagged agent teams. The human team's uncommitted order was replaced
+by a plainly synthetic conserve/unnamed-rotation scenario. Its first
+attempt with a selective break order for the hills captain failed at km
+151 on an uncommitted front pass. A named worker also became absent from
+the peloton, and ending every rotation at 5 km to go left no payable
+leader. The tested policy therefore uses no break attack and an unnamed
+helper rotation that continues through the finish.
+
+With this exact policy, the recorder completed 298 km, 23,840 paid rider-km
+decisions and 80 line crossings. Independent replay matched; the viewer
+document contained 365 frames and 961 contact events. It observed 16
+unresolved finish ties and assigned no official results. The race took
+about 70 seconds locally, replay about 39 seconds. These inputs can change
+before Sunday, particularly the human tactic and game date. This check
+does not authorize invented official placings or guarantee a hosted run.
 
 ## Server-to-server agent route
 
@@ -36,9 +84,9 @@ placed in the repository, a browser bundle or a ChatGPT message. Provision
 each token to its corresponding Work agent by a private secret mechanism.
 Work must call the route before the deadline and check the successful
 response. The game does not currently provide a Work agent scheduler or
-token-provisioning UI, so the route alone does not make the nine submissions
-automatic. Do not mark the race ready until the database has nine tagged-agent
-inputs plus the player's separately saved input.
+token-provisioning UI. The Sunday policy above supplies automatic orders
+for this test event. Do not mark the race ready until the database has nine
+tagged-agent inputs plus the player's separately saved input.
 
 ## Read and submit
 
