@@ -13,8 +13,8 @@ agent decision.
 captain, actual rider ratings, saved flat route and club kit. It retains
 that lineup and captain. The strongest support rider by
 leadership/endurance/flat becomes road captain. A sprint captain gets a
-`sprint_finish` goal, early conservation and a selective chase with
-unnamed helper rotation from about 50 km to go. The engine selects one
+`sprint_finish` goal, early conservation and unnamed helper rotation from
+the start, then a selective chase from about 50 km to go. The engine selects one
 available paid leader at a time. A captain better at hills than sprinting
 gets an explicit `none` goal and conserves on this flat route. Both plans
 switch to steady effort at 5 km to go. An order is not a recorded attack,
@@ -38,18 +38,19 @@ The calibration script `scripts/audit-winter-agent-pilot-v1.mjs` used a
 private read-only snapshot of the ten entered teams, their 80 selected
 riders, current route and event data, plus a private list of the nine
 Auth-tagged agent teams. The human team's uncommitted order was replaced
-by a plainly synthetic conserve/unnamed-rotation scenario. Its first
+by a plainly synthetic conserve/sit-in scenario. Its first
 attempt with a selective break order for the hills captain failed at km
 151 on an uncommitted front pass. A named worker also became absent from
 the peloton, and ending every rotation at 5 km to go left no payable
 leader. The tested policy therefore uses no break attack and an unnamed
 helper rotation that continues through the finish.
 
-With this exact policy, the recorder completed 298 km, 23,840 paid rider-km
-decisions and 80 line crossings. Independent replay matched; the viewer
-document contained 365 frames and 961 contact events. It observed 16
-unresolved finish ties and assigned no official results. The race took
-about 70 seconds locally, replay about 39 seconds. These inputs can change
+With the agent plans providing early rotation and the human team sitting in,
+the recorder completed 298 km, 23,840 paid rider-km decisions and 80 line
+crossings. Independent replay matched; the viewer document contained 367
+frames and 980 contact events. It observed 14 unresolved finish ties and
+assigned no official results. The race took about 66 seconds locally,
+replay about 33 seconds. These inputs can change
 before Sunday, particularly the human tactic and game date. This check
 does not authorize invented official placings or guarantee a hosted run.
 

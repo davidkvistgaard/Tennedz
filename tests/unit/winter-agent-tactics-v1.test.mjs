@@ -21,6 +21,7 @@ test('sprint manager uses entered lineup, paid helper and late chase',()=>{
   assert.equal(plan.reason,'flat_route_sprint_captain');
   assert.equal(plan.stake.sportingGoal,'sprint_finish');
   assert.equal(plan.orders.captainId,ids[0]);
+  assert.equal(plan.orders.baseline.frontWork,'rotate');
   assert.equal(plan.orders.helperIds.length,6);
   assert.equal(plan.orders.phases[0].atKm,245);
   assert.equal(plan.orders.phases[0].frontWork,'rotate');
@@ -39,6 +40,7 @@ test('climber captain conserves in a flat race',()=>{
     riders:riders({sprint:24,hills:42}),stage});
   assert.equal(plan.reason,'flat_route_climb_captain_conserve');
   assert.equal(plan.orders.baseline.attack,'none');
+  assert.equal(plan.orders.baseline.frontWork,'sit_in');
   assert.equal(plan.stake.sportingGoal,'none');
 });
 

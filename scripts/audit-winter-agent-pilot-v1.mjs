@@ -1,5 +1,5 @@
 // Read-only whole-race calibration. The uncommitted human team uses an
-// explicitly synthetic conserve/rotation scenario, not the player's order.
+// explicitly synthetic conserve/sit-in scenario, not the player's order.
 import {readFileSync} from 'node:fs';
 import {planWinterAgentTacticsV1} from
   '../lib/race/winter-agent-tactics-v1.mjs';
@@ -37,7 +37,7 @@ const entries=snapshot.teams.map((team,index)=>{
       helperIds:riderIds.filter(id=>
         id!==team.entry.captain_id&&id!==roadCaptainId),
       baseline:{effort:'conserve',attack:'none',
-        chase:'selective',frontWork:'rotate'},
+        chase:'selective',frontWork:'sit_in'},
       phases:[]};
     stake={sportingGoal:'none',
       sportingCaptainId:team.entry.captain_id};
@@ -66,7 +66,7 @@ if(bundle.race.completedThroughKm!==298||
   throw new Error('The calibrated race did not finish completely.');
 replayPhysicalFirstPositionGeneralRaceV8(bundle.request,bundle.race);
 console.log(JSON.stringify({fixture:'read_only_sunday_20261112',
-  agentPolicies:9,humanInput:'synthetic-conserve-rotation',
+  agentPolicies:9,humanInput:'synthetic-conserve-sit-in',
   km:bundle.race.completedThroughKm,
   decisions:bundle.race.decisionCount,
   finishCrossings:bundle.race.finishCrossings.length,
