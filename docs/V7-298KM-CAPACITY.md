@@ -125,3 +125,12 @@ fallback refused at **km 250**: a synthetic rear rider assigned a paid leader
 leg had 0.199 energy before a 1,000 m terrain-priced segment. The recorder
 stopped at km 249 rather than allowing unpaid travel. This is a concrete
 Sunday-order risk; the real field and submitted tactics may behave differently.
+
+On those same observed event inputs, all ten synthetic teams ordering
+`conserve` plus `selective` attack completed 23,840 decisions and 80 crossings.
+The recorder registered **zero attack departures**, 2,556 attack-capacity
+refusals, 963 paid contacts and eight unresolved finish-tie observations.
+It produced 410 viewer frames and a 2,958,909-byte compressed archive; race
+plus viewer construction took 129.8 s and archive encoding 65.8 s locally.
+An attack order did not become a recorded attack. This capacity probe cannot
+predict the nine agent-managers' actual orders or the entered riders' outcome.

@@ -8,13 +8,13 @@ to this pilot; the stored engine version is V8.
 
 ## Verified candidate
 
-- First verified application source: `codex/v7-sunday-integration`, commit
-  `55c012efb57b9ab3fefb22ad80ac342237adbb38`, based on
+- Current application source: `codex/v7-sunday-integration`, commit
+  `36b2931024214bd32063d72d21e82d9e494b9a6a`, based on
   `release/pelotonia` commit `2acb18e681c21d2df6896daecbeeb30da138be55`.
-- Preview: deployment `dpl_6y5qgQczfkP1ievQPgj6o6oWwe7L` is READY at that
-  source SHA. Its `/viewer`, `/login`, viewer JavaScript and public sample clock
-  respond successfully. The participant race path was verified against the
-  disposable auth-test database locally, not against production.
+- Preview: deployment `dpl_GZeghAd7uD3eh2LkvQGtqH1NmfxB` is READY at that
+  source SHA. Its `/viewer` and viewer JavaScript respond successfully; the
+  public sample and participant path were checked on the prior Preview and
+  against the disposable auth-test database locally, not against production.
 - Auth-test: an immutable 16-rider race completed, replayed in WebGL2, and
   finalized with zero official awards; repeated finalization was idempotent.
 - Two disposable managers saved physical tactics through the actual browser
@@ -67,6 +67,11 @@ to this pilot; the stored engine version is V8.
    the external agents must call this API or use the UI. The nine agent
    submissions must be checked in the database; old `event_teams.orders` do
    not count. Do not fill missing entries with guessed neutral tactics.
+   A read-only check on 2026-11-12 found ten entered teams with ten distinct
+   manager auth accounts, but nine of those accounts had no password hash,
+   confirmed email or prior login. Their existing route to authenticate and
+   submit their own choices must be established before this prerequisite can
+   pass. No agent orders have been inferred or submitted on their behalf.
    The following read-only check must return `10 / 10 / 10` before the
    deadline:
 
