@@ -17,6 +17,12 @@ flat 39.8 and endurance 39.5 on average, with form 40 and fatigue 0. The
 seed-2 synthetic field averaged flat 38 and endurance 40, also with form 40
 and fatigue 0. These aggregate comparisons do not reproduce individual
 riders, actual tactical orders or the eventual locked race snapshot.
+The ten entered production teams currently own 16–24 riders each (23.2 on
+average), while this fixture owns only its eight selected riders per team.
+The production snapshot is therefore larger than this local fixture even
+though both have 80 starters. A read-only aggregate measured 232 roster
+rider records at about 259 kB of rider JSON before team and event metadata.
+Hosted snapshot and database write time remain unmeasured.
 
 On seed `sunday-capacity-1` and an artificial flat 298 km route, all ten
 teams explicitly ordered an unnamed helper rotation, no attack, selective
