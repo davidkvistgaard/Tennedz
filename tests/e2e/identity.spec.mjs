@@ -34,7 +34,7 @@ test('next race is gender-specific and a failed calendar is not shown as empty',
   await expect(page.getByRole('heading',{name:'The road is waiting'})).toBeVisible();
   await page.getByRole('button',{name:'Women',exact:true}).click();
   await expect(page.getByRole('heading',{name:'Women’s coastal race'})).toBeVisible();
-  await expect(page.getByRole('link',{name:/Race details and lineup/})).toHaveAttribute('href','/team/run?gender=F');
+  await expect(page.getByRole('link',{name:/Set up team/})).toHaveAttribute('href','/team/run?event_id=future&gender=F');
   await page.unroute('**/api/events?*');
   await page.route('**/api/events?*',route=>route.fulfill({status:503,json:{ok:false,error:'Unavailable'}}));
   await page.reload();

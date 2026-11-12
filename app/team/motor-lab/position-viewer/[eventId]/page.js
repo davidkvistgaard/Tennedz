@@ -1,8 +1,10 @@
 import {notFound,redirect} from 'next/navigation';
-import {requireAdministrator,databaseClient} from
+import {requireAdministrator,requireTeam,databaseClient} from
   '../../../../../lib/auth/server';
 import {AuthError} from '../../../../../lib/auth/policy.mjs';
 import {uuid} from '../../../../../lib/race/server';
+import {requirePositionRaceParticipantV1} from
+  '../../../../../lib/race/position-race-access-v1.mjs';
 import {verifyGameSnapshotPositionViewerDocumentV1} from
   '../../../../../lib/viewer/game-snapshot-position-viewer-v1.mjs';
 import {scenicPresentationV1} from
@@ -21,18 +23,32 @@ import '../../viewer-preview/viewer-preview.css';
 export const dynamic='force-dynamic';
 
 export default async function PositionGameViewerPage({params}){
-  if(process.env.PELOTONIA_V7_POSITION_PREVIEW_ENABLED!==
-      'true')notFound();
-  try{await requireAdministrator({method:'GET'});}
-  catch(error){
-    if(error instanceof AuthError&&
-      error.code==='UNAUTHENTICATED')redirect('/login');
-    throw error;
-  }
   let eventId;
   try{eventId=uuid((await params).eventId);}
   catch{notFound();}
-  const {data,error}=await databaseClient().from(
+  const db=databaseClient();
+  const {data:raceType,error:raceTypeError}=await db.from('events')
+    .select('engine_version').eq('id',eventId).maybeSingle();
+  if(raceTypeError)throw new Error('Could not check the race version.');
+  const publicPosition=raceType?.engine_version===
+    'physical-first-position-general-race-8';
+  if(!publicPosition&&
+    process.env.PELOTONIA_V7_POSITION_PREVIEW_ENABLED!==
+      'true')notFound();
+  try{
+    if(publicPosition){
+      const auth=await requireTeam();
+      await requirePositionRaceParticipantV1(
+        db,eventId,auth.team.id);
+    }else await requireAdministrator({method:'GET'});
+  }catch(error){
+    if(error instanceof AuthError&&
+      error.code==='UNAUTHENTICATED')redirect('/login');
+    if(error instanceof AuthError&&
+      [403,404].includes(error.status))notFound();
+    throw error;
+  }
+  const {data,error}=await db.from(
     'recovery_position_race_recordings')
     .select('document,recorded_at').eq('event_id',eventId)
     .maybeSingle();
@@ -47,7 +63,7 @@ export default async function PositionGameViewerPage({params}){
   if(!broadcast.recordingPublished)
     return <TeamShell compact><WaitingRecordedGameViewer
       eventId={eventId}
-      viewerKind="position"
+      viewerKind={publicPosition?'position-public':'position'}
       publicationAtMs={broadcast.publicationAtMs}/></TeamShell>;
   const document=verifyGameSnapshotPositionViewerDocumentV1(
     data.document);
@@ -55,7 +71,8 @@ export default async function PositionGameViewerPage({params}){
     document.input?.officialResults!==false)notFound();
   const feed=scenicPresentationV1({...document.feed,events:[]});
   return <TeamShell compact><RecordedGameViewerClient
-    viewerKind="position" eventId={eventId}
+    viewerKind={publicPosition?'position-public':'position'}
+    eventId={eventId}
     raceId={document.raceId} sha256={document.sha256}
     feed={feed} coverage={document.coverage}
     version={document.adapterVersion}/></TeamShell>;

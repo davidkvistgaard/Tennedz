@@ -2,7 +2,7 @@ import { NextResponse } from "next/server";
 import { protectedRoute, requireGameWrites } from "../../../../lib/auth/server";
 import { AuthError } from "../../../../lib/auth/policy.mjs";
 import { executeRace, uuid } from "../../../../lib/race/server";
-export const maxDuration = 60;
+export const maxDuration = 300;
 
 // A participant may request their locked race. Every sporting input comes from
 // the server snapshot, and the atomic commit makes concurrent viewers harmless.
@@ -33,5 +33,6 @@ export const POST = protectedRoute(async (req, context, auth) => {
   return NextResponse.json({
     ok: true,
     already_finished: !!result.already_finished,
+    viewer_kind: result.viewer_kind??null,
   });
 });

@@ -31,7 +31,8 @@ sporting stake and game kit with the selected lineup. The database allocates
 unique positive race bibs and preserves them on an identical resubmission.
 The private table has RLS enabled and no client grants. The companion
 `/api/event/join-physical` endpoint is disabled unless
-`PELOTONIA_PHYSICAL_ENTRY_ENABLED=true`; it validates the manager input,
+`PELOTONIA_PHYSICAL_ENTRY_ENABLED=true` and an exact
+`PELOTONIA_PHYSICAL_ENTRY_EVENT_ID`; it validates the manager input,
 reads the saved game kit and uses the atomic RPC. The legacy entry path remains
 available. PGlite tests verify the transaction, bib assignment, rollback
 and revoked anonymous grants. The migration has **not** been applied to the

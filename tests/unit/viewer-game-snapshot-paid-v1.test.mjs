@@ -1,6 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import {createHash} from 'node:crypto';
+import {gzipSync,gunzipSync} from 'node:zlib';
 import {validateFeed} from '@pelotonia/race-viewer/data';
 import {createGameSnapshotPaidViewerDocumentV1,
   GAME_SNAPSHOT_PAID_VIEWER_VERSION} from
@@ -236,6 +237,13 @@ test('V2 archive restores paid contact topology without changing V1',()=>{
   const repeat=encodeGameSnapshotPositionRaceArchiveV2(bundle);
   assert.deepEqual(repeat.metadata,v2.metadata);
   assert.deepEqual(repeat.body,v2.body);
+  const oldBody=gzipSync(gunzipSync(v2.body),{level:9});
+  const oldArchive={metadata:{...v2.metadata,
+    compressedBytes:oldBody.length,
+    compressedSha256:createHash('sha256').update(oldBody)
+      .digest('hex')},body:oldBody};
+  assert.deepEqual(decodeGameSnapshotPositionRaceArchiveV2(oldArchive),
+    bundle);
   const v1=encodeGameSnapshotPositionRaceArchiveV1(bundle);
   assert.deepEqual(decodeGameSnapshotPositionRaceArchiveV1(v1),
     bundle);

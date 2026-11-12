@@ -1,6 +1,6 @@
 import {test,expect} from '@playwright/test';
 
-for(const width of [390,1440])test(`manager runs a recorded Motor Lab race at ${width}px`,async({page,context})=>{
+for(const width of [390,1440])test(`manager opens the recorded Motor Lab viewer at ${width}px`,async({page,context})=>{
  await page.setViewportSize({width,height:900});
  const errors=[];page.on('pageerror',error=>errors.push(error.message));
  const endpoint='http://localhost:3100/api/motor-lab';
@@ -11,21 +11,15 @@ for(const width of [390,1440])test(`manager runs a recorded Motor Lab race at ${
  await page.getByRole('button',{name:'Sign in',exact:true}).click();
  await expect(page).toHaveURL(/\/team$/);
  await page.getByRole('link',{name:'Motor Lab'}).click();
- await expect(page.getByRole('heading',{name:'Motor Lab'})).toBeVisible();
+ await expect(page.getByRole('heading',{name:'Recorded Motor Lab race'})).toBeVisible();
  expect((await context.request.post(endpoint,{headers:{Origin:'https://another.example'},data:{plan:'sprint',seed:1}})).status()).toBe(403);
- await page.getByRole('radio',{name:/Send the captain ahead/}).check();
- await page.getByRole('button',{name:'Run the race'}).click();
- await expect(page.getByRole('heading',{name:'Coast Road laboratory'})).toBeVisible();
- await expect(page.getByText('1 / 160',{exact:true})).toBeVisible();
- const slider=page.getByRole('slider',{name:'Inspect recorded kilometre'});
- await slider.focus();await page.keyboard.press('End');
- await expect(page.getByText('160 / 160',{exact:true})).toBeVisible();
- await page.getByRole('button',{name:'Previous moment'}).click();
- await expect(page.getByRole('listitem').filter({hasText:'Amber Captain'}).first()).toBeVisible();
- await page.getByRole('radio',{name:/Protect the sprinter/}).check();
- await page.getByRole('button',{name:'Run the race'}).click();
- await expect(page.getByText('Amber rode Protect the sprinter')).toBeVisible();
- await page.screenshot({path:`test-results/motor-lab-${width}.png`,fullPage:true});
+ await expect(page.getByRole('region',{name:'Pelotonia race theatre'})).toBeVisible();
+ await expect(page.getByRole('navigation',{name:'Race groups'})).toBeVisible();
+ await expect(page.getByRole('link',{name:/Generate and watch a test race/})).toBeVisible();
+ await expect(page.getByRole('link',{name:/Watch your saved game race/})).toBeVisible();
+ await expect(page.getByText('Data coverage and limitations')).toBeVisible();
+ await page.getByRole('button',{name:'Race details'}).click();
+ await expect(page.getByText('Motor race data · synthetic scenery')).toBeVisible();
  expect(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth)).toBe(true);
  expect(errors).toEqual([]);
 });

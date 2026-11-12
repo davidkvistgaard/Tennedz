@@ -27,7 +27,9 @@ import {recordPhysicalFirstPositionGeneralRaceV1,
   recordPhysicalFirstPositionGeneralRaceV6,
   replayPhysicalFirstPositionGeneralRaceV6,
   recordPhysicalFirstPositionGeneralRaceV7,
-  replayPhysicalFirstPositionGeneralRaceV7} from
+  replayPhysicalFirstPositionGeneralRaceV7,
+  recordPhysicalFirstPositionGeneralRaceV8,
+  replayPhysicalFirstPositionGeneralRaceV8} from
   '../../lib/engine/v2/physical-first-position-general-race-v1.mjs';
 
 test('a connected start records every rider without an attack',()=>{
@@ -85,6 +87,28 @@ test('V7 records a chosen attack without launch when paid runway is insufficient
   assert.deepEqual(
     replayPhysicalFirstPositionGeneralRaceV7(
       request,race),race);
+});
+
+test('V8 records a separate replay version and preserves V7 recordings',()=>{
+  const request=prepareSyntheticPositionCatchV1({
+    teamCount:2,kmCount:20,weakBunchCount:2,
+    profile:'hill_then_mountain'});
+  request.input.positionPassingCorridorCount=1;
+  request.input.teams[0].orders.baseline.attack='none';
+  const historic=recordPhysicalFirstPositionGeneralRaceV7(request);
+  const current=recordPhysicalFirstPositionGeneralRaceV8(request);
+  assert.equal(current.version,'physical-first-position-general-race-8');
+  assert.equal(current.steps[0].sharedRoad.version,
+    'physical-first-position-shared-road-km-16');
+  assert.equal(current.completedThroughKm,20);
+  assert.equal(current.decisionCount,320);
+  assert.equal(current.finishCrossings.length,16);
+  assert.deepEqual(replayPhysicalFirstPositionGeneralRaceV8(
+    request,current),current);
+  assert.deepEqual(replayPhysicalFirstPositionGeneralRaceV7(
+    request,historic),historic);
+  assert.throws(()=>replayPhysicalFirstPositionGeneralRaceV7(
+    request,current),/differs from paid movement/);
 });
 
 test('membership-only contact events preserve paid movement and finish',()=>{

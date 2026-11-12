@@ -5,6 +5,8 @@ import { randomUUID } from "node:crypto";
 import {v2BrowserRecordingLock} from './v2-browser-recording-fixture.mjs';
 import {createGuidedSavedRunFixture, guidedSavedRunIds} from
   './guided-saved-run-fixture.mjs';
+import {physicalGameViewerInputsV1} from
+  './physical-game-viewer-fixture.mjs';
 
 const sessions = new Map();
 const clubKits = new Map();
@@ -22,6 +24,13 @@ const v2FutureSettlementFixture = process.env.PELOTONIA_E2E_V2_SETTLEMENT_FUTURE
 const v2RecordingFixture = process.env.PELOTONIA_E2E_V2_RECORDING === "true" ||
   v2SettlementFixture;
 const guidedSavedRunFixture = process.env.PELOTONIA_E2E_GUIDED_SAVED_RUN === 'true';
+const positionViewerFixture = process.env.PELOTONIA_E2E_POSITION_VIEWER === 'true';
+const positionInputs = positionViewerFixture ? physicalGameViewerInputsV1({
+  teamCount:Number(process.env.PELOTONIA_E2E_POSITION_VIEWER_TEAMS ?? 2),
+  category:process.env.PELOTONIA_E2E_POSITION_VIEWER_CATEGORY ?? 'men',
+}) : null;
+let savedPositionDocument = null;
+let savedPositionAt = null;
 const savedRuns = guidedSavedRunFixture ? Object.fromEntries(
   ['men', 'women'].map(category => [guidedSavedRunIds[category],
     createGuidedSavedRunFixture(category)])) : {};
@@ -89,6 +98,34 @@ const server = http.createServer(async (req, res) => {
   }
   if (url.pathname.startsWith("/rest/v1/")) {
     if (req.headers.apikey !== "fixture-service-role") return send(403, { message: "Bad fixture key" });
+    if (positionViewerFixture &&
+      url.pathname === '/rest/v1/rpc/recovery_race_snapshot')
+      return send(body.p_event === positionInputs.snapshot.event.id ? 200 : 404,
+        body.p_event === positionInputs.snapshot.event.id ?
+          positionInputs.snapshot : {message:'Race not found.'});
+    if (positionViewerFixture &&
+      url.pathname === '/rest/v1/rpc/recovery_save_position_race_recording_v1') {
+      if (body.p_event !== positionInputs.snapshot.event.id ||
+        body.p_document?.input?.eventId !== body.p_event)
+        return send(409,{message:'Position recording differs from the fixture.'});
+      const already_recorded = savedPositionDocument !== null;
+      savedPositionDocument ??= body.p_document;
+      if (!savedPositionAt) {
+        const finished=process.env.PELOTONIA_E2E_POSITION_VIEWER_FINISHED === 'true';
+        const playbackMs=savedPositionDocument.feed.duration*1000/60;
+        savedPositionAt=new Date(Date.now()-(finished?playbackMs+5000:0))
+          .toISOString();
+      }
+      return send(200,{event_id:body.p_event,
+        sha256:savedPositionDocument.sha256,recorded_at:savedPositionAt,
+        already_recorded});
+    }
+    if (positionViewerFixture &&
+      url.pathname === '/rest/v1/rpc/recovery_position_viewer_broadcast_source_v1')
+      return send(200,savedPositionDocument?{
+        recorded_at:savedPositionAt,race_id:savedPositionDocument.raceId,
+        duration:savedPositionDocument.feed.duration,
+        events:savedPositionDocument.feed.events}:null);
     if (v2RecordingFixture && url.pathname === "/rest/v1/rpc/recovery_save_v2_recorded_candidate") {
       if (body.p_event !== v2PreviewEventId || body.p_contract?.schemaVersion !== 1 ||
           body.p_contract?.engineVersion !== 2 ||
@@ -178,6 +215,13 @@ const server = http.createServer(async (req, res) => {
       return send(200, saved ? [saved] : []);
     }
     if (req.method !== "GET" && req.method !== "HEAD") return send(500, { message: "Unexpected database mutation in recovery" });
+    if (positionViewerFixture &&
+      url.pathname === '/rest/v1/recovery_physical_entry_inputs')
+      return send(200,positionInputs.rows);
+    if (positionViewerFixture &&
+      url.pathname === '/rest/v1/recovery_position_race_recordings')
+      return send(200,savedPositionDocument?{
+        document:savedPositionDocument,recorded_at:savedPositionAt}:null);
     const table = url.pathname.split("/").at(-1);
     if (guidedSavedRunFixture && table === 'event_divisions') {
       const eventId = url.searchParams.get('event_id')?.replace('eq.', '');
@@ -357,7 +401,7 @@ const child = spawn(process.execPath, ["node_modules/next/dist/bin/next", "start
   PELOTONIA_V2_SETTLEMENT_ENABLED: v2SettlementFixture ? "true" : "false",
   SUPABASE_URL: "http://127.0.0.1:54329", SUPABASE_ANON_KEY: "fixture-anon", SUPABASE_SERVICE_ROLE_KEY: "fixture-service-role",
   NEXT_PUBLIC_SUPABASE_URL: "", NEXT_PUBLIC_SUPABASE_ANON_KEY: "", APP_ORIGIN: "http://localhost:3100", ADMIN_USER_IDS: ids.alice,
-  RECOVERY_ALLOW_GAME_WRITES: noContestFixture || v2SaveFixture || v2LockFixture || v2RecordingFixture ? "true" : "false",
+  RECOVERY_ALLOW_GAME_WRITES: noContestFixture || v2SaveFixture || v2LockFixture || v2RecordingFixture || positionViewerFixture ? "true" : "false",
   PELOTONIA_AUTOPILOT_ENABLED: noContestFixture ? "true" : "false",
 } });
 const stop = () => { child.kill(); server.closeAllConnections(); server.close(); };

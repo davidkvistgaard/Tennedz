@@ -14,12 +14,18 @@ async function handler(req, context, auth) {
 
     const supabase = createClient(process.env.SUPABASE_URL, process.env.SUPABASE_SERVICE_ROLE_KEY);
 
-    const { data: rows, error } = await supabase
-      .from("event_divisions")
-      .select("division_index,total_divisions,team_id")
-      .eq("event_id", event_id);
+    const [{ data: rows, error }, {data:event,error:eventError}]=
+      await Promise.all([
+        supabase.from("event_divisions")
+          .select("division_index,total_divisions,team_id")
+          .eq("event_id", event_id),
+        supabase.from("events").select("engine_version,status")
+          .eq("id",event_id).maybeSingle(),
+      ]);
 
-    if (error) throw new Error(error.message);
+    if (error || eventError) throw new Error(error?.message || eventError.message);
+    if (!event) return NextResponse.json({ok:false,error:"Race not found"},
+      {status:404});
 
     const divisions = {};
     let total_divisions = 1;
@@ -39,7 +45,9 @@ async function handler(req, context, auth) {
       my_division = mine ? Number(mine.division_index) : null;
     }
 
-    return NextResponse.json({ ok: true, total_divisions, divisions: list, my_division });
+    return NextResponse.json({ ok: true, total_divisions, divisions: list,
+      my_division, viewer_kind:event.engine_version===
+        "physical-first-position-general-race-8"?"position":null });
   } catch (e) {
     return NextResponse.json({ ok: false, error: e?.message ?? String(e) }, { status: 500 });
   }

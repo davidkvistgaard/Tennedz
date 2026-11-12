@@ -10,6 +10,7 @@ import { useAuth } from "../../components/AuthProvider";
 import { api } from "../../../lib/api";
 import { normalizeRoute, routeAdvice } from "../../../lib/race/route.mjs";
 import RaceOrders from "../../components/RaceOrders";
+import PhysicalRaceEntryControls from "./PhysicalRaceEntryControls";
 import { draftOrders } from "../../../lib/race/orders.mjs";
 
 const skills = {
@@ -68,6 +69,7 @@ export default function RunPage() {
     [busy, setBusy] = useState(false),
     [notice, setNotice] = useState("");
   const [orderDraft,setOrderDraft]=useState(null);
+  const [physicalEntry,setPhysicalEntry]=useState(null);
   const orders=draftOrders(orderDraft,selected,captain);
   const [sortKey, setSortKey] = useState("form"),
     [now, setNow] = useState(Date.now()),
@@ -118,6 +120,7 @@ export default function RunPage() {
     setCaptain("");
     setSaved(null);
     setOrderDraft(null);
+    setPhysicalEntry(null);
     setStage(null);
     setEntryError("");
     setNotice("");
@@ -129,14 +132,22 @@ export default function RunPage() {
     Promise.all([
       api(`/api/stage-profile?event_id=${eventId}`, { signal: abort.signal }),
       api(`/api/event/join?event_id=${eventId}`, { signal: abort.signal }),
+      api(`/api/event/join-physical?event_id=${eventId}`,
+        {signal:abort.signal}).then(result=>({enabled:true,
+          entry:result.entry})).catch(error=>{
+          if(error.status===404)return {enabled:false,entry:null};
+          throw error;
+        }),
     ])
-      .then(([profile, entry]) => {
+      .then(([profile, entry, physical]) => {
         if (abort.signal.aborted) return;
         setStage(profile.stage);
         setSaved(entry.entry);
+        setPhysicalEntry(physical);
         setOrderDraft(entry.entry?.orders || null);
-        setSelected(entry.entry?.selected_riders || []);
-        setCaptain(entry.entry?.captain_id || "");
+        const savedLineup=physical.entry??entry.entry;
+        setSelected(savedLineup?.selected_riders || []);
+        setCaptain(savedLineup?.captain_id || "");
         try {
           setSortKey(routeAdvice(normalizeRoute(profile.stage)).primary);
         } catch {
@@ -189,7 +200,12 @@ export default function RunPage() {
     selected.length === 8 &&
     selected.includes(captain) &&
     selected.every((id) => available.some((r) => r.id === id && eligible(r)));
-  const unchanged = sameLineup(saved, {
+  const unchanged = physicalEntry?.enabled?
+    !!physicalEntry.entry&&
+    physicalEntry.entry.captain_id===captain&&
+    physicalEntry.entry.selected_riders.length===selected.length&&
+    physicalEntry.entry.selected_riders.every(id=>selected.includes(id)):
+    sameLineup(saved, {
     selected_riders: selected,
     captain_id: captain,
     orders,
@@ -376,18 +392,21 @@ export default function RunPage() {
                 <div className="card race-ready">
                   <h2>The race is ready</h2>
                   <p>
-                    Follow your division in the viewer, or go straight to
-                    the results.
+                    {event.engine_version===
+                      'physical-first-position-general-race-8'?
+                      'Watch the saved V7 test race. Finish crossings are recorded, but official results and points are not available.':
+                      'Follow your division in the viewer, or go straight to the results.'}
                   </p>
                   <Link className="btn primary" href={`/team/view/${event.id}`}>
                     Watch the race →
                   </Link>
-                  <Link
+                  {event.engine_version!==
+                    'physical-first-position-general-race-8'&&<Link
                     className="text-button"
                     href={`/team/results/${event.id}`}
                   >
                     Results
-                  </Link>
+                  </Link>}
                 </div>
               ) : (
                 <>
@@ -411,14 +430,15 @@ export default function RunPage() {
                       <div>
                         <h2>Your lineup</h2>
                         <p className="small">
-                          Eight riders and one captain. Your captain’s time determines
-                          your team’s placing.
+                          Eight riders and one captain. {physicalEntry?.enabled?
+                            'Your saved race tactics determine what your riders attempt.':
+                            'Your captain’s time determines your team’s placing.'}
                         </p>
                       </div>
                       <span
                         className={`save-badge ${unchanged ? "saved" : ""}`}
                       >
-                        {saved
+                        {(physicalEntry?.enabled?physicalEntry.entry:saved)
                           ? unchanged
                             ? "Saved ✓"
                             : "Unsaved changes"
@@ -471,7 +491,17 @@ export default function RunPage() {
                         );
                       })}
                     </div>
-                    <RaceOrders orders={orders} riders={selected.map(id=>riders.find(r=>r.id===id)).filter(Boolean)} onChange={setOrderDraft} disabled={locked || busy || entryLoading} />
+                    {physicalEntry?.enabled?<PhysicalRaceEntryControls
+                      eventId={eventId} teamId={team?.id}
+                      selected={selected} captain={captain}
+                      riders={available.filter(eligible)}
+                      locked={locked} valid={valid}
+                      savedEntry={physicalEntry.entry}
+                      onSaved={entry=>{
+                        setPhysicalEntry({enabled:true,entry});
+                        setSaved(entry);
+                      }}/>:<RaceOrders orders={orders} riders={selected.map(id=>riders.find(r=>r.id===id)).filter(Boolean)} onChange={setOrderDraft} disabled={locked || busy || entryLoading} />}
+                    {!physicalEntry?.enabled&&<>
                     <div className="lineup-save">
                       <span>
                         {selected.length}/8 riders ·{" "}
@@ -504,6 +534,7 @@ export default function RunPage() {
                         {notice}
                       </p>
                     )}
+                    </>}
                   </section>
                   {!locked && (
                     <>

@@ -97,9 +97,13 @@ test('saved V7 game race reaches the shared WebGL viewer',
       if(process.env.PELOTONIA_REQUIRE_HARDWARE_WEBGL==='true')
         expect(diagnostics.graphicsBackend?.unmaskedRenderer??'')
           .not.toMatch(/SwiftShader|llvmpipe|software/i);
-      await expect(page.getByRole('heading',
-        {name:'Measured finish crossings'})).toBeVisible(
-          {timeout:65000});
+      await page.getByRole('button',{name:'Race details'}).click();
+      await page.getByRole('button',{name:'results',exact:true}).click();
+      await expect(page.getByText(/Recorded line crossings\. Shared clock observations may tie/))
+        .toBeVisible();
+      await expect(page.locator(
+        '.race-theatre-details .race-theatre-event-list li'))
+        .toHaveCount(teamCount*8,{timeout:65000});
       // Once released by the server, finish evidence remains public even
       // when the synchronized replay clock starts its next cycle.
       await expect.poll(async()=>{
@@ -108,8 +112,9 @@ test('saved V7 game race reaches the shared WebGL viewer',
         expect(response.ok()).toBe(true);
         return (await response.json()).finishPublished;
       },{timeout:25000,intervals:[500]}).toBe(false);
-      await expect(page.getByRole('heading',
-        {name:'Measured finish crossings'})).toBeVisible();
+      await expect(page.locator(
+        '.race-theatre-details .race-theatre-event-list li'))
+        .toHaveCount(teamCount*8);
       await test.info().attach('v7-viewer-diagnostics',{
         body:JSON.stringify(diagnostics,null,2),
         contentType:'application/json'});

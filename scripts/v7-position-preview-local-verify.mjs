@@ -19,6 +19,7 @@ const baseEnv={...process.env,PELOTONIA_NEXT_DIST_DIR:distDir,
   PELOTONIA_E2E_V2_RECORDING:'false',
   PELOTONIA_E2E_V2_SETTLEMENT:'false',
   PELOTONIA_E2E_PHYSICAL_VIEWER:'false',
+  PELOTONIA_V7_POSITION_PREVIEW_ENABLED:'true',
   PELOTONIA_E2E_POSITION_VIEWER:'true'};
 
 function run(args,env){

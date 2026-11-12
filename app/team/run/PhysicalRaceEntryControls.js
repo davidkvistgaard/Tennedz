@@ -37,6 +37,7 @@ export default function PhysicalRaceEntryControls({eventId,teamId,
     form.sportingGoal&&selected.includes(form.sportingCaptainId)&&
     (form.attack==='none'||selected.includes(form.attackRiderId))&&
     (form.frontWork==='sit_in'||
+      !form.frontWorkRiderId||
       form.helperIds.includes(form.frontWorkRiderId));
   function set(key,value){setForm(previous=>({...previous,[key]:value}));
     setMessage("");}
@@ -63,7 +64,7 @@ export default function PhysicalRaceEntryControls({eventId,teamId,
             form.attackRiderId,
           frontWork:form.frontWork,
           frontWorkRiderId:form.frontWork==='rotate'?
-            form.frontWorkRiderId:null}};
+            form.frontWorkRiderId||null:null}};
       await api('/api/event/join-physical',{
         method:'POST',headers:{'Content-Type':'application/json'},
         body:JSON.stringify({version:'physical-entry-request-v1',
@@ -121,11 +122,11 @@ export default function PhysicalRaceEntryControls({eventId,teamId,
           event.target.value)}><option value="">Choose front work</option>
         <option value="sit_in">Sit in</option>
         <option value="rotate">Rotate</option></select></label>
-      {form.frontWork==='rotate'?<label>Named front worker
-        <select required value={form.frontWorkRiderId}
+      {form.frontWork==='rotate'?<label>Preferred front worker (optional)
+        <select value={form.frontWorkRiderId}
           disabled={locked||busy} onChange={event=>set(
             'frontWorkRiderId',event.target.value)}>
-          <option value="">Choose a helper</option>
+          <option value="">Rotate available helpers</option>
           {helpers.map(rider=><option key={rider.id} value={rider.id}>
             {rider.name}</option>)}
         </select></label>:null}
