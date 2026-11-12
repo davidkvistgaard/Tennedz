@@ -8,9 +8,13 @@ to this pilot; the stored engine version is V8.
 
 ## Verified candidate
 
-- Current application source: `codex/v7-sunday-integration`, commit
+- The tested application baseline is `codex/v7-sunday-integration` commit
   `36b2931024214bd32063d72d21e82d9e494b9a6a`, based on
   `release/pelotonia` commit `2acb18e681c21d2df6896daecbeeb30da138be55`.
+  The later compression-only change is commit
+  `7dc91d4749ca22a70e203b112db1d85a3ec2db61`; read the current PR head
+  immediately before release rather than treating either SHA as the final
+  deployment SHA.
 - Preview: deployment `dpl_GZeghAd7uD3eh2LkvQGtqH1NmfxB` is READY at that
   source SHA. Its `/viewer` and viewer JavaScript respond successfully; the
   public sample and participant path were checked on the prior Preview and
