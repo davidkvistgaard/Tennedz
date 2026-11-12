@@ -12,6 +12,11 @@ never generated manager orders for the real race.
 read-only snapshot of the production game's stage profile, kept in
 `scripts/observed-sunday-stage-profile-20261111.json` for repeatability.
 That profile is game data, not a claim about canonical geography.
+In a read-only check on 2026-11-12, the 80 entered production riders had aggregate
+flat 39.8 and endurance 39.5 on average, with form 40 and fatigue 0. The
+seed-2 synthetic field averaged flat 38 and endurance 40, also with form 40
+and fatigue 0. These aggregate comparisons do not reproduce individual
+riders, actual tactical orders or the eventual locked race snapshot.
 
 On seed `sunday-capacity-1` and an artificial flat 298 km route, all ten
 teams explicitly ordered an unnamed helper rotation, no attack, selective
@@ -59,11 +64,17 @@ administrator routes. Production duration remains unverified.
 The same observed profile and seed with all ten teams ordering `steady`,
 selective chase, no attack and unnamed rotating workers stopped at km 252:
 a sheltered rider had 0.148 energy and could not pay 963.218 m of movement.
+Seed `sunday-capacity-2` reproduced the refusal at km 252 for the same
+synthetic rider with 0.149 energy and a 963.022 m sheltered leg.
 With **one** team ordering `conserve` and nine `steady`, the recorder instead
 completed 23,840 decisions and 80 crossings (407 viewer frames). Five
 `conserve` and five `steady` teams also completed (397 frames). These are
 outcomes of the stated synthetic orders on one seed, not a safe threshold
 for arbitrary agent tactics. The unpaid-movement refusal remains active.
+Seed `sunday-capacity-2` with one `conserve` and nine `steady` teams also
+completed 23,840 decisions and 80 crossings (398 frames, 60 contact events,
+10 unresolved finish ties, no official results). This second seed narrows the
+known failure case but does not validate all possible manager orders.
 
 On seed `sunday-capacity-2`, the same observed profile with all ten teams
 explicitly ordering `conserve` and `selective` attack completed 23,840

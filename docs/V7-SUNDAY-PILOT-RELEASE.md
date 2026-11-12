@@ -92,3 +92,8 @@ unpayable movement at km 252, while one `conserve` and nine `steady` teams
 complete on the same seed. Other seeds, rider profiles and agent orders may
 still refuse. Do not bypass the paid-movement guard or treat this probe as a
 guarantee for Sunday's actual choices.
+If a manager changes their lineup or captain while saving physical tactics,
+the old engine's order is cleared rather than carried over to the wrong
+riders. A rollback for that team requires a fresh explicit legacy order before
+the old engine can race; restoring the prior READY deployment alone does not
+restore that tactical input.
