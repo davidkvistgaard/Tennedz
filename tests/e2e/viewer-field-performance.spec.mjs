@@ -24,7 +24,11 @@ for (const category of ['men', 'women'])
           '[data-viewer-diagnostics]').getAttribute('data-viewer-diagnostics'));
         await expect.poll(async () => (await read())?.visible,
           {timeout: 30000}).toBe(fieldSize);
-        await page.waitForTimeout(4000);
+        // The diagnostics can report zero until the first FPS window closes.
+        // Poll for a measured rate; a persistently slow renderer still fails.
+        await expect.poll(async()=>(await read()).fps,
+          {timeout:15000,intervals:[500,1000,1000,2000]})
+          .toBeGreaterThan(20);
         const result = await read();
         expect(result.renderer).toBe('WebGL');
         expect(result.graphicsBackend?.api).toBe('WebGL2');
