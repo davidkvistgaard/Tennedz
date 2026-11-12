@@ -75,6 +75,11 @@ export default function ViewPage({ params }) {
         const result = await prepared.json();
         if (!prepared.ok || !result.ok)
           throw new Error(result.error || "Could not prepare the race.");
+        if(result.viewer_kind==='position'){
+          window.location.assign(
+            `/team/motor-lab/position-viewer/${eventId}`);
+          return;
+        }
         sent = Date.now();
         r = await fetch(runUrl, {
           signal: controller.signal,

@@ -3,9 +3,10 @@
 import { execFileSync } from 'node:child_process';
 import { routeTemplates } from '../../lib/race/templates.mjs';
 import { guidedReplayClockV1 } from '../../lib/viewer/guided-replay-clock-v1.mjs';
-export async function installJourney(page) {
+export async function installJourney(page,{physical=false}={}) {
   let signedIn=false, created=false, entry=null, finished=false, output=null,
-    rejected=false, replayAtFinish=false, createdAt=null;
+    rejected=false, replayAtFinish=false, createdAt=null,
+    physicalEntry=null;
   const team={id:'11111111-1111-4111-8111-111111111112',name:'Northern Lights Cycling',budget:100000,coins:100000};
   const names=['Emil Berg','Louis Morel','Mateo Rojas','Dawit Tesfay','Luca Rossi','Noah Vermeer','Adam Nowak','Elias Holm','Freja Møller','Elin Lind','Femke Visser','Zofia Kowalska','Haruka Mori','Lina Moreau','Sara Costa','Amina Diallo'];
   const riders=names.map((name,i)=>({id:`rider-${i}`,name,gender:i<8?'M':'F',nationality:['DNK','FRA','COL','ERI','ITA','NLD','POL','SWE'][i%8],age:22+i%7,rating:0,sprint:40+i,flat:52,hills:45+i,mountain:65-i,cobbles:40,timetrial:43,endurance:60,strength:45,wind:47,form:85,fatigue:i%8}));
@@ -30,6 +31,14 @@ export async function installJourney(page) {
       }
       return send({ok:true,entry});
     }
+    if(path==='/api/event/join-physical'){
+      if(!physical)return send({ok:false,error:'Not enabled'},404);
+      if(request.method()==='POST'){
+        physicalEntry=request.postDataJSON();
+        return send({ok:true});
+      }
+      return send({ok:true,entry:physicalEntry});
+    }
     if(path==='/api/event/divisions')return send({ok:true,my_division:1,divisions:[{division_index:1,team_count:2}]});
     if(path==='/api/event-run'){
       const replay=output.divisions[0].replay;
@@ -51,6 +60,7 @@ export async function installJourney(page) {
     rejectNextSave(){rejected=true;},
     replayAtFinish(){replayAtFinish=true;},
     entry(){return entry;},
+    physicalEntry(){return physicalEntry;},
     finish(){
       if(!entry)throw Error('No saved lineup');
       event.deadline=new Date(Date.now()-1000).toISOString();

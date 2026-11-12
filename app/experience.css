@@ -66,9 +66,17 @@
 .race-calendar .lineup-rider.selected { border-color:#3f6d47; background:#e6ebd6; }
 .race-calendar .lineup-save { background:#f0efdf; padding:17px; border-radius:14px; }
 .race-calendar .lineup-save .btn.primary { min-height:48px; border-radius:10px; }
+.race-calendar .physical-entry { margin-top:24px; padding:24px; background:#f0efdf; border:1px solid #cad2b7; border-radius:16px; }
+.race-calendar .physical-entry-grid { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:14px; margin:20px 0; }
+.race-calendar .physical-entry-grid label { display:grid; gap:6px; font-size:13px; font-weight:700; }
+.race-calendar .physical-entry-grid select { width:100%; min-height:44px; background:#fffdf4; border:1px solid #cad2b7; border-radius:9px; padding:8px; color:#294631; }
+.race-calendar .physical-entry fieldset { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:10px; border:1px solid #cad2b7; border-radius:9px; padding:14px; margin:0 0 20px; }
+.race-calendar .physical-entry fieldset label { display:flex; align-items:center; gap:8px; font-size:13px; }
+.race-calendar .physical-entry button { min-height:48px; }
 .race-calendar .rider-selection-toolbar select { background:#fffdf4; border:1px solid #d2d9c1; border-radius:10px; min-height:44px; padding:8px; color:#294631; }
 @media(max-width:1000px) { .experience-welcome .welcome-story{padding:30px 26px 20px}.welcome-art{margin-left:-26px;margin-right:-26px}.welcome-art-portrait{width:180px}.experience-welcome .welcome-form{padding:30px 18px}.calendar-hero-note{display:none} }
 @media(max-width:760px) {
+ .race-calendar .physical-entry-grid,.race-calendar .physical-entry fieldset{grid-template-columns:1fr}
  .experience-welcome{padding:0;gap:0;grid-template-columns:1fr}.experience-welcome .welcome-story{padding:23px 25px;border-radius:0;min-height:190px;gap:16px;background:#e9e6d5}.experience-welcome .welcome-story-copy{margin-top:0;max-width:65%}.experience-welcome .welcome-story h2{font-size:26px;letter-spacing:-.8px;margin:8px 0}.experience-welcome .welcome-story-copy>p:last-child,.experience-welcome .welcome-story-foot,.welcome-art-note{display:none}.experience-welcome .welcome-brand{font-size:29px}.experience-welcome .welcome-story .welcome-eyebrow{font-size:8px;letter-spacing:1px}.welcome-art{position:absolute;right:0;bottom:0;width:35%;height:160px;min-height:0;margin:0;background:transparent;overflow:visible}.welcome-art>img,.welcome-art:after{display:none}.welcome-art-portrait{width:115px;max-width:90%;left:0;bottom:12px;border-width:5px;border-bottom-width:15px}.experience-welcome .welcome-form{padding:34px 25px 40px}.experience-welcome .welcome-card h1{font-size:36px}.experience-welcome .welcome-card{max-width:460px}
  .calendar-hero{min-height:260px;margin-top:20px;border-radius:19px}.calendar-hero>div{padding:28px 25px}.calendar-hero h1{font-size:42px}.calendar-hero p{font-size:13px;max-width:260px}.race-steps{gap:12px;padding:20px 0}.race-steps li{display:block}.race-steps li>span{font-size:21px}.race-steps strong{font-size:12px;margin-top:8px;line-height:1.4}.race-steps small{display:none}.race-calendar .lineup-slots{grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}.race-calendar .lineup-slot{min-height:165px}.race-calendar .lineup-slot svg{max-width:none}.race-calendar .lineup-slot .text-button{font-size:12px}.race-calendar .lineup-summary{padding:16px}.race-calendar .lineup-save{padding:13px}.race-calendar .lineup-rider strong{font-size:14px}.race-calendar .event-card{min-height:215px}
 }

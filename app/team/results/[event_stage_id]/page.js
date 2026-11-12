@@ -64,6 +64,21 @@ export default function ResultsPage({ params }) {
     return () => abort.abort();
   }, [eventId, division, revealed]);
   const mine = data?.teams.find((t) => t.team_id === teamId);
+  if(divisions?.viewer_kind==="position")return (
+    <TeamShell title="Race recording">
+      <section className="card empty-state">
+        <p className="eyebrow">Recorded V7 race</p>
+        <h2>Watch the recorded finish</h2>
+        <p>The viewer shows the motor’s recorded rider positions and line
+          crossings. Official placings and points are not available for this
+          experimental race.</p>
+        <Link className="btn primary"
+          href={`/team/motor-lab/position-viewer/${eventId}`}>
+          Open race viewer →
+        </Link>
+      </section>
+    </TeamShell>
+  );
   return (
     <TeamShell title="Results & points">
       {!revealed ? (

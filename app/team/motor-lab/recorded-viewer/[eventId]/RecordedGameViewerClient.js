@@ -9,9 +9,16 @@ const Scene=dynamic(()=>import(
 
 export default function RecordedGameViewerClient({eventId,raceId,
   sha256,feed,coverage,version,viewerKind='physical'}){
-  const positionViewer=viewerKind==='position';
+  const positionViewer=viewerKind==='position'||
+    viewerKind==='position-public';
+  const publicPosition=viewerKind==='position-public';
   const apiBase=positionViewer?'position-viewer':
     'physical-viewer';
+  const clockPath=publicPosition?'/api/event/position-race-clock':
+    `/api/admin/${apiBase}-clock`;
+  const recordingPath=publicPosition?
+    '/api/event/position-race-recording':
+    `/api/admin/${apiBase}-preview`;
   const [sync,setSync]=useState(null);
   const [finishEvidence,setFinishEvidence]=useState(null);
   const [error,setError]=useState(null);
@@ -21,7 +28,7 @@ export default function RecordedGameViewerClient({eventId,raceId,
       try{
         const sent=Date.now();
         const response=await fetch(
-          `/api/admin/${apiBase}-clock?event_id=${eventId}`,
+          `${clockPath}?event_id=${eventId}`,
           {cache:'no-store'});
         if(!response.ok)throw new Error(
           'The recorded race clock is unavailable.');
@@ -50,14 +57,14 @@ export default function RecordedGameViewerClient({eventId,raceId,
     load();
     const timer=setInterval(load,5000);
     return ()=>{active=false;clearInterval(timer);};
-  },[apiBase,eventId,raceId,feed.duration]);
+  },[clockPath,eventId,raceId,feed.duration]);
   useEffect(()=>{
     if(!sync?.finishPublished||finishEvidence)return;
     const controller=new AbortController();
     let active=true;
     (async()=>{
       const response=await fetch(
-        `/api/admin/${apiBase}-preview?event_id=${eventId}`,
+        `${recordingPath}?event_id=${eventId}`,
         {cache:'no-store',signal:controller.signal});
       if(!response.ok)throw new Error(
         'The recorded finish is unavailable.');
@@ -70,7 +77,7 @@ export default function RecordedGameViewerClient({eventId,raceId,
       if(active&&cause.name!=='AbortError')setError(cause.message);
     });
     return ()=>{active=false;controller.abort();};
-  },[apiBase,eventId,raceId,sha256,feed.duration,sync?.finishPublished,
+  },[recordingPath,eventId,raceId,sha256,feed.duration,sync?.finishPublished,
     finishEvidence]);
   return <main className="motor-viewer-preview">
     <header className="motor-viewer-intro">

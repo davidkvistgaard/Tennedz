@@ -4,9 +4,13 @@ import {useRouter} from 'next/navigation';
 
 export default function WaitingRecordedGameViewer({eventId,
   publicationAtMs,viewerKind='physical'}){
-  const positionViewer=viewerKind==='position';
+  const positionViewer=viewerKind==='position'||
+    viewerKind==='position-public';
+  const publicPosition=viewerKind==='position-public';
   const apiBase=positionViewer?'position-viewer':
     'physical-viewer';
+  const clockPath=publicPosition?'/api/event/position-race-clock':
+    `/api/admin/${apiBase}-clock`;
   const router=useRouter();
   const [remaining,setRemaining]=useState(null);
   const [error,setError]=useState(null);
@@ -15,7 +19,7 @@ export default function WaitingRecordedGameViewer({eventId,
     const load=async()=>{
       try{
         const response=await fetch(
-          `/api/admin/${apiBase}-clock?event_id=${eventId}`,
+          `${clockPath}?event_id=${eventId}`,
           {cache:'no-store'});
         if(!response.ok)throw new Error(
           'The race clock is unavailable.');
@@ -32,7 +36,7 @@ export default function WaitingRecordedGameViewer({eventId,
     load();
     const timer=setInterval(load,5000);
     return ()=>{active=false;clearInterval(timer);};
-  },[apiBase,eventId,publicationAtMs,router]);
+  },[clockPath,eventId,publicationAtMs,router]);
   return <main className="motor-viewer-preview">
     <header className="motor-viewer-intro">
       <h1>{positionViewer?'Recorded position race':

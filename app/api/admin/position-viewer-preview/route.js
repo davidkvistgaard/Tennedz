@@ -11,7 +11,7 @@ import {encodeGameSnapshotPositionRaceArchiveV2} from
 import {recordedGameBroadcastV1} from
   '../../../../lib/viewer/recorded-game-broadcast-v1.mjs';
 
-export const maxDuration=180;
+export const maxDuration=300;
 
 async function retryUnavailableRead(read){
   try{return await read();}

@@ -2,10 +2,24 @@ import { NextResponse } from "next/server";
 import { protectedRoute } from "../../../lib/auth/server";
 import { AuthError } from "../../../lib/auth/policy.mjs";
 import { uuid } from "../../../lib/race/server";
+import {positionRaceTargetV1} from
+  '../../../lib/race/position-race-target-v1.mjs';
 import { guidedReplayClockV1 } from "../../../lib/viewer/guided-replay-clock-v1.mjs";
 export const GET = protectedRoute(async (req, context, auth) => {
   const url = new URL(req.url),
     id = uuid(url.searchParams.get("event_id"));
+  if(positionRaceTargetV1(id,process.env))
+    throw new AuthError('POSITION_RACE_VIEWER',
+      'This race uses the position viewer.',404);
+  const raceVersion=await auth.db.from('events')
+    .select('engine_version').eq('id',id).maybeSingle();
+  if(raceVersion.error)
+    throw new AuthError('RUN_UNAVAILABLE',
+      'Could not check the race version.',503);
+  if(raceVersion.data?.engine_version===
+      'physical-first-position-general-race-8')
+    throw new AuthError('POSITION_RACE_VIEWER',
+      'This race uses the position viewer.',404);
   const mine = await auth.db
     .from("event_divisions")
     .select("division_index")

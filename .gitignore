@@ -17,3 +17,4 @@ supabase/.temp/
 .next-viewer-build/
 
 .next-release-audit/
+.next-v7-integration/
