@@ -21,6 +21,8 @@ export default function RecordedGameViewerClient({eventId,raceId,
     `/api/admin/${apiBase}-preview`;
   const [sync,setSync]=useState(null);
   const [finishEvidence,setFinishEvidence]=useState(null);
+  const [pointsPreview,setPointsPreview]=useState(null);
+  const [pointsError,setPointsError]=useState(null);
   const [error,setError]=useState(null);
   useEffect(()=>{
     let active=true;
@@ -79,6 +81,31 @@ export default function RecordedGameViewerClient({eventId,raceId,
     return ()=>{active=false;controller.abort();};
   },[recordingPath,eventId,raceId,sha256,feed.duration,sync?.finishPublished,
     finishEvidence]);
+  useEffect(()=>{
+    if(!publicPosition||!sync?.finishPublished||pointsPreview)return;
+    const controller=new AbortController();
+    let active=true;
+    fetch(`/api/event/position-points-preview?event_id=${eventId}`,
+      {cache:'no-store',signal:controller.signal})
+      .then(async response=>{
+        if(!response.ok)throw new Error(
+          'The points preview is unavailable.');
+        return response.json();
+      })
+      .then(result=>{
+        if(active&&result.event_id===eventId&&
+          result.official===false){
+          setPointsPreview(result);
+          setPointsError(null);
+        }
+      })
+      .catch(cause=>{
+        if(active&&cause.name!=='AbortError')
+          setPointsError(cause.message);
+      });
+    return()=>{active=false;controller.abort();};
+  },[publicPosition,sync?.finishPublished,sync?.serverNowMs,
+    pointsPreview,eventId]);
   return <main className="motor-viewer-preview">
     <header className="motor-viewer-intro">
       <h1>{positionViewer?'Recorded position race':
@@ -96,6 +123,8 @@ export default function RecordedGameViewerClient({eventId,raceId,
       version={version} clock={sync.clock}
       serverOffsetMs={sync.serverOffsetMs}
       publicEvents={sync.events}
-      finishEvidence={finishEvidence}/>:null}
+      finishEvidence={finishEvidence}
+      pointsPreview={pointsPreview}
+      pointsError={pointsError}/>:null}
   </main>;
 }

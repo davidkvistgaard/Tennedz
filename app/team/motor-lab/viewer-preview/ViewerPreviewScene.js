@@ -14,7 +14,8 @@ const clockLabel=seconds=>{
 
 export default function ViewerPreviewScene({feed,coverage,mode='recorded',
   version,clock,serverOffsetMs,provisionalResults,
-  publicEvents=null,finishEvidence=null}){
+  publicEvents=null,finishEvidence=null,
+  pointsPreview=null,pointsError=null}){
   const viewerRef=useRef(null),lastUpdate=useRef(-1);
   const lastAssetStatus=useRef('');
   const graphicsBackend=useRef(null);
@@ -245,6 +246,31 @@ export default function ViewerPreviewScene({feed,coverage,mode='recorded',
             </li>)}</ol>:
             <p>Crossing data appears when the shared replay reaches
               the finish.</p>}
+          {pointsPreview?<section>
+            <h3>Winter points preview</h3>
+            <p>Illustrative points from recorded crossings: {pointsPreview.starters}
+              {' '}starters give the first recorded rank {pointsPreview.starters}
+              {' '}points. Teams sum riders whose recorded rank is within
+              the first {pointsPreview.teamScoringRankLimit}.
+              {' '}{pointsPreview.unresolvedTieRiders} riders share unresolved
+              model-clock ties and receive equal preview points.
+              No points are awarded to accounts or official rankings.</p>
+            <h4>Teams</h4>
+            <ol className="race-theatre-event-list">
+              {pointsPreview.teams.map(row=><li key={row.teamId}>
+                {row.teamName} · {row.points} preview points
+              </li>)}
+            </ol>
+            <details><summary>All rider preview points</summary>
+              <ol className="race-theatre-event-list">
+                {pointsPreview.riders.map(row=><li key={row.riderId}>
+                  {row.riderName} · {row.points} points
+                  {row.tied?' · tied model clock':''}
+                </li>)}
+              </ol>
+            </details>
+          </section>:null}
+          {pointsError?<p role="status">{pointsError}</p>:null}
         </div>:null}
         <p className="race-theatre-coverage">{mode==='exhibition'?
           'Fictional positions, groups, route and scenery. No game result.':

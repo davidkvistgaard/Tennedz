@@ -15,7 +15,7 @@ export const GET = protectedRoute(async (req, context, auth) => {
   const [event, teams, riders] = await Promise.all([
     auth.db
       .from("events")
-      .select("id,name,status")
+      .select("id,name,status,engine_version")
       .eq("id", event_id)
       .maybeSingle(),
     auth.db
