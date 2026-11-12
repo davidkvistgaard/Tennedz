@@ -1,0 +1,69 @@
+# Sunday V7 pilot release
+
+This is an opt-in test of the versioned `physical-first-position-general-race-8`
+recorder for the single 2026-11-15 Milano-Sanremo event
+`109a9235-44e6-d390-1fa9-aec19b65cf3b`. Other races and historical
+recordings continue through their existing paths. The public label V7 refers
+to this pilot; the stored engine version is V8.
+
+## Verified candidate
+
+- First verified application source: `codex/v7-sunday-integration`, commit
+  `55c012efb57b9ab3fefb22ad80ac342237adbb38`, based on
+  `release/pelotonia` commit `2acb18e681c21d2df6896daecbeeb30da138be55`.
+- Preview: deployment `dpl_6y5qgQczfkP1ievQPgj6o6oWwe7L` is READY at that
+  source SHA. Its `/viewer`, `/login`, viewer JavaScript and public sample clock
+  respond successfully. The participant race path was verified against the
+  disposable auth-test database locally, not against production.
+- Auth-test: an immutable 16-rider race completed, replayed in WebGL2, and
+  finalized with zero official awards; repeated finalization was idempotent.
+- Two disposable managers saved physical tactics through the actual browser
+  and API. A subsequent unseeded race used the shared release seed, completed
+  through the participant `prepare` endpoint, and finalized idempotently with
+  zero awards. This exposed and fixed the standalone/release fallback mismatch.
+- The 298 km, 80-rider synthetic capacity run produced 23,840 paid rider-km
+  decisions and 80 line crossings against a read-only snapshot of the current
+  production profile. It did not assign official placings or points. This is
+  performance evidence, not a prediction of Sunday's tactics.
+
+## Production prerequisites
+
+1. Review PR #4 and the exact SHA. Refresh the candidate against any later
+   changes to `release/pelotonia`, then rerun the isolated build, lint,
+   focused tests and Preview checks.
+2. Apply these migrations in order to the production Supabase project:
+   `20261109131922_committed_physical_entry_inputs.sql`,
+   `20261109135901_physical_viewer_recording_v1.sql`,
+   `20261109140727_physical_viewer_broadcast_source_v1.sql`,
+   `20261111033000_experimental_position_race_recording_v1.sql`, and
+   `20261112012000_finalize_position_race_v1.sql`, and
+   `20261112023000_position_race_release_seed_fallback_v1.sql`. Confirm the recorded and
+   finalizer functions are executable only by `service_role`, and review
+   security advisories. Production currently has none of these migrations.
+3. Set production `PELOTONIA_PHYSICAL_ENTRY_ENABLED=true`,
+   `PELOTONIA_V7_RACE_ENABLED=true`, and
+   `PELOTONIA_PHYSICAL_ENTRY_EVENT_ID=109a9235-44e6-d390-1fa9-aec19b65cf3b`.
+   Deploy after those exact settings are in place. If physical entry is on
+   but V7 dispatch is off, the target race refuses to run.
+4. Verify the user and all nine agent-managers have saved explicit physical
+   lineup and tactics before the deadline, 2026-11-15 18:00 UTC. The current
+   repository contains the manager UI and API but no agent-manager scheduler;
+   the external agents must call this API or use the UI. The nine agent
+   submissions must be checked in the database; old `event_teams.orders` do
+   not count. Do not fill missing entries with guessed neutral tactics.
+5. Verify the exact production SHA, READY deployment, `tennedz.eu` alias,
+   page, JavaScript, runtime, V7 entry, saved archive and shared viewer clock.
+   Keep the prior READY deployment ID as the rollback candidate. At the time
+   this runbook was written it was
+   `dpl_54PzHmstJQLs5Q8nj5VRGqkQfPww` at SHA
+   `2acb18e681c21d2df6896daecbeeb30da138be55`; recheck immediately
+   before release because the atlas branch is active in parallel.
+
+## Pilot limits
+
+The recording is authoritative for rider distance, energy, contact, group
+events and line crossings. Scenery is synthetic and labelled. The finalizer
+sets the event to FINISHED but creates no official results, points or awards.
+Unresolved same-lane finish ties remain visible as crossings. Viewer access
+is restricted to entered teams after finalization. The shared clock releases
+commentary and finish events only when their recorded time arrives.
