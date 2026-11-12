@@ -17,12 +17,27 @@ const distanceKm=298,teamCount=10;
 const seed=process.argv[2]??'sunday-capacity-1';
 const effort=process.argv[3]??'steady';
 const routeSource=process.argv[4]??'flat';
+const chase=process.argv[5]??'selective';
+const attack=process.argv[6]??'none';
+const frontWork=process.argv[7]??'rotate';
+const conserveTeams=Number(process.argv[8]??0);
+const attackTeams=Number(process.argv[9]??teamCount);
 if(!/^[A-Za-z0-9-]{1,64}$/.test(seed))
   throw new Error('Supply a bounded synthetic seed.');
 if(!['conserve','steady','hard'].includes(effort))
   throw new Error('Supply a valid explicit effort.');
 if(!['flat','observed-sunday-20261111'].includes(routeSource))
   throw new Error('Supply a known synthetic test route.');
+if(!['ignore','selective','all'].includes(chase)||
+  !['none','selective','repeated'].includes(attack)||
+  !['rotate','sit_in'].includes(frontWork))
+  throw new Error('Supply valid explicit chase, attack and front-work orders.');
+if(!Number.isInteger(conserveTeams)||conserveTeams<0||
+  conserveTeams>teamCount)
+  throw new Error('Supply zero to ten explicitly conserving teams.');
+if(!Number.isInteger(attackTeams)||attackTeams<0||
+  attackTeams>teamCount)
+  throw new Error('Supply zero to ten explicitly attacking teams.');
 const observedRoute=routeSource==='observed-sunday-20261111'?
   JSON.parse(readFileSync(new URL(
     './observed-sunday-stage-profile-20261111.json',import.meta.url),
@@ -59,9 +74,12 @@ const manifest={version:GAME_SNAPSHOT_PAID_VIEWER_VERSION,
       helperIds:team.riders.filter((_,riderIndex)=>
         riderIndex!==0&&riderIndex!==6)
         .map(row=>row.id),
-      baseline:{effort,attack:'none',
-        chase:'selective',
-        frontWork:'rotate',frontWorkRiderId:null}},
+      baseline:{effort:index<conserveTeams?'conserve':effort,
+        attack:index<attackTeams?attack:'none',
+        attackRiderId:attack==='none'||index>=attackTeams?
+          null:team.riders[2].id,
+        chase,
+        frontWork,frontWorkRiderId:null}},
     stake:{sportingGoal:'sprint_finish',
       sportingCaptainId:team.entry.captain_id},
     riderNumbers:Object.fromEntries(team.riders.map(
@@ -84,10 +102,15 @@ const archive=encodeGameSnapshotPositionRaceArchiveV2(bundle);
 const archiveMs=performance.now()-started-raceMs-replayMs;
 console.log(JSON.stringify({
   fixture:'synthetic_sunday_capacity_only',
-  seed,effort,routeSource,distanceKm,teams:teamCount,
+  seed,effort,routeSource,chase,attack,frontWork,
+  conserveTeams,attackTeams,
+  distanceKm,teams:teamCount,
   riders:teamCount*8,
   decisions:bundle.race.decisionCount,
   finishers:bundle.race.finishCrossings.length,
+  attackDepartures:bundle.race.attackDepartureEvents.length,
+  attackCapacityRefusals:bundle.race.attackCapacityRefusals.length,
+  contactEvents:bundle.race.contactEvents.length,
   tieGroups:bundle.race.finaleFinishTieObservations.length,
   officialResults:bundle.race.officialResults,
   viewerFrames:bundle.document.feed.frames.length,

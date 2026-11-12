@@ -21,6 +21,10 @@ to this pilot; the stored engine version is V8.
   and API. A subsequent unseeded race used the shared release seed, completed
   through the participant `prepare` endpoint, and finalized idempotently with
   zero awards. This exposed and fixed the standalone/release fallback mismatch.
+- A disposable two-team entry reproduced the legacy-order clearing bug. The
+  final migration retained the previous order when lineup and captain stayed
+  identical and cleared it when the lineup changed. Both physical entries
+  remained saved; the function is still executable only by `service_role`.
 - The 298 km, 80-rider synthetic capacity run produced 23,840 paid rider-km
   decisions and 80 line crossings against a read-only snapshot of the current
   production profile. It did not assign official placings or points. This is
@@ -35,10 +39,12 @@ to this pilot; the stored engine version is V8.
    `20261109131922_committed_physical_entry_inputs.sql`,
    `20261109135901_physical_viewer_recording_v1.sql`,
    `20261109140727_physical_viewer_broadcast_source_v1.sql`,
-   `20261111033000_experimental_position_race_recording_v1.sql`, and
-   `20261112012000_finalize_position_race_v1.sql`, and
-   `20261112023000_position_race_release_seed_fallback_v1.sql`. Confirm the recorded and
-   finalizer functions are executable only by `service_role`, and review
+   `20261111033000_experimental_position_race_recording_v1.sql`,
+   `20261112012000_finalize_position_race_v1.sql`,
+   `20261112023000_position_race_release_seed_fallback_v1.sql`, and
+   `20261112030000_preserve_legacy_orders_on_physical_entry_v1.sql`.
+   Confirm the recorded and finalizer functions are executable only by
+   `service_role`, and review
    security advisories. Production currently has none of these migrations.
 3. Set production `PELOTONIA_PHYSICAL_ENTRY_ENABLED=true`,
    `PELOTONIA_V7_RACE_ENABLED=true`, and
@@ -51,6 +57,20 @@ to this pilot; the stored engine version is V8.
    the external agents must call this API or use the UI. The nine agent
    submissions must be checked in the database; old `event_teams.orders` do
    not count. Do not fill missing entries with guessed neutral tactics.
+   The following read-only check must return `10 / 10 / 10` before the
+   deadline:
+
+   ```sql
+   select count(*) as entered_teams,
+     count(i.team_id) as committed_physical_orders,
+     count(*) filter (where i.selected_riders=et.selected_riders
+       and i.captain_id=et.captain_id) as matching_lineups
+   from public.event_teams et
+   left join public.recovery_physical_entry_inputs i
+     on i.event_id=et.event_id and i.team_id=et.team_id
+   where et.event_id=
+     '109a9235-44e6-d390-1fa9-aec19b65cf3b'::uuid;
+   ```
 5. Verify the exact production SHA, READY deployment, `tennedz.eu` alias,
    page, JavaScript, runtime, V7 entry, saved archive and shared viewer clock.
    Keep the prior READY deployment ID as the rollback candidate. At the time
@@ -67,3 +87,8 @@ sets the event to FINISHED but creates no official results, points or awards.
 Unresolved same-lane finish ties remain visible as crossings. Viewer access
 is restricted to entered teams after finalization. The shared clock releases
 commentary and finish events only when their recorded time arrives.
+On the observed 298 km profile, an all-`steady` synthetic field refuses
+unpayable movement at km 252, while one `conserve` and nine `steady` teams
+complete on the same seed. Other seeds, rider profiles and agent orders may
+still refuse. Do not bypass the paid-movement guard or treat this probe as a
+guarantee for Sunday's actual choices.

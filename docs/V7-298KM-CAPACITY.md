@@ -3,7 +3,11 @@
 This is a synthetic 10-team, 80-rider **men's** fixture made from starter
 profiles. It is not the entered Milano-Sanremo field, weather, kit, manager
 orders, results or official classification. Run it with
-`node scripts/diagnose-v7-298km-80-rider.mjs <seed> <effort> <routeSource>`.
+`node scripts/diagnose-v7-298km-80-rider.mjs <seed> <effort> <routeSource> [chase] [attack] [frontWork] [conserveTeams] [attackTeams]`.
+The seventh argument assigns `conserve` to that many teams and the named
+effort to the others. The eighth assigns the named attack order to that many
+teams; the others order no attack. These are explicit synthetic test orders,
+never generated manager orders for the real race.
 `routeSource` is `flat` or `observed-sunday-20261111`. The latter uses a
 read-only snapshot of the production game's stage profile, kept in
 `scripts/observed-sunday-stage-profile-20261111.json` for repeatability.
@@ -48,8 +52,31 @@ independent replay matched. The bounded viewer had 415 frames and was
 the independent replay 44.1 s and archive encoding 57.7 s, with peak RSS
 about 497 MB on the test machine. Eight unresolved finish-tie observations
 remain. Server execution does not need to replay before committing, but
-the measured race plus archive time of about 146 s leaves little margin
-under a 180 s function limit; production duration must be checked.
+the measured race plus archive time of about 146 s is only a local estimate
+for the 300 s Vercel function duration configured on the participant and
+administrator routes. Production duration remains unverified.
+
+The same observed profile and seed with all ten teams ordering `steady`,
+selective chase, no attack and unnamed rotating workers stopped at km 252:
+a sheltered rider had 0.148 energy and could not pay 963.218 m of movement.
+With **one** team ordering `conserve` and nine `steady`, the recorder instead
+completed 23,840 decisions and 80 crossings (407 viewer frames). Five
+`conserve` and five `steady` teams also completed (397 frames). These are
+outcomes of the stated synthetic orders on one seed, not a safe threshold
+for arbitrary agent tactics. The unpaid-movement refusal remains active.
+
+On seed `sunday-capacity-2`, the same observed profile with all ten teams
+explicitly ordering `conserve` and `selective` attack completed 23,840
+decisions and 80 crossings. It recorded **zero attack departures**, 2,556
+attack-capacity refusals and 835 paid contact events. Its 412 viewer frames
+and 2.94 MB compressed archive are useful capacity measurements, but an
+attack order alone is not a successful attack. Five finish ties remained
+unresolved and no official results were assigned.
+
+With only one team ordering selective attack and nine ordering none on that
+seed, the race also completed, with zero departures and zero attack-capacity
+refusals. This probe gives no evidence of a successful attack in a Sunday-size
+race; the viewer must not portray an attack merely from the submitted order.
 
 The observed-route completion demonstrates route-size and archive capacity
 for synthetic riders and orders. It does not validate the entered field,
