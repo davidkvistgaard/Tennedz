@@ -166,10 +166,23 @@ function makeFieldTerrain({cell,features,geography,atlas,heights,atlasFocus}){
 function groundMesh(land){
   const axis=(min,max,key,center)=>{
     const values=[min,max],step=land.atlasFocus?550:295;
-    for(let x=Math.ceil(min/step)*step;x<max;x+=step)values.push(x);
-    if(land.hasLand)for(let offset=-3060;offset<=3060;offset+=24){
-      const p=center+offset;
-      if(p>min&&p<max)values.push(p);
+    for(let x=Math.ceil(min/step)*step;x<max;x+=step){
+      if(!land.atlasFocus || !land.hasLand || Math.abs(x-center)>11000+step/2)values.push(x);
+    }
+    if(land.hasLand){
+      for(let offset=-3060;offset<=3060;offset+=24){
+        const p=center+offset;
+        if(p>min&&p<max)values.push(p);
+      }
+      if(land.atlasFocus){
+        // Taper the grid on both axes to avoid elongated triangles at the edge of the detailed terrain.
+        for(let distance=3060;distance<11000;){
+          distance+=mix(24,step,smooth(3060,10500,distance));
+          for(const p of [center-distance,center+distance]){
+            if(p>min&&p<max)values.push(p);
+          }
+        }
+      }
     }
     for(const site of land.landmarks){
       for(let offset=-120;offset<=120;offset+=24){
