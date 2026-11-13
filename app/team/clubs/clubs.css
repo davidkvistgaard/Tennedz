@@ -66,3 +66,10 @@
   .my-team-banner { grid-template-columns: minmax(0, 1fr); }
   .my-team-identity .club-actions { grid-column: 1 / -1; }
 }
+
+.club-directory-columns { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 1rem; align-items: start; }
+.club-directory-columns .club-bookmark-grid { grid-template-columns: minmax(0, 1fr); }
+.club-directory-entry { flex: 1; min-width: 0; padding: .8rem; overflow-wrap: anywhere; }
+.club-bookmark-grid small { display: block; margin-top: .2rem; }
+.club-front-roster li:target { outline: 2px solid currentColor; outline-offset: 2px; }
+@media (max-width: 900px) { .club-directory-columns { grid-template-columns: minmax(0, 1fr); } }
