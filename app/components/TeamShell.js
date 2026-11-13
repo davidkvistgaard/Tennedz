@@ -30,7 +30,7 @@ export default function TeamShell({ title, children, compact = false }) {
     ["/team/history", "History"],
     ["/team/leaderboards", "Rankings"],
     ["/team/marketplace", "Marketplace"],
-    ["/team/clubs", "Clubs"],
+    ["/team/clubs", "Search"],
     ["/team/atlas", "Atlas"],
     ["/team/settings", "Settings"],
     ["/team/faq", "FAQ"],

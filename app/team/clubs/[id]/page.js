@@ -82,12 +82,12 @@ export default function ClubPage({ params }) {
     if (!data || !window.location.hash.startsWith("#rider-")) return;
     document.getElementById(window.location.hash.slice(1))?.scrollIntoView({ block: "center" });
   }, [data]);
-  if (!data) return <TeamShell title="Club"><p role="status">{error || "Loading club…"}</p><Link href="/team/clubs">All clubs</Link></TeamShell>;
+  if (!data) return <TeamShell title="Club"><p role="status">{error || "Loading club…"}</p><Link href="/team/clubs">Back to Search</Link></TeamShell>;
   const { club, kit, riders, trophies } = data;
   const colors = CLUB_PALETTES[kit.palette];
   return <TeamShell compact>
     <main className="club-front">
-      <Link href="/team/clubs">← All clubs</Link>
+      <Link href="/team/clubs">← Back to Search</Link>
       <header className="club-front-header" style={{ "--club-primary": colors.primary, "--club-accent": colors.accent }}>
         <ClubBadge name={club.name} clubKit={kit} decorative />
         <div><h1>{club.name}</h1><p>{colors.name}</p></div>
