@@ -17,7 +17,7 @@ export const GET=protectedRoute(async(req,context,auth)=>{
   await requirePositionRaceParticipantV1(
     auth.db,eventId,auth.team.id);
   const {data:event,error:eventError}=await auth.db.from('events')
-    .select('status,engine_version,stage_profile_id')
+    .select('status,engine_version,stage_profile_id,scheduled_at')
     .eq('id',eventId).maybeSingle();
   if(eventError)throw new AuthError('POINTS_PREVIEW_UNAVAILABLE',
     'Could not check the race.',503);
@@ -45,6 +45,7 @@ export const GET=protectedRoute(async(req,context,auth)=>{
   try{
     verified=verifyGameSnapshotPositionViewerDocumentV1(document);
     broadcast=recordedGameBroadcastV1({recorded_at,
+      scheduled_at:event.scheduled_at,
       race_id:verified.raceId,duration:verified.feed.duration,
       events:verified.feed.events},Date.now());
   }catch{
