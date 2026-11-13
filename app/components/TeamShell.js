@@ -24,19 +24,19 @@ export default function TeamShell({ title, children, compact = false }) {
   const links = [
     ["/team", "My team"],
     ...(teamId ? [[`/team/clubs/${encodeURIComponent(teamId)}`, "My Club"]] : []),
-    ["/team/settings", "Settings"],
-    ["/team/calendar", "Calendar & races"],
-    ["/team/motor-lab", "Motor Lab"],
     ["/team/portraits", "Riders"],
-    ["/team/marketplace", "Marketplace"],
     ["/team/economy", "Economy"],
+    ["/team/calendar", "Calendar & races"],
+    ["/team/history", "History"],
     ["/team/identity", "Club identity"],
     ["/team/leaderboards", "Rankings"],
+    ["/team/marketplace", "Marketplace"],
     ["/team/clubs", "Clubs"],
-    ["/team/history", "History"],
     ["/team/atlas", "Atlas"],
+    ["/team/settings", "Settings"],
+    ...(session?.is_admin ? [["/admin", "Admin"]] : []),
+    ["/team/motor-lab", "Motor Lab"],
   ];
-  if (session?.is_admin) links.push(["/admin", "Admin"]);
   return (
     <div className="game-shell">
       <a className="studio-skip" href="#team-page-content">Skip to content</a>
