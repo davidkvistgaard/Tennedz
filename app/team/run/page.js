@@ -180,8 +180,11 @@ export default function RunPage() {
       (bucket === "upcoming"
         ? e.status === "OPEN" && Date.parse(e.deadline) > now
         : bucket === "pending"
-          ? e.status === "OPEN" && Date.parse(e.deadline) <= now
-          : e.status !== "OPEN"),
+          ? (e.status === "OPEN" && Date.parse(e.deadline) <= now) ||
+            (e.status === "FINISHED" && e.scheduled_at &&
+              Date.parse(e.scheduled_at) > now)
+          : e.status !== "OPEN" &&
+            (!e.scheduled_at || Date.parse(e.scheduled_at) <= now)),
   );
   const eligible = (r) =>
     !r.injury_until || (!!gameDate && r.injury_until <= gameDate);
@@ -361,7 +364,9 @@ export default function RunPage() {
               <span className="event-meta">
                 <span>
                   {e.status === "FINISHED"
-                    ? "Ready to watch"
+                    ? e.scheduled_at && Date.parse(e.scheduled_at) > now
+                      ? "Recorded · awaiting scheduled start"
+                      : "Ready to watch"
                     : Date.parse(e.deadline) <= now
                       ? "Entries closed"
                       : `Deadline in ${countdown(e.deadline, now)}`}

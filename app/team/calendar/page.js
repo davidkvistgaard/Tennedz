@@ -26,7 +26,9 @@ function EventCard({event,filter}){
   const raceDate=event.scheduled_at??event.deadline;
   const source=event.calendar_source??"Unclassified";
   const tier=event.race_tier?`T${event.race_tier}`:"Unranked";
-  const status=event.status!=="OPEN"?event.status.toLowerCase():
+  const status=event.status==="FINISHED"&&event.scheduled_at&&
+    Date.parse(event.scheduled_at)>Date.now()?"recorded · awaiting start":
+    event.status!=="OPEN"?event.status.toLowerCase():
     Date.parse(event.deadline)<=Date.now()?"locked":event.team_ready?"entered":"team incomplete";
   const setup=event.kind==="one_day"&&event.status==="OPEN";
   return <article className="agenda-card">
