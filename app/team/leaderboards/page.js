@@ -1,4 +1,5 @@
 "use client";
+import Link from "next/link";
 import { useEffect,useState } from "react";
 import { api } from "../../../lib/api";
 import TeamShell from "../../components/TeamShell";
@@ -11,6 +12,6 @@ export default function LeaderboardsPage(){
     <p>Team points are added up from completed races in the selected category. In winter races, only riders who finish in the top 30 of their division score points for their team.</p>
     <p role="status">{error || (!data?"Loading rankings…":"")}</p>
     {data && [ ["Team",data.teams],["Riders",data.riders] ].map(([title,rows])=><section className="card" style={{padding:20,marginBottom:16}} key={title}>
-      <h2>{title}</h2><ol>{rows.map(r=><li key={r.id}>{r.name} — {r.rating} points</li>)}</ol></section>)}
+      <h2>{title}</h2><ol>{rows.map(r=><li key={r.id}>{title === "Team" ? <Link href={"/team/clubs/" + r.id}>{r.name}</Link> : r.name} — {r.rating} points</li>)}</ol></section>)}
   </TeamShell>;
 }

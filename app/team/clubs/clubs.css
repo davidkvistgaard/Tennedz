@@ -1,0 +1,35 @@
+.club-front { display: grid; gap: 1.25rem; }
+.club-front-header {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr) auto;
+  align-items: center;
+  gap: clamp(.75rem, 3vw, 2rem);
+  padding: clamp(1rem, 4vw, 2.5rem);
+  background: #fbf7eb;
+  border: 1px solid #ded6c2;
+  border-top: .5rem solid var(--club-primary);
+  box-shadow: inset 0 4px var(--club-accent);
+  border-radius: 1.25rem;
+}
+.club-front-header h1 { margin: 0; overflow-wrap: anywhere; font-size: clamp(1.7rem, 4vw, 3.4rem); }
+.club-front-header p { margin: .3rem 0 0; }
+.club-front-header .club-badge { width: clamp(2.5rem, 8vw, 5rem); height: auto; }
+.club-front-header .studio-jersey { width: clamp(3.25rem, 12vw, 8rem); }
+.club-front-columns { display: grid; grid-template-columns: minmax(0, 2fr) minmax(15rem, 1fr); gap: 1.25rem; align-items: start; }
+.club-front-panel { background: #fbf7eb; border: 1px solid #ded6c2; border-radius: 1.25rem; padding: clamp(1rem, 3vw, 1.75rem); margin-bottom: 1.25rem; }
+.club-front-panel h2 { margin-top: 0; }
+.club-front-release { border-top: 1px solid #ded6c2; padding: 1rem 0; overflow-wrap: anywhere; }
+.club-front-release p { white-space: pre-wrap; }
+.club-front-release h3 { margin: .35rem 0; }
+.club-front-form { display: grid; gap: .75rem; max-width: 40rem; }
+.club-front-form label { display: grid; gap: .25rem; }
+.club-front-form :is(input, textarea) { font: inherit; padding: .65rem; border: 1px solid #b2b5a0; border-radius: .5rem; }
+.club-front-form button { justify-self: start; }
+.club-front-roster, .club-directory-list, .club-front-trophies ul { list-style: none; padding: 0; }
+.club-front-roster { display: grid; grid-template-columns: repeat(auto-fill, minmax(8rem, 1fr)); gap: .7rem; }
+.club-front-roster li { display: grid; justify-items: center; align-content: start; gap: .5rem; padding: .75rem; border-radius: .75rem; background: #f0eadd; text-align: center; overflow-wrap: anywhere; }
+.club-front-trophies li { border-top: 1px solid #ded6c2; padding: .8rem 0; }
+.club-front-trophies small { display: block; margin-top: .3rem; }
+.club-directory-list { display: grid; grid-template-columns: repeat(auto-fill, minmax(min(100%, 16rem), 1fr)); gap: .65rem; margin-top: 0; }
+.club-directory-list a { display: flex; justify-content: space-between; gap: .5rem; padding: .9rem; background: #f0eadd; border-radius: .65rem; }
+@media (max-width: 740px) { .club-front-columns { grid-template-columns: 1fr; } }

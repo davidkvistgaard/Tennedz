@@ -1,9 +1,9 @@
 "use client";
 import { CLUB_PALETTES, useClubStyle } from "./ClubStyle";
 
-export default function ClubBadge({ name = "Pelotonia", decorative = false }) {
+export default function ClubBadge({ name = "Pelotonia", decorative = false, clubKit }) {
   const { kit } = useClubStyle();
-  const colors = CLUB_PALETTES[kit.palette];
+  const colors = CLUB_PALETTES[(clubKit || kit).palette];
   const initials = name.trim().split(/\s+/u).slice(0, 2).map(word => Array.from(word)[0]).join("").toLocaleUpperCase("en");
   return <svg className="club-badge" viewBox="0 0 64 72" role={decorative ? undefined : "img"} aria-hidden={decorative || undefined} aria-label={decorative ? undefined : `${name} club colours`}>
     <path d="M5 5Q32-1 59 5V39Q57 57 32 68Q7 57 5 39Z" fill={colors.primary} stroke={colors.accent} strokeWidth="4"/>

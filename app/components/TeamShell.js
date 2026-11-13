@@ -31,6 +31,7 @@ export default function TeamShell({ title, children, compact = false }) {
     ["/team/marketplace", "Marketplace"],
     ["/team/identity", "Club identity"],
     ["/team/leaderboards", "Rankings"],
+    ["/team/clubs", "Clubs"],
     ["/team/history", "History"],
     ["/team/atlas", "Atlas"],
   ];
