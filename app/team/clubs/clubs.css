@@ -40,3 +40,29 @@
 .club-bookmark-grid .club-badge { width: 2.6rem; height: auto; flex-shrink: 0; }
 .club-favorite-toggle { min-width: 44px; min-height: 44px; background: #fffaf0; color: #344638; border: 1px solid #b7b39c; border-radius: .6rem; font-size: 1.3rem; cursor: pointer; }
 .club-favorite-toggle[aria-pressed="true"] { color: #79530b; background: #f7e8ba; }
+
+.my-team-banner { grid-template-columns: minmax(0, 1fr) minmax(17rem, 29%); }
+.my-team-identity { display: grid; grid-template-columns: auto minmax(0, 1fr); gap: 1rem; align-items: center; }
+.my-team-identity .club-actions { grid-column: 2; justify-content: flex-start; }
+.my-team-cabinet {
+  background: #312823;
+  color: #fbefd4;
+  border: 4px solid #785941;
+  border-radius: .85rem;
+  box-shadow: inset 0 0 1.25rem #211913;
+  padding: 1rem;
+}
+.my-team-cabinet h2 { margin: 0 0 .75rem; color: inherit; font-size: 1.05rem; }
+.my-team-cabinet p, .my-team-cabinet ul { margin: 0 0 .75rem; padding: .65rem 0; border-bottom: 3px solid #967454; }
+.my-team-cabinet ul { display: grid; gap: .55rem; list-style: none; }
+.my-team-cabinet li { display: flex; align-items: baseline; gap: .5rem; overflow-wrap: anywhere; }
+.my-team-cabinet a { color: #ffe1a3; }
+.my-team-rankings { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: .65rem; margin: 1rem 0; }
+.my-team-rankings > div { padding: .75rem; border: 1px solid #ded6c2; border-radius: .65rem; background: #f0eadd; }
+.my-team-rankings dt { font-size: .85rem; font-weight: 600; }
+.my-team-rankings dd { margin: .3rem 0 0; overflow-wrap: anywhere; }
+.my-team-rankings .my-team-rank-place { font-size: clamp(1.45rem, 3vw, 2.25rem); line-height: 1.1; font-weight: 700; font-variant-numeric: tabular-nums; }
+@media (max-width: 740px) {
+  .my-team-banner { grid-template-columns: minmax(0, 1fr); }
+  .my-team-identity .club-actions { grid-column: 1 / -1; }
+}
