@@ -10,6 +10,7 @@ import "./programme.css";
 
 const FILTERS=["All","Men","Women","UCI","Pelotonia","Stage races","My races"];
 const displayDate=value=>new Date(value).toLocaleDateString("en-GB",{weekday:"short",day:"numeric",month:"short",timeZone:"UTC"});
+const displayLocalTime=value=>new Date(value).toLocaleString("en-GB",{day:"numeric",month:"short",hour:"2-digit",minute:"2-digit",timeZoneName:"short"});
 const category=gender=>gender==="F"?"Women":"Men";
 function matches(event,filter){
   if(filter==="Men")return event.gender==="M";
@@ -25,14 +26,17 @@ function EventCard({event,filter}){
   const raceDate=event.scheduled_at??event.deadline;
   const source=event.calendar_source??"Unclassified";
   const tier=event.race_tier?`T${event.race_tier}`:"Unranked";
-  const status=event.status!=="OPEN"?event.status.toLowerCase():
+  const status=event.status==="FINISHED"&&event.scheduled_at&&
+    Date.parse(event.scheduled_at)>Date.now()?"recorded · awaiting start":
+    event.status!=="OPEN"?event.status.toLowerCase():
     Date.parse(event.deadline)<=Date.now()?"locked":event.team_ready?"entered":"team incomplete";
   const setup=event.kind==="one_day"&&event.status==="OPEN";
   return <article className="agenda-card">
     <div className="agenda-card-top"><span>{category(event.gender)} · {source} · {tier}</span>
       <strong>{event.kind==="stage_race"?"Stage race":"One-day"}</strong></div>
     <h3>{event.name}</h3>
-    <p className="agenda-muted">{event.scheduled_at?"Race day":"Entry deadline"} · {displayDate(raceDate)}</p>
+    <p className="agenda-muted">{event.scheduled_at?"Scheduled start":"Entry deadline"} · {displayLocalTime(raceDate)}</p>
+    {event.scheduled_at&&<p className="agenda-muted">Team selection and orders close · {displayLocalTime(event.deadline)}</p>}
     <div className="agenda-readiness"><span>Team <strong>{event.team_count}/{event.team_size}</strong></span>
       <span className="agenda-state">{status}</span></div>
     <div className="agenda-card-bottom"><span>{event.winner_points===null?"Ranking points not set":`Winner · ${event.winner_points.toLocaleString("en-GB")} pts`}</span>

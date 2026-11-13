@@ -32,3 +32,30 @@ test('one saved timestamp drives every spectator without future events',()=>{
   assert.equal(recordedGameBroadcastV1(source,epoch+19000)
     .clock.serverEpochMs,epoch+19000);
 });
+
+test('a recorded race waits for its scheduled public start',()=>{
+  const scheduled=epoch+60_000;
+  const race={...source,scheduled_at:new Date(scheduled).toISOString()};
+  const waiting=recordedGameBroadcastV1(race,scheduled-1);
+  assert.equal(waiting.publicationAtMs,scheduled);
+  assert.equal(waiting.recordingPublished,false);
+  assert.deepEqual(waiting.events,[]);
+  const start=recordedGameBroadcastV1(race,scheduled);
+  assert.equal(start.recordingPublished,true);
+  assert.deepEqual(start.events.map(event=>event.id),['start']);
+  assert.equal(start.finishPublished,false);
+  assert.deepEqual(recordedGameBroadcastV1(race,scheduled+1000)
+    .events.map(event=>event.id),['start','attack']);
+  assert.equal(recordedGameBroadcastV1(race,scheduled+2000)
+    .finishPublished,true);
+});
+
+test('a late recording starts only after it is ready',()=>{
+  const race={...source,scheduled_at:new Date(epoch-60_000).toISOString()};
+  assert.equal(recordedGameBroadcastV1(race,epoch+1000)
+    .recordingPublished,false);
+  assert.equal(recordedGameBroadcastV1(race,epoch+2000)
+    .publicationAtMs,epoch+2000);
+  assert.throws(()=>recordedGameBroadcastV1({...source,
+    scheduled_at:'not-a-date'},epoch),/valid broadcast anchor/);
+});

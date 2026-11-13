@@ -2,6 +2,8 @@ import { protectedRoute } from "../../../../lib/auth/server";
 import { AuthError } from "../../../../lib/auth/policy.mjs";
 import { uuid } from "../../../../lib/race/server";
 import { NextResponse } from "next/server";
+import {positionResultPublishedV1} from
+  "../../../../lib/viewer/position-result-publication-v1.mjs";
 export const GET = protectedRoute(async (req, context, auth) => {
   const url = new URL(req.url),
     event_id = uuid(url.searchParams.get("event_id")),
@@ -15,7 +17,7 @@ export const GET = protectedRoute(async (req, context, auth) => {
   const [event, teams, riders] = await Promise.all([
     auth.db
       .from("events")
-      .select("id,name,status,engine_version")
+      .select("id,name,status,engine_version,scheduled_at")
       .eq("id", event_id)
       .maybeSingle(),
     auth.db
@@ -45,6 +47,13 @@ export const GET = protectedRoute(async (req, context, auth) => {
     );
   if (!event.data)
     throw new AuthError("EVENT_NOT_FOUND", "Race not found.", 404);
+  let published;
+  try{published=await positionResultPublishedV1(
+    auth.db,event.data,Date.now());}
+  catch{throw new AuthError("RESULT_UNAVAILABLE",
+    "Could not check result publication.",503);}
+  if(!published)throw new AuthError("RESULT_PENDING",
+    "Results will be published after the shared race reaches the finish.",409);
   return NextResponse.json({
     ok: true,
     event: event.data,

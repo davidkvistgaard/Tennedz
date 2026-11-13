@@ -32,7 +32,6 @@ const date = (ts) =>
   new Date(ts).toLocaleString("en-GB", {
     day: "numeric",
     month: "short",
-    timeZone: "UTC",
     timeZoneName: "short",
     hour: "2-digit",
     minute: "2-digit",
@@ -181,8 +180,11 @@ export default function RunPage() {
       (bucket === "upcoming"
         ? e.status === "OPEN" && Date.parse(e.deadline) > now
         : bucket === "pending"
-          ? e.status === "OPEN" && Date.parse(e.deadline) <= now
-          : e.status !== "OPEN"),
+          ? (e.status === "OPEN" && Date.parse(e.deadline) <= now) ||
+            (e.status === "FINISHED" && e.scheduled_at &&
+              Date.parse(e.scheduled_at) > now)
+          : e.status !== "OPEN" &&
+            (!e.scheduled_at || Date.parse(e.scheduled_at) <= now)),
   );
   const eligible = (r) =>
     !r.injury_until || (!!gameDate && r.injury_until <= gameDate);
@@ -357,11 +359,14 @@ export default function RunPage() {
                 {e.gender === "F" ? "Women" : "Men"} · One-day race
               </span>
               <h2>{e.name}</h2>
-              <span className="event-date">{date(e.deadline)}</span>
+              <span className="event-date">{e.scheduled_at ? `Scheduled start · ${date(e.scheduled_at)}` : `Entry deadline · ${date(e.deadline)}`}</span>
+              {e.scheduled_at && <span className="event-date">Team selection and orders close · {date(e.deadline)}</span>}
               <span className="event-meta">
                 <span>
                   {e.status === "FINISHED"
-                    ? "Ready to watch"
+                    ? e.scheduled_at && Date.parse(e.scheduled_at) > now
+                      ? "Recorded · awaiting scheduled start"
+                      : "Ready to watch"
                     : Date.parse(e.deadline) <= now
                       ? "Entries closed"
                       : `Deadline in ${countdown(e.deadline, now)}`}
@@ -395,6 +400,7 @@ export default function RunPage() {
                 : `Deadline in ${countdown(event.deadline, now)}`}
             </span>
           </div>
+          <p className="event-date">{event.scheduled_at && `Scheduled start · ${date(event.scheduled_at)} · `}Team selection and orders close · {date(event.deadline)}</p>
           {entryLoading ? (
             <p role="status">Loading the route and your saved lineup…</p>
           ) : entryError ? (

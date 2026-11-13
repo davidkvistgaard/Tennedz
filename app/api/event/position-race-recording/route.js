@@ -13,16 +13,22 @@ export const GET=protectedRoute(async(req,context,auth)=>{
   const eventId=uuid(new URL(req.url).searchParams.get('event_id'));
   await requirePositionRaceParticipantV1(
     auth.db,eventId,auth.team.id);
-  const {data,error}=await auth.db.from(
-    'recovery_position_race_recordings')
-    .select('document,recorded_at').eq('event_id',eventId)
-    .maybeSingle();
-  if(error)throw new AuthError('POSITION_RACE_UNAVAILABLE',
+  const [recordingResult,eventResult]=await Promise.all([
+    auth.db.from('recovery_position_race_recordings')
+      .select('document,recorded_at').eq('event_id',eventId)
+      .maybeSingle(),
+    auth.db.from('events').select('scheduled_at')
+      .eq('id',eventId).maybeSingle(),
+  ]);
+  if(recordingResult.error||eventResult.error||!eventResult.data)
+    throw new AuthError('POSITION_RACE_UNAVAILABLE',
     'Could not load the saved race.',503);
+  const data=recordingResult.data;
   if(!data)throw new AuthError('POSITION_RACE_NOT_RECORDED',
     'This race has no saved position recording.',404);
   const broadcast=recordedGameBroadcastV1({
     recorded_at:data.recorded_at,
+    scheduled_at:eventResult.data.scheduled_at,
     race_id:data.document.raceId,
     duration:data.document.feed?.duration,
     events:data.document.feed?.events},Date.now());

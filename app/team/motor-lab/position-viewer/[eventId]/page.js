@@ -28,7 +28,8 @@ export default async function PositionGameViewerPage({params}){
   catch{notFound();}
   const db=databaseClient();
   const {data:raceType,error:raceTypeError}=await db.from('events')
-    .select('engine_version').eq('id',eventId).maybeSingle();
+    .select('engine_version,scheduled_at').eq('id',eventId)
+    .maybeSingle();
   if(raceTypeError)throw new Error('Could not check the race version.');
   const publicPosition=raceType?.engine_version===
     'physical-first-position-general-race-8';
@@ -56,6 +57,7 @@ export default async function PositionGameViewerPage({params}){
     'Could not load the recorded position race.');
   if(!data)notFound();
   const source={recorded_at:data.recorded_at,
+    scheduled_at:publicPosition?raceType.scheduled_at:null,
     race_id:data.document.raceId,
     duration:data.document.feed?.duration,
     events:data.document.feed?.events};
