@@ -8,8 +8,7 @@ import '../../identity.css';
 export default function PortraitsPage() {
   const { session } = useAuth(), [gender, setGender] = useState('M'), [profile, setProfile] = useState(null);
   const riders = (session?.riders || []).filter(r => r.gender === gender);
-  return <TeamShell title="Meet your team">
-    <p className="page-intro">The faces behind the results. Get to know their strengths, their form, and the riders you can build a race around.</p>
+  return <TeamShell title="Your riders">
     <div className="club-toolbar"><div className="club-genders" role="group" aria-label="Rider category">{[['M', 'Men'], ['F', 'Women']].map(([value, label]) => <button key={value} aria-pressed={gender === value} onClick={() => setGender(value)}>{label}</button>)}</div></div>
     <div className="club-roster">{riders.map(rider => <SquadRider key={rider.id} rider={rider} onProfile={selected => setProfile(selected.id)} />)}</div>
     {!riders.length && <p className="club-empty">Your team has no riders in this category yet.</p>}
