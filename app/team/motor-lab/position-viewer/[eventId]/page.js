@@ -3,14 +3,12 @@ import {requireAdministrator,requireTeam,databaseClient} from
   '../../../../../lib/auth/server';
 import {AuthError} from '../../../../../lib/auth/policy.mjs';
 import {uuid} from '../../../../../lib/race/server';
-import {requirePositionRaceParticipantV1} from
-  '../../../../../lib/race/position-race-access-v1.mjs';
 import {verifyGameSnapshotPositionViewerDocumentV1} from
   '../../../../../lib/viewer/game-snapshot-position-viewer-v1.mjs';
 import {scenicPresentationV1} from
   '../../../../../lib/viewer/scenic-presentation-v1.mjs';
-import {recordedGameBroadcastV1} from
-  '../../../../../lib/viewer/recorded-game-broadcast-v1.mjs';
+import {scheduledGameBroadcastV2} from
+  '../../../../../lib/viewer/scheduled-game-broadcast-v2.mjs';
 import RecordedGameViewerClient from
   '../../recorded-viewer/[eventId]/RecordedGameViewerClient';
 import WaitingRecordedGameViewer from
@@ -38,9 +36,7 @@ export default async function PositionGameViewerPage({params}){
       'true')notFound();
   try{
     if(publicPosition){
-      const auth=await requireTeam();
-      await requirePositionRaceParticipantV1(
-        db,eventId,auth.team.id);
+      await requireTeam();
     }else await requireAdministrator({method:'GET'});
   }catch(error){
     if(error instanceof AuthError&&
@@ -61,7 +57,7 @@ export default async function PositionGameViewerPage({params}){
     race_id:data.document.raceId,
     duration:data.document.feed?.duration,
     events:data.document.feed?.events};
-  const broadcast=recordedGameBroadcastV1(source,Date.now());
+  const broadcast=scheduledGameBroadcastV2(source,Date.now());
   if(!broadcast.recordingPublished)
     return <TeamShell compact><WaitingRecordedGameViewer
       eventId={eventId}

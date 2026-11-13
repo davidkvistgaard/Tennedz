@@ -66,6 +66,12 @@ export default function ViewPage({ params }) {
         cache: "no-store",
       });
       if (r.status === 404) {
+        const status=await r.clone().json().catch(()=>null);
+        if(status?.code==='POSITION_RACE_VIEWER'){
+          window.location.assign(
+            `/team/motor-lab/position-viewer/${eventId}`);
+          return;
+        }
         const prepared = await fetch("/api/event/prepare", {
           method: "POST",
           headers: { "Content-Type": "application/json" },

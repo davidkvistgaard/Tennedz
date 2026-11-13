@@ -119,6 +119,14 @@
 .race-theatre-bottom{background:#f1f1df}
 .race-theatre-position-note{margin:0;padding:9px 18px;
   background:#e4ead9;color:#3c604c;font-size:11px}
+.race-theatre-result-ready{display:flex;align-items:center;
+  justify-content:space-between;gap:16px;padding:12px 18px;
+  background:#e4ead9;color:#274d3b}
+.race-theatre-result-ready div{display:grid;gap:3px}
+.race-theatre-result-ready span{font-size:12px}
+.race-theatre-result-ready button{border:1px solid #78977e;
+  border-radius:5px;background:#fffdf0;color:#274d3b;
+  padding:8px 12px;cursor:pointer}
 .race-theatre-commentary{padding:13px 18px;border-bottom:1px solid #d5dbc7}
 .race-theatre-commentary>p{margin:0 0 9px;font-size:10px;font-weight:700;
   letter-spacing:.15em}

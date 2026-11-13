@@ -26,6 +26,7 @@ export default function RecordedGameViewerClient({eventId,raceId,
   const [error,setError]=useState(null);
   useEffect(()=>{
     let active=true;
+    let finishTimer=null;
     const load=async()=>{
       try{
         const sent=Date.now();
@@ -39,14 +40,26 @@ export default function RecordedGameViewerClient({eventId,raceId,
         const elapsed=Math.min(feed.duration,Math.max(0,
           (payload.serverNowMs-payload.clock?.serverEpochMs)*
             payload.clock?.rate/1000));
+        const finishedElapsed=payload.finishPublished?
+          feed.duration:elapsed;
+        const expectedFinish=Number.isFinite(payload.finishAtMs)?
+          payload.serverNowMs>=payload.finishAtMs:
+          elapsed>=feed.duration;
         if(payload.raceId!==raceId||
           payload.clock?.duration!==feed.duration||
           !Number.isFinite(elapsed)||
           !Array.isArray(payload.events)||
-          payload.events.some(event=>event.time>elapsed)||
-          payload.finishPublished!==(elapsed>=feed.duration))
+          payload.events.some(event=>event.time>finishedElapsed)||
+          payload.finishPublished!==expectedFinish)
           throw new Error('The shared clock differs from this recording.');
         if(active){
+          clearTimeout(finishTimer);
+          if(!payload.finishPublished&&
+            Number.isFinite(payload.finishAtMs)){
+            const offset=payload.serverNowMs-(sent+received)/2;
+            finishTimer=setTimeout(load,Math.max(100,
+              payload.finishAtMs-(Date.now()+offset)+100));
+          }
           setSync({raceId,clock:payload.clock,
             serverNowMs:payload.serverNowMs,
             serverOffsetMs:payload.serverNowMs-
@@ -58,7 +71,8 @@ export default function RecordedGameViewerClient({eventId,raceId,
     };
     load();
     const timer=setInterval(load,5000);
-    return ()=>{active=false;clearInterval(timer);};
+    return ()=>{active=false;clearInterval(timer);
+      clearTimeout(finishTimer);};
   },[clockPath,eventId,raceId,feed.duration]);
   useEffect(()=>{
     if(!sync?.finishPublished||finishEvidence)return;
@@ -108,12 +122,14 @@ export default function RecordedGameViewerClient({eventId,raceId,
     pointsPreview,eventId]);
   return <main className="motor-viewer-preview">
     <header className="motor-viewer-intro">
-      <h1>{positionViewer?'Recorded position race':
+      <h1>{publicPosition?'Live race':positionViewer?'Recorded position race':
         'Recorded game race'}</h1>
       <span>{feed.route.profile.samples.at(-1)[0]/1000} km · {
         feed.riderCategory==='women'?'Women':'Men'} · {
         coverage.riderCount} riders</span>
-      <span>Saved Motor Lab race · synthetic scenery · unofficial finish</span>
+      <span>{publicPosition?
+        'Shared 30-minute race · recorded motor data · synthetic scenery':
+        'Saved Motor Lab race · synthetic scenery · unofficial finish'}</span>
     </header>
     {error?<p role="alert">{error}</p>:null}
     {!sync&&!error?<p role="status">
