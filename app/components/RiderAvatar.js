@@ -8,8 +8,9 @@ const shade=(hex,factor)=>'#'+hex.slice(1).match(/../g).map(v=>Math.min(255,Math
 
 // Lightweight deterministic fallback. Original painted portraits can replace it
 // individually without rerolling a rider's identity or adding a runtime AI bill.
-export function RiderArt({rider}) {
-  const {kit}=useClubStyle();
+export function RiderArt({rider,clubKit}) {
+  const {kit:ownKit}=useClubStyle();
+  const kit=clubKit || ownKit;
   const colors=CLUB_PALETTES[kit.palette];
   const a=riderAppearance(rider), id=useId().replace(/:/g,'');
   const hair=a.dye?.placement==='full'?a.dye.color:a.naturalHair;
@@ -93,11 +94,11 @@ export function RiderArt({rider}) {
   </svg>;
 }
 
-export default function RiderAvatar({rider,size=76}) {
+export default function RiderAvatar({rider,size=76,clubKit}) {
   const [failedPath,setFailedPath]=useState(null);
   // Only reviewed local assets; no arbitrary remote tracking URLs or SVG uploads.
   const path=/^\/portraits\/[a-zA-Z0-9_-]+\.(png|webp)$/.test(rider?.portrait_path||'')?rider.portrait_path:null;
   return <div className="rider-avatar" role="img" aria-label={`Portrait of ${rider?.display_name||rider?.name||'rider'}`} style={{width:size,height:size,flexShrink:0,borderRadius:12,overflow:'hidden',background:'#eee9df',border:'1px solid #dadfd6'}}>
-    {path&&failedPath!==path?<img src={path} alt="" width={size} height={size} onError={()=>setFailedPath(path)} style={{width:'100%',height:'100%',objectFit:'cover'}}/>:<RiderArt rider={rider}/>}
+    {path&&failedPath!==path?<img src={path} alt="" width={size} height={size} onError={()=>setFailedPath(path)} style={{width:'100%',height:'100%',objectFit:'cover'}}/>:<RiderArt rider={rider} clubKit={clubKit}/>}
   </div>;
 }
