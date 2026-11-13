@@ -73,3 +73,9 @@
 .club-bookmark-grid small { display: block; margin-top: .2rem; }
 .club-front-roster li:target { outline: 2px solid currentColor; outline-offset: 2px; }
 @media (max-width: 900px) { .club-directory-columns { grid-template-columns: minmax(0, 1fr); } }
+
+.club-front-kit { display: grid; justify-items: center; gap: .5rem; }
+.club-front-kit .btn { text-align: center; }
+@media (max-width: 540px) {
+  .club-front-kit:has(.btn) { grid-column: 1 / -1; justify-self: end; }
+}

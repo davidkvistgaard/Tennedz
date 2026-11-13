@@ -85,7 +85,7 @@ function DirectoryEntry({ entry, kind }) {
 }
 
 export default function ClubsPage() {
-  return <TeamShell title="Clubs">
+  return <TeamShell title="Search">
     <div className="club-directory-columns">
       <DirectoryColumn kind="club" />
       <DirectoryColumn kind="manager" />
