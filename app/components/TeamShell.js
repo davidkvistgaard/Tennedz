@@ -22,8 +22,10 @@ export default function TeamShell({ title, children, compact = false }) {
       active = false;
     };
   }, []);
+  const teamId = session?.team?.id;
   const links = [
     ["/team", "My team"],
+    ...(teamId ? [[`/team/clubs/${encodeURIComponent(teamId)}`, "My Club"]] : []),
     ["/team/settings", "Settings"],
     ["/team/calendar", "Calendar & races"],
     ["/team/motor-lab", "Motor Lab"],
