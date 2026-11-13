@@ -9,21 +9,21 @@ import ClubBadge from "./ClubBadge";
 export default function TeamShell({ title, children, compact = false }) {
   const { session } = useAuth(),
     pathname = usePathname();
-  const [gameDate, setGameDate] = useState(null);
+  const [localDate, setLocalDate] = useState(null);
   useEffect(() => {
-    let active = true;
-    fetch("/api/game-date")
-      .then((r) => r.json())
-      .then((j) => {
-        if (active && j.ok) setGameDate(j.game_date);
-      })
-      .catch(() => {});
+    const updateDate = () => setLocalDate(new Date().toLocaleDateString("en-GB"));
+    updateDate();
+    const timer = window.setInterval(updateDate, 30_000);
+    window.addEventListener("focus", updateDate);
     return () => {
-      active = false;
+      window.clearInterval(timer);
+      window.removeEventListener("focus", updateDate);
     };
   }, []);
+  const teamId = session?.team?.id;
   const links = [
     ["/team", "My team"],
+    ...(teamId ? [[`/team/clubs/${encodeURIComponent(teamId)}`, "My Club"]] : []),
     ["/team/settings", "Settings"],
     ["/team/calendar", "Calendar & races"],
     ["/team/motor-lab", "Motor Lab"],
@@ -62,9 +62,7 @@ export default function TeamShell({ title, children, compact = false }) {
         <div className="game-date"><ClubBadge name={session?.team?.name} decorative/><div>
           {session?.team?.name}
           <br />
-          {gameDate
-            ? `Game date ${new Date(gameDate + "T12:00:00Z").toLocaleDateString("en-GB", { timeZone: "UTC" })}`
-            : "Loading game date…"}
+          {localDate}
         </div></div>
       </header>
       {!compact && (
