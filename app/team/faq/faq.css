@@ -1,0 +1,16 @@
+.team-faq { display: grid; grid-template-columns: minmax(12rem, 17rem) minmax(0, 48rem); gap: clamp(1rem, 4vw, 3rem); align-items: start; }
+.team-faq-index, .team-faq-topics section { padding: clamp(1rem, 3vw, 1.75rem); background: #fbf7eb; border: 1px solid #ded6c2; border-radius: 1rem; }
+.team-faq-index { position: sticky; top: 1rem; }
+.team-faq-index h2 { font-size: 1.1rem; }
+.team-faq-index ul { padding: 0; margin: 0; list-style: none; }
+.team-faq-index a { display: inline-block; padding: .35rem 0; color: #285440; text-decoration: underline; text-underline-offset: .2em; }
+.team-faq-topics { display: grid; gap: 1rem; }
+.team-faq h2 { margin: 0 0 .75rem; scroll-margin-top: 2rem; }
+.team-faq-answer { padding: .9rem 0; border-top: 1px solid #ded6c2; }
+.team-faq-answer:last-child { padding-bottom: 0; }
+.team-faq-answer h3 { margin: 0 0 .4rem; font-size: 1.05rem; }
+.team-faq-answer p { margin: 0; line-height: 1.6; }
+@media (max-width: 720px) {
+  .team-faq { grid-template-columns: minmax(0, 1fr); }
+  .team-faq-index { position: static; }
+}

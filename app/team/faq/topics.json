@@ -1,0 +1,154 @@
+[
+  [
+    "getting-started",
+    "Getting started",
+    [
+      [
+        "What do I manage in Pelotonia?",
+        "You manage a cycling club with men’s and women’s squads. Choose riders and race orders, follow results and rankings, and develop your club through the marketplace and club identity tools."
+      ],
+      [
+        "Where should I start?",
+        "Open My Team for your club overview and shortcuts. Use Riders to review your squads, then open Calendar & Races to see upcoming events and entry deadlines."
+      ],
+      [
+        "What is the difference between My Team and My Club?",
+        "My Team is your manager dashboard with rankings, the latest press release and recent trophies. My Club opens your club page, where other managers can see your colours, roster, press releases and honours."
+      ]
+    ]
+  ],
+  [
+    "riders",
+    "Riders and squads",
+    [
+      [
+        "Where can I see my riders’ abilities?",
+        "Open Riders, select Men or Women, then open a rider’s profile. Use the attributes and specialties to match riders to the terrain and the roles you need."
+      ],
+      [
+        "What can other managers see about my riders?",
+        "Your club page shows rider names and portraits. The club roster does not expose the private attribute panels from your Riders tab."
+      ],
+      [
+        "How do form and fatigue affect my riders?",
+        "Form and fatigue describe current condition. Consider them alongside a rider’s abilities when you choose a lineup. Ranking points come from race results."
+      ]
+    ]
+  ],
+  [
+    "calendar",
+    "Calendar and routes",
+    [
+      [
+        "How does the Pelotonia calendar work?",
+        "Pelotonia splits the calendar year into three seasons. The 2027 programme groups January–April, May–August and September–December into separate views. Use the race list and its entry deadlines to see which events you can enter."
+      ],
+      [
+        "Why does a route profile show 2025 or 2026?",
+        "The year identifies the source edition. A previous edition can serve as a reference while the upcoming route is unavailable. An approximate chart trace comes from a published elevation chart, so its gradients are approximate."
+      ],
+      [
+        "Why are some profiles or stages missing?",
+        "A stage stays pending until a usable route has been added. For stage races, expand the race and select an available stage to see its elevation and distance."
+      ]
+    ]
+  ],
+  [
+    "race-entry",
+    "Race entry and tactics",
+    [
+      [
+        "How do I enter a race?",
+        "Go to Calendar & Races and choose Set up on the race. Select the required number of riders from the eligible squad, choose a captain and save the lineup. Check the race’s team size and deadline on the entry screen."
+      ],
+      [
+        "What do Team ready and Orders ready mean?",
+        "The lineup and tactics are tracked separately. A complete lineup includes a captain among the selected riders. Open the race setup and save your tactical orders to complete the orders step."
+      ],
+      [
+        "What should I consider when choosing orders?",
+        "Start with the route and decide which rider the team should support. Compare the terrain and your riders’ strengths, then use the available orders to assign roles that suit the race."
+      ],
+      [
+        "Why is a race locked?",
+        "Entries lock when the race deadline passes. Check the displayed time and time zone, and save the lineup and orders before the deadline."
+      ]
+    ]
+  ],
+  [
+    "results",
+    "Results, rankings and trophies",
+    [
+      [
+        "Where can I see the result or replay?",
+        "Open the completed race from Calendar & Races or History. A result or replay appears when it is available for that race. Some rankings update after the shared race reaches the finish."
+      ],
+      [
+        "How are interim winter race points awarded?",
+        "For a winter race using the interim system, the winner receives as many points as there are starters. Each following finisher receives one point fewer, down to one for the last finisher. For the team classification, only the first 30 finishers in each division contribute rider points to their teams."
+      ],
+      [
+        "Why are there separate rankings?",
+        "Rankings separates men’s and women’s results. Switch the category to see the corresponding team and rider standings. The positions on My Team use the order shown in Rankings."
+      ],
+      [
+        "What appears in the trophy cabinet?",
+        "Recorded team wins from finished races appear in your club’s trophy cabinet. My Team highlights up to three recent wins and links to their results."
+      ]
+    ]
+  ],
+  [
+    "economy",
+    "Economy and marketplace",
+    [
+      [
+        "What are Coins and Gems for?",
+        "Coins are used to buy riders and pay team expenses. Gems are used for extras. Open Economy to see both balances."
+      ],
+      [
+        "How do I buy or sell a rider?",
+        "Open Marketplace to browse listings and check the price and expiry before buying. To sell, choose an eligible rider from your squad and set a price. A purchase adds the rider to the buyer’s team."
+      ],
+      [
+        "Why can’t I list a rider?",
+        "A rider selected for an unfinished race or saved lineup must first be removed from that selection. A marketplace listing lasts 96 hours from the time it is posted."
+      ]
+    ]
+  ],
+  [
+    "club",
+    "Club identity and discovery",
+    [
+      [
+        "Where can I change my club name and colours?",
+        "Use Settings to change your team name. Use Club Identity to choose and save the available colour palette and jersey pattern."
+      ],
+      [
+        "How do I publish a press release?",
+        "Open My Club, enter a title and text in the Press releases section, then select Publish release. Other managers can read published releases on your club page. You can remove your own releases there."
+      ],
+      [
+        "How do I find another club, manager or rider?",
+        "Open Clubs and use the relevant search column. Select the star beside a result to save it to your favorites. A club result opens its club page, and a rider with a club can link to the corresponding roster entry."
+      ]
+    ]
+  ],
+  [
+    "help",
+    "Atlas, Motor Lab and troubleshooting",
+    [
+      [
+        "What can I do in Atlas?",
+        "Explore the Pelotonia world map, switch between top view and 3D relief, and zoom in to explore local terrain and places."
+      ],
+      [
+        "What is Motor Lab?",
+        "Motor Lab is the test area for experimental race engines and viewer features. Use Calendar & Races for scheduled competition entries."
+      ],
+      [
+        "What should I check if my lineup or orders seem missing?",
+        "Open the exact race from Calendar & Races, confirm the squad and captain, and check the lineup and orders status separately. If a save failed, use the message on the setup screen to identify what needs attention."
+      ]
+    ]
+  ]
+]
