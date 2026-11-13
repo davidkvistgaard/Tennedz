@@ -78,6 +78,10 @@ export default function ClubPage({ params }) {
     return () => controller.abort();
   }, [id, endpoint]);
   const { data, error } = result?.id === id ? result : {};
+  useEffect(() => {
+    if (!data || !window.location.hash.startsWith("#rider-")) return;
+    document.getElementById(window.location.hash.slice(1))?.scrollIntoView({ block: "center" });
+  }, [data]);
   if (!data) return <TeamShell title="Club"><p role="status">{error || "Loading club…"}</p><Link href="/team/clubs">All clubs</Link></TeamShell>;
   const { club, kit, riders, trophies } = data;
   const colors = CLUB_PALETTES[kit.palette];
@@ -96,7 +100,7 @@ export default function ClubPage({ params }) {
             <h2>Riders</h2>
             {[["M", "Men’s squad"], ["F", "Women’s squad"]].map(([gender, title]) => {
               const squad = riders.filter(rider => rider.gender === gender);
-              return <div key={gender}><h3>{title}</h3>{squad.length ? <ul className="club-front-roster">{squad.map(rider => <li key={rider.id}>
+              return <div key={gender}><h3>{title}</h3>{squad.length ? <ul className="club-front-roster">{squad.map(rider => <li id={"rider-" + rider.id} key={rider.id}>
                 <RiderAvatar rider={rider} size={100} clubKit={kit} />
                 <strong>{rider.display_name || rider.name}</strong>
               </li>)}</ul> : <p>No riders yet.</p>}</div>;
