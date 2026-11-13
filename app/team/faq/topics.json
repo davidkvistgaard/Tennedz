@@ -4,8 +4,8 @@
     "Getting started",
     [
       [
-        "What do I manage in Pelotonia?",
-        "You manage a cycling club with men’s and women’s squads. Choose riders and race orders, follow results and rankings, and develop your club through the marketplace and club identity tools."
+        "What is Pelotonia?",
+        "Pelotonia is an online cycling management game. You run a club with men’s and women’s squads and compete against other clubs across a season. As manager, you build your roster, select lineups and captains, and set race tactics. Race results contribute to rider and team rankings."
       ],
       [
         "Where should I start?",
@@ -14,6 +14,20 @@
       [
         "What is the difference between My Team and My Club?",
         "My Team is your manager dashboard with rankings, the latest press release and recent trophies. My Club opens your club page, where other managers can see your colours, roster, press releases and honours."
+      ]
+    ]
+  ],
+  [
+    "pelotonia-island",
+    "The island of Pelotonia",
+    [
+      [
+        "Where is Pelotonia?",
+        "Pelotonia is a fictional island created for the game. Its towns, mountains and coastlines form the setting for the game world. Open Atlas to explore the island and zoom from the world map into local terrain."
+      ],
+      [
+        "Why do some races have familiar names?",
+        "The calendar draws inspiration from real-world cycling. Some races use elevation profiles from real editions as route references. The source year is shown with the profile."
       ]
     ]
   ],
