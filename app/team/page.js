@@ -1,77 +1,96 @@
 "use client";
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useState } from "react";
 import Link from "next/link";
 import TeamShell from "../components/TeamShell";
-import SquadRider from "../components/SquadRider";
-import RiderDossier from "../components/RiderDossier";
+import ClubBadge from "../components/ClubBadge";
+import { CLUB_PALETTES, useClubStyle } from "../components/ClubStyle";
 import { useAuth } from "../components/AuthProvider";
-import { teamRating } from "../../lib/race/rating.mjs";
 import { api } from "../../lib/api";
-import { nextTeamRace } from "../../lib/calendar/next-race.mjs";
 import "../identity.css";
+import "./clubs/clubs.css";
 
-const EMPTY = [];
-const SKILLS = [["rating","Race points"],["sprint","Sprint"],["flat","Flat roads"],["hills","Hills"],["mountain","Mountains"],["cobbles","Cobbles"],["timetrial","Time trial"],["endurance","Endurance"],["strength","Strength"],["wind","Wind"],["form","Form"],["fatigue","Fatigue"]];
-const value = (r,k) => Number.isFinite(Number(r[k])) ? Number(r[k]) : 0;
-const format = n => Number(n ?? 0).toLocaleString("en-GB");
+const categories = [["M", "Men"], ["F", "Women"]];
 
-function NextRace({ gender }) {
-  const [calendar,setCalendar] = useState({loading:true,events:[],error:"",offset:0});
-  const [now,setNow] = useState(0);
-  useEffect(()=>{
-    let active=true;
-    api("/api/events?limit=100").then(data=>{
-      if(active) {setCalendar({loading:false,events:data.events||[],error:"",offset:Date.parse(data.server_time)-Date.now()});setNow(Date.now());}
-    }).catch(()=>{if(active)setCalendar({loading:false,events:[],error:"Could not load the calendar. Please try again from the race calendar.",offset:0});});
-    const timer=setInterval(()=>setNow(Date.now()),1000);
-    return ()=>{active=false;clearInterval(timer);};
-  },[]);
-  const next = nextTeamRace(calendar.events,gender,now+calendar.offset);
-  const raceDate=next?.scheduled_at??next?.deadline;
-  const entryOpen=next&&Date.parse(next.deadline)>now+calendar.offset;
-  const action=!next?"Open race calendar":!entryOpen?"View race":
-    next.orders_ready?"Review orders":next.team_ready?"Set orders":"Set up team";
-  return <section className="club-race" aria-labelledby="club-next-race-label">
-    <p id="club-next-race-label" className="identity-eyebrow">NEXT RACE · {gender==="M"?"MEN":"WOMEN"}</p>
-    <h2>{calendar.loading?"Loading…":next?.name || (calendar.error?"Calendar unavailable":"The road is waiting")}</h2>
-    {next&&<p className="club-race-date">{next.scheduled_at?"Scheduled start":"Entry deadline"} · {new Date(raceDate).toLocaleString("en-GB",{weekday:"long",day:"numeric",month:"long",year:"numeric",hour:"2-digit",minute:"2-digit",timeZoneName:"short"})}{next.race_tier?` · T${next.race_tier}`:""}</p>}
-    {next&&<div className="club-race-readiness"><span>Team <strong>{next.team_count??0}/{next.team_size??8}</strong></span><span>Orders <strong>{next.orders_ready?"Ready":"Missing"}</strong></span>{!entryOpen&&<span>Locked</span>}</div>}
-    <p>{calendar.error || (next ? `Team selection and orders close ${new Date(next.deadline).toLocaleString("en-GB",{day:"numeric",month:"long",year:"numeric",hour:"2-digit",minute:"2-digit",timeZoneName:"short"})}.` : calendar.loading?"":"There are no open one-day races for this squad yet.")}</p>
-    <Link className="btn" href={next?`/team/run?event_id=${encodeURIComponent(next.id)}&gender=${gender}`:"/team/calendar"}>{action} ↗</Link>
-  </section>;
-}
-export default function TeamPage() {
-  const {session,refresh,logout} = useAuth();
-  const [gender,setGender] = useState("M");
-  const [selected,setSelected] = useState([]);
-  const [profile,setProfile] = useState(null);
-  const [specialty,setSpecialty] = useState("all");
-  function changeSquad(value){setGender(value);setSelected([]);setProfile(null);}
-  function toggleCompare(id){setSelected(current=>current.includes(id)?current.filter(x=>x!==id):current.length<3?[...current,id]:current);}
-  function specialtyOf(r){return ["sprint","mountain","hills","cobbles","timetrial"].filter(k=>r[k]!=null).sort((a,b)=>value(r,b)-value(r,a))[0];}
-  const [query,setQuery] = useState("");
-  const [sort,setSort] = useState("rating");
-  const [direction,setDirection] = useState("DESC");
-  const [busy,setBusy] = useState(false);
-  const [status,setStatus] = useState("");
-  const riders=session?.riders || EMPTY;
-  const team=session?.team;
-  const visible=useMemo(()=>riders.filter(r=>r.gender===gender && (specialty==="all" || specialtyOf(r)===specialty) && (r.display_name||r.name||"").toLocaleLowerCase("en").includes(query.trim().toLocaleLowerCase("en"))).sort((a,b)=>(direction==="ASC"?1:-1)*(value(a,sort)-value(b,sort))),[riders,gender,query,sort,direction,specialty]);
-  async function reload(){setBusy(true);setStatus("Refreshing your team…");try{const result=await refresh();setStatus(result?"Your team is up to date.":"Could not refresh your team.");}catch{setStatus("Could not refresh your team.");}finally{setBusy(false);}}
-  async function signOut(){setBusy(true);try{await logout();}catch{setStatus("Could not sign out. Please try again.");setBusy(false);}}
-  if(!team) return null;
-  return <TeamShell compact>
-    <div className="club-heading"><div><p className="identity-eyebrow">TEAM OFFICE · MY TEAM</p><h1>{team.name}</h1></div><div className="club-actions"><Link className="btn" href="/team/settings#team-name">Change team name</Link><button className="btn" disabled={busy} onClick={reload}>Refresh</button><button className="btn" disabled={busy} onClick={signOut}>Sign out</button></div></div>
-    <p role="status" className="club-status">{status}</p>
-    <div className="club-overview"><NextRace gender={gender}/><section className="club-stats" aria-label="Team overview"><div><span>Coins</span><strong>{format(team.coins)}</strong><small>Gems: {format(team.gems)}</small></div>{[["M","Men"],["F","Women"]].map(([g,label])=><div key={g}><span>{label} · {riders.filter(r=>r.gender===g).length} riders</span><strong>{format(teamRating(riders,g))}</strong><small>team rating · race points</small></div>)}</section></div>
-    <section aria-labelledby="club-roster-title"><div className="club-roster-title"><h2 id="club-roster-title">The people behind the team</h2><p>Two squads. Their own races. One shared ambition.</p></div>
-      <div className="club-toolbar"><div className="club-genders" role="group" aria-label="Choose squad"><button aria-pressed={gender==="M"} onClick={()=>changeSquad("M")}>Men</button><button aria-pressed={gender==="F"} onClick={()=>changeSquad("F")}>Women</button></div><label>Search riders<input type="search" value={query} onChange={e=>setQuery(e.target.value)} placeholder="Find a name…"/></label><label>Specialty<select value={specialty} onChange={e=>setSpecialty(e.target.value)}><option value="all">All riders</option><option value="sprint">Sprinters</option><option value="mountain">Climbers</option><option value="hills">Puncheurs</option><option value="cobbles">Classics riders</option><option value="timetrial">Time triallists</option></select></label><label>Sort by<select value={sort} onChange={e=>setSort(e.target.value)}>{SKILLS.map(([key,label])=><option key={key} value={key}>{label}</option>)}</select></label><label>Order<select value={direction} onChange={e=>setDirection(e.target.value)}><option value="DESC">High → low</option><option value="ASC">Low → high</option></select></label></div>
-      <p className="small" aria-live="polite">{visible.length} riders · {gender==="M"?"Men’s squad":"Women’s squad"}</p>
-      <div className="club-roster">{visible.map(r=><SquadRider key={r.id} rider={r} onProfile={r=>setProfile([r.id])} onCompare={toggleCompare} selected={selected.includes(r.id)} compareFull={selected.length>=3}/>)}</div>
-      {!visible.length && <p className="club-empty">{query || specialty!=="all"?"No riders match your search.":"There are no riders in this squad yet."}</p>}
-      <p className="identity-note">Team rating is the sum of the top 16 rider ratings in each squad. Form and fatigue affect racing, not race points.</p>
+function ClubOverview({ teamId }) {
+  const [press, setPress] = useState(null);
+  const [rankings, setRankings] = useState({});
+  const clubUrl = "/team/clubs/" + encodeURIComponent(teamId);
+
+  useEffect(() => {
+    const controller = new AbortController();
+    const options = { signal: controller.signal };
+    api("/api/clubs/" + encodeURIComponent(teamId), options)
+      .then(data => setPress(data.pressAvailable ? { release: data.press[0] } : { error: true }))
+      .catch(() => { if (!controller.signal.aborted) setPress({ error: true }); });
+
+    for (const [gender] of categories) {
+      api("/api/leaderboards?gender=" + gender, options)
+        .then(data => {
+          const index = data.teams.findIndex(team => team.id === teamId);
+          setRankings(current => ({ ...current, [gender]: index < 0 ? "Unranked" : "#" + (index + 1) }));
+        })
+        .catch(error => {
+          if (!controller.signal.aborted) {
+            const label = error.code === "RANKING_PENDING" ? "Pending race finish" : "Unavailable";
+            setRankings(current => ({ ...current, [gender]: label }));
+          }
+        });
+    }
+    return () => controller.abort();
+  }, [teamId]);
+
+  return <div className="club-front-columns">
+    <section className="club-front-panel">
+      <h2>Latest press release</h2>
+      {press?.release ? <article className="club-front-release">
+        <time dateTime={press.release.published_at}>{new Date(press.release.published_at).toLocaleDateString("en-GB")}</time>
+        <h3>{press.release.title}</h3>
+        <p>{press.release.body}</p>
+      </article> : <p>{!press ? "Loading press release…" : press.error ? "Press releases are unavailable." : "No press releases yet."}</p>}
+      <Link href={clubUrl}>View club page</Link>
     </section>
-    {selected.length>0 && <aside className="studio-compare-bar" aria-label="Selected riders"><span>{selected.length} / 3 selected</span><button className="btn primary" disabled={selected.length<2} onClick={()=>setProfile(selected)}>Compare selected riders</button><button className="btn" onClick={()=>setSelected([])}>Clear selection</button></aside>}
-    {profile && profile.every(id=>riders.some(r=>r.id===id)) && <RiderDossier riders={profile.map(id=>riders.find(r=>r.id===id))} onClose={()=>setProfile(null)}/>}
+    <section className="club-front-panel">
+      <h2>Rankings</h2>
+      <dl>{categories.map(([gender, label]) => <div key={gender}>
+        <dt>{label}</dt><dd>{rankings[gender] ?? "Loading…"}</dd>
+      </div>)}</dl>
+      <Link href="/team/leaderboards">View rankings</Link>
+    </section>
+  </div>;
+}
+
+export default function TeamPage() {
+  const { session, logout } = useAuth();
+  const { kit } = useClubStyle();
+  const [signingOut, setSigningOut] = useState(false);
+  const [error, setError] = useState("");
+  const team = session?.team;
+  if (!team) return null;
+  const colors = CLUB_PALETTES[kit.palette];
+
+  async function signOut() {
+    setSigningOut(true);
+    setError("");
+    try {
+      await logout();
+    } catch {
+      setError("Could not sign out. Please try again.");
+      setSigningOut(false);
+    }
+  }
+
+  return <TeamShell compact>
+    <main className="club-front">
+      <header className="club-front-header" style={{ "--club-primary": colors.primary, "--club-accent": colors.accent }}>
+        <ClubBadge name={team.name} decorative />
+        <h1>{team.name}</h1>
+        <div className="club-actions" style={{ gridColumn: "2 / -1", justifyContent: "flex-start" }}>
+          <Link className="btn" href="/team/settings#team-name">Change team name</Link>
+          <button className="btn" disabled={signingOut} onClick={signOut}>Sign out</button>
+        </div>
+      </header>
+      {error && <p role="alert">{error}</p>}
+      <ClubOverview key={team.id} teamId={team.id} />
+    </main>
   </TeamShell>;
 }
