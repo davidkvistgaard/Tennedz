@@ -90,6 +90,18 @@ export default function TeamPage() {
         </div>
       </header>
       {error && <p role="alert">{error}</p>}
+      <nav className="club-front-panel" aria-label="Team shortcuts">
+        <ul style={{ display: "flex", flexWrap: "wrap", gap: ".75rem", listStyle: "none", margin: 0, padding: 0 }}>
+          {[
+            ["/team/portraits", "Riders"],
+            ["/team/economy", "Economy"],
+            ["/team/calendar", "Calendar & races"],
+            ["/team/clubs/" + encodeURIComponent(team.id), "My Club"],
+            ["/team/marketplace", "Marketplace"],
+            ["/team/leaderboards", "Rankings"],
+          ].map(([href, label]) => <li key={href}><Link className="btn" href={href}>{label}</Link></li>)}
+        </ul>
+      </nav>
       <ClubOverview key={team.id} teamId={team.id} />
     </main>
   </TeamShell>;
