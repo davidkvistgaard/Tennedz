@@ -91,7 +91,10 @@ export default function ClubPage({ params }) {
       <header className="club-front-header" style={{ "--club-primary": colors.primary, "--club-accent": colors.accent }}>
         <ClubBadge name={club.name} clubKit={kit} decorative />
         <div><h1>{club.name}</h1><p>{colors.name}</p></div>
-        <Jersey kit={kit} name={club.name + " jersey"} />
+        <div className="club-front-kit">
+          <Jersey kit={kit} name={club.name + " jersey"} />
+          {data.isOwner && <Link className="btn" href="/team/identity">Club Identity</Link>}
+        </div>
       </header>
       <div className="club-front-columns">
         <div>
