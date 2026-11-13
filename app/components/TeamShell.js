@@ -34,6 +34,7 @@ export default function TeamShell({ title, children, compact = false }) {
     ["/team/clubs", "Clubs"],
     ["/team/atlas", "Atlas"],
     ["/team/settings", "Settings"],
+    ["/team/faq", "FAQ"],
     ...(session?.is_admin ? [["/admin", "Admin"]] : []),
     ["/team/motor-lab", "Motor Lab"],
   ];
