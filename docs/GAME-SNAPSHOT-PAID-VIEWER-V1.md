@@ -1,0 +1,111 @@
+# Game snapshot to paid viewer v1
+
+`createGameSnapshotPaidViewerDocumentV1(snapshot, manifest)` is an
+experimental, server-side integration boundary. It accepts the shape of
+`recovery_race_snapshot` for one-day events and a separately committed,
+versioned manifest with tactics and presentation identity for every team.
+It does not change the official race cycle or existing recordings.
+
+The snapshot supplies the actual event ID, category, seed, game date, stage
+profile, locked weather, participating teams, selected riders and captain.
+The manifest must match that event and every participating team exactly. Each
+entry must supply normalized tactical orders (including baseline effort,
+attack, chase and front work), sporting goal and captain, game team style,
+and one unique positive race bib per selected rider. Missing fields,
+conflicting captains, injured or wrong-category riders, duplicate bibs and
+unknown manifest fields are rejected. The route comes from the motor's
+`buildKilometreRoute`; the start reserve comes from the motor's replayable
+energy cap. The paid race export then verifies every rider-kilometre and
+produces `motor-lab-viewer-document-v2`.
+
+The resulting viewer document labels `officialResults:false`. Paid finish
+clocks are evidence, not official places, points or awards. The adapter's
+longitudinal coordinates between recorded crossings are interpolation; lane
+offsets and geography remain unavailable. Tests cover complete 20 km
+game-shaped races for men and women and refusal of missing tactics, bibs and
+an injured selected rider. These are fixtures, not production races.
+
+Migration `20261109131922_committed_physical_entry_inputs.sql` adds an
+optional, locked entry transaction that saves the normalized team order,
+sporting stake and game kit with the selected lineup. The database allocates
+unique positive race bibs and preserves them on an identical resubmission.
+The private table has RLS enabled and no client grants. The companion
+`/api/event/join-physical` endpoint is disabled unless
+`PELOTONIA_PHYSICAL_ENTRY_ENABLED=true` and an exact
+`PELOTONIA_PHYSICAL_ENTRY_EVENT_ID`; it validates the manager input,
+reads the saved game kit and uses the atomic RPC. The legacy entry path remains
+available. PGlite tests verify the transaction, bib assignment, rollback
+and revoked anonymous grants. The migration has **not** been applied to the
+hosted database.
+
+The current `recovery_race_snapshot` still omits these new fields. The
+physical-entry UI is gated by the server flag and hosted migration. The
+official `buildRace` still invokes the
+earlier `simulateStage` and awards official points from that engine.
+
+`manifestFromCommittedPhysicalEntriesV1` now assembles the private saved
+entry rows into the exact manifest above, checking the event, every team,
+selected rider order and captain against the current game snapshot.
+`createPhysicalGameRaceDocumentV1` uses the official engine's current seed
+and deterministic weather fallback when those values are not yet locked,
+and labels that provenance in the document. It never stores weather or
+publishes official results. `loadPhysicalGameRaceDocumentV1` rereads the
+game snapshot after the private rows and rejects a changed source.
+
+Migration `20261109135901_physical_viewer_recording_v1.sql` adds a private,
+immutable recording table and an atomic save RPC. Under the existing race
+transaction lock, that RPC compares the current game snapshot and every
+physical entry against the data used to calculate the paid document. A
+different document cannot replace the recording; exact retries are safe.
+An administrator-only POST to `/api/admin/physical-viewer-preview` records
+it after the entry deadline, and the corresponding GET with `event_id`
+serves that saved document without rerunning the race. Both calls require
+`PELOTONIA_PHYSICAL_VIEWER_PREVIEW_ENABLED=true`; POST also respects the
+game-write gate. Both flags are off by default, neither hosted migration has
+been applied, and no actual game race has completed this path.
+Administrators can enter an event ID at
+`/team/motor-lab/recorded-viewer` to record and open a race. Exact retries
+open the existing immutable recording. Incomplete entries or an unfinished
+entry deadline produce a visible error; no synthetic entry is substituted.
+
+Migration `20261109140727_physical_viewer_broadcast_source_v1.sql` exposes
+only the immutable recording timestamp, race ID, duration and recorded
+events to the service role for clock polls. The admin-only
+`/team/motor-lab/recorded-viewer/<event-id>` page verifies the saved
+document digest, renders the paid positions in the new WebGL viewer and
+labels the scenic layer as synthetic. The first 60× pass from the saved
+recording timestamp determines a shared publication time. Before that time,
+the page sends no race feed and the document GET returns 425. Afterward,
+all viewers follow the same repeating 60× replay clock. The clock API
+releases commentary events when reached in each replay; measured finish
+crossings appear when the replay reaches the finish. The document digest is canonical across JSONB
+key ordering and detects changed recording content. Local browser fixtures
+verified the withholding gate and actual WebGL rendering after publication
+for one complete 20 km game-shaped race. This is an experimental admin preview;
+the fixture is not a hosted game race or GPU performance approval.
+The game-shaped browser matrix also covers 32 and 144 paid riders in each
+category. Every rider reached a measured finish, all were visible in WebGL2,
+and the diagnostics reported no rendering errors. On the local Intel UHD
+Direct3D11 backend, the four sampled frame rates were 53 fps (32 men),
+50 fps (32 women), 34 fps (144 men) and 32 fps (144 women). These are single
+local samples, not a device-wide performance guarantee. The viewer contract
+currently accepts at most 150 riders; a game field of complete eight-rider
+teams can reach 144 within that cap. Exact 30/150 synthetic renderer stress
+tests remain separate from the game-shaped race matrix.
+Until every participating team saves a physical input, this route correctly
+refuses the old incomplete entries.
+
+The race-entry screen now offers an explicit tactical form when the physical
+entry endpoint is enabled. The manager selects effort, chase, attack, front
+work, road captain, helpers, sporting goal and goal rider before saving the
+lineup and orders in the same RPC. Existing advanced phases, contingency and
+response orders are retained when editing the visible baseline fields. The
+legacy lineup form remains the active path while the feature flag is off.
+Browser fixtures cover the physical form and the preserved legacy path;
+neither fixture proves a hosted race has completed the workflow.
+
+Connecting this boundary to official races requires reading a consistent
+physical input snapshot, committing seed and weather, validating full-race
+calibration and finish semantics, then versioning the official cycle while
+preserving historic runs. This module must not fabricate those inputs from
+the old strategic replay.

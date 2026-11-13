@@ -1,0 +1,60 @@
+.programme-views,.programme-months,.programme-stages {
+  display:flex;flex-wrap:wrap;gap:8px;margin:18px 0;
+}
+.programme button,.programme-views button {
+  border:1px solid #c4cebd;border-radius:9px;background:#fffaf0;color:#234838;
+  padding:8px 12px;font:inherit;font-weight:650;cursor:pointer;
+}
+.programme button[aria-pressed=true],.programme-views button[aria-pressed=true] {
+  background:#254d3d;color:#fffaf0;border-color:#254d3d;
+}
+.programme button:disabled {opacity:.45;cursor:default;}
+.programme {color:#234838;}
+.programme-intro {
+  display:flex;justify-content:space-between;align-items:flex-end;flex-wrap:wrap;gap:12px;
+  padding:clamp(18px,4vw,34px);background:#edf1e6;border-radius:16px;
+}
+.programme-intro h2 {margin:0 0 8px;font-size:clamp(1.6rem,3.5vw,2.5rem);}
+.programme-intro p {margin:0;line-height:1.45;}
+.programme-intro>p,.programme-count,.programme-profile-note {color:#526759;font-size:.86rem;}
+.programme-seasons {display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px;margin:15px 0 25px;}
+.programme-seasons button {display:grid;text-align:left;gap:5px;padding:clamp(10px,2vw,19px);}
+.programme-seasons span,.programme-seasons small {font-size:.81rem;}
+.programme-season-title {margin:0;font-size:1.35rem;}
+.programme-season-title span {font-size:.82rem;font-weight:500;display:inline-block;margin-left:8px;color:#526759;}
+.programme-filters {display:flex;flex-wrap:wrap;gap:10px;}
+.programme-filters label {display:grid;gap:5px;font-size:.82rem;font-weight:650;min-width:0;}
+.programme-filters input,.programme-filters select {
+  min-width:0;max-width:100%;height:37px;border:1px solid #c4cebd;border-radius:8px;
+  padding:5px 8px;color:inherit;background:#fffaf0;font:inherit;
+}
+.programme-list {list-style:none;margin:0;padding:0;display:grid;gap:8px;}
+.programme-race {border:1px solid #dce2d2;border-radius:12px;background:#fffaf0;}
+.programme-race-row {
+  display:grid;grid-template-columns:110px minmax(0,1fr) 70px 133px;gap:12px;
+  align-items:center;padding:12px 15px;
+}
+.programme-race-row small {display:block;margin-top:3px;color:#526759;}
+.programme-date {font-size:.86rem;font-variant-numeric:tabular-nums;}
+.programme-tier,.programme-pending {font-size:.75rem;color:#526759;}
+.programme-race-row button {font-size:.8rem;text-align:left;}
+.programme-race-row button[aria-expanded=true] {background:#e8eee0;border-color:#83977f;}
+.programme-profile {padding:8px 15px 16px;border-top:1px solid #dce2d2;}
+.programme-profile h4 {margin:8px 0 0;font-size:1.1rem;}
+.programme-profile-note {margin:5px 0;}
+.programme-profile a {text-decoration:underline;font-size:.85rem;}
+.programme-profile .profile-scale {display:flex;justify-content:space-between;gap:6px;font-size:.8rem;}
+.programme-scrubber {
+  display:grid;grid-template-columns:auto minmax(0,1fr) auto;align-items:center;
+  gap:10px;margin:14px 0;font-size:.8rem;
+}
+.programme-scrubber input {width:100%;accent-color:#254d3d;}
+@media(max-width:620px) {
+  .programme-race-row {grid-template-columns:minmax(0,1fr) auto;gap:7px;}
+  .programme-date {grid-column:1/-1;}
+  .programme-race-row button,.programme-pending {grid-column:1;justify-self:start;}
+  .programme-seasons {gap:5px;}
+  .programme-seasons button {font-size:.82rem;}
+  .programme-scrubber {grid-template-columns:minmax(0,1fr) auto;}
+  .programme-scrubber>span {grid-column:1/-1;}
+}

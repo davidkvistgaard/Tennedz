@@ -1,114 +1,176 @@
 "use client";
-
-import { useEffect, useMemo, useState } from "react";
+import { commentaryText } from "../../../../lib/race/commentary.mjs";
+import { use, useEffect, useMemo, useState } from "react";
+import dynamic from "next/dynamic";
+import Link from "next/link";
+import { useSearchParams } from "next/navigation";
 import TeamShell from "../../../components/TeamShell";
-import Loading from "../../../components/Loading";
-import { SectionHeader, Pill } from "../../../components/ui";
+import { adaptGuidedReplayV1 } from "../../../../lib/viewer/guided-replay-adapter-v1.mjs";
+import { guidedReplayClockV1 } from "../../../../lib/viewer/guided-replay-clock-v1.mjs";
+import { guidedSceneryV1 } from
+  "../../../../lib/viewer/guided-scenery-v1.mjs";
+import "@pelotonia/race-viewer/commentary.css";
+import "@pelotonia/race-viewer/profile.css";
+import "../../motor-lab/viewer-preview/viewer-preview.css";
 
-function toLines(feed) {
-  if (!Array.isArray(feed)) return [];
-  return feed.map((x) => {
-    if (typeof x === "string") return { km: null, text: x };
-    return { km: x?.km ?? null, text: x?.text ?? JSON.stringify(x) };
-  });
-}
+const ViewerScene = dynamic(() => import(
+  "../../motor-lab/viewer-preview/ViewerPreviewScene"), { ssr: false,
+  loading: () => <p role="status">Loading the race renderer…</p> });
 
 export default function ViewPage({ params }) {
-  const eventId = params?.event_stage_id;
-  const [status, setStatus] = useState("Loader…");
-  const [run, setRun] = useState(null);
-
+  const eventId = use(params).event_stage_id;
+  const division = useSearchParams().get("division");
+  const [data, setData] = useState(null),
+    [error, setError] = useState(""),
+    [attempt, setAttempt] = useState(0),
+    [showReport, setShowReport] = useState(false),
+    [now, setNow] = useState(0);
   useEffect(() => {
+    const timer = setInterval(() => setNow(Date.now()), 1000);
+    setNow(Date.now());
+    return () => clearInterval(timer);
+  }, []);
+  const adapted = useMemo(() => {
+    if (!data?.run?.replay) return null;
+    try {
+      return adaptGuidedReplayV1(data.run.replay,
+        { raceId: `${data.run.event_id}:division-${data.run.division_index}` });
+    } catch { return null; }
+  }, [data]);
+  const clock = useMemo(() => {
+    if (!adapted || !data?.viewer_clock || !now) return null;
+    try {
+      return guidedReplayClockV1(adapted.feed.duration,
+        data.run.created_at, now + data.serverOffsetMs).clock;
+    } catch { return null; }
+  }, [adapted, data, now]);
+  const displayFeed = useMemo(() => adapted &&
+    guidedSceneryV1(adapted.feed), [adapted]);
+  const canShowReport = !adapted || !clock || clock.paused;
+  useEffect(() => {
+    if (!clock?.paused) return;
+    try { localStorage.setItem(`pelotonia-watched:${eventId}`, "true"); }
+    catch { /* Storage may be disabled; the result remains visible here. */ }
+  }, [clock?.paused, eventId]);
+  useEffect(() => {
+    let active = true;
+    const controller = new AbortController();
+    setData(null);
+    setError("");
+    setShowReport(false);
+    const runUrl = `/api/event-run?event_id=${encodeURIComponent(eventId)}${division ? `&division_index=${encodeURIComponent(division)}` : ""}`;
     (async () => {
-      setStatus("Loader…");
-      try {
-        const j = await fetch(`/api/event-run?event_id=${eventId}`).then((r) => r.json());
-        if (!j?.ok) throw new Error(j?.error || "Could not load event run");
-        setRun(j.run);
-        setStatus("Klar ✅");
-      } catch (e) {
-        setStatus("Fejl: " + (e?.message ?? String(e)));
+      let sent = Date.now();
+      let r = await fetch(runUrl, {
+        signal: controller.signal,
+        cache: "no-store",
+      });
+      if (r.status === 404) {
+        const status=await r.clone().json().catch(()=>null);
+        if(status?.code==='POSITION_RACE_VIEWER'){
+          window.location.assign(
+            `/team/motor-lab/position-viewer/${eventId}`);
+          return;
+        }
+        const prepared = await fetch("/api/event/prepare", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ event_id: eventId }),
+          signal: controller.signal,
+        });
+        const result = await prepared.json();
+        if (!prepared.ok || !result.ok)
+          throw new Error(result.error || "Could not prepare the race.");
+        if(result.viewer_kind==='position'){
+          window.location.assign(
+            `/team/motor-lab/position-viewer/${eventId}`);
+          return;
+        }
+        sent = Date.now();
+        r = await fetch(runUrl, {
+          signal: controller.signal,
+          cache: "no-store",
+        });
       }
-    })();
-  }, [eventId]);
-
-  const lines = useMemo(() => toLines(run?.feed), [run]);
-
-  // Build a very simple km “timeline”
-  const distance = Number(run?.stage_snapshot?.distance_km ?? 150);
-  const markers = useMemo(() => {
-    const ms = [
-      { km: Math.max(0, distance - 5), label: "5 km" },
-      { km: Math.max(0, distance - 3), label: "3 km" },
-      { km: Math.max(0, distance - 1), label: "1 km" },
-      { km: distance, label: "Mål" }
-    ];
-    return ms;
-  }, [distance]);
-
+      const j = await r.json();
+      const received = Date.now();
+      if (!r.ok || !j.ok)
+        throw new Error(j.error || "Could not load the race.");
+      if (active) setData({ ...j, serverOffsetMs: j.viewer_clock?.serverNowMs
+        ? j.viewer_clock.serverNowMs - (sent + received) / 2 : 0 });
+    })().catch((e) => {
+      if (active && e.name !== "AbortError") setError(e.message);
+    });
+    return () => {
+      active = false;
+      controller.abort();
+    };
+  }, [eventId, division, attempt]);
   return (
-    <TeamShell title="Se løb">
-      <p className="small">Status: {status}</p>
-
-      {!run ? (
-        <Loading text="Loader…" />
+    <TeamShell title="Race day" compact>
+      {error ? (
+        <section className="card empty-state" role="status">
+          <p className="eyebrow">The race is not ready</p>
+          <h1>Race replay unavailable</h1>
+          <p>{error}</p>
+          <button
+            className="btn primary"
+            onClick={() => setAttempt((n) => n + 1)}
+          >
+            Try again
+          </button>
+          <Link className="btn" href="/team/run">
+            To the race calendar
+          </Link>
+        </section>
+      ) : !data ? (
+        <section className="card empty-state" role="status">
+          <div className="loading-wheel" />
+          <h2>Preparing race day…</h2>
+          <p>Loading the recorded race.</p>
+        </section>
       ) : (
-        <div style={{ display: "grid", gap: 14 }}>
-          <div className="card" style={{ padding: 14 }}>
-            <SectionHeader
-              title={run?.stage_snapshot?.name || "Event"}
-              subtitle={`${distance} km · Engine ${run.engine_version}`}
-              right={<Pill tone="info">Seed: {run.seed}</Pill>}
-            />
-
-            <div className="hr" />
-
-            <div style={{ position: "relative", height: 16, borderRadius: 999, border: "1px solid var(--border)", background: "rgba(0,0,0,0.35)" }}>
-              <div style={{ position: "absolute", inset: 0, borderRadius: 999, background: "linear-gradient(90deg, rgba(124,255,107,0.14), rgba(77,214,255,0.12))" }} />
-              {markers.map((m, idx) => {
-                const left = distance > 0 ? Math.max(0, Math.min(100, (m.km / distance) * 100)) : 0;
-                return (
-                  <div key={idx} title={`${m.label} · ${m.km} km`}
-                    style={{
-                      position: "absolute",
-                      left: `calc(${left}% - 6px)`,
-                      top: -7,
-                      width: 12,
-                      height: 30,
-                      borderRadius: 10,
-                      border: "1px solid rgba(255,255,255,0.22)",
-                      background: "rgba(0,0,0,0.45)"
-                    }}
-                  />
-                );
-              })}
-            </div>
-
-            <div style={{ display: "flex", justifyContent: "space-between", marginTop: 10 }}>
-              <span className="small">0 km</span>
-              <span className="small">{distance} km</span>
-            </div>
-          </div>
-
-          <div className="card" style={{ padding: 14 }}>
-            <SectionHeader title="Live feed" subtitle="MVP feed (næste: bedre segmentering + flere events i finalen)" />
-
-            <div className="hr" />
-
-            <div style={{ display: "grid", gap: 10 }}>
-              {lines.length ? lines.map((l, idx) => (
-                <div key={idx} style={{ padding: 12, borderRadius: 16, border: "1px solid rgba(255,255,255,0.10)", background: "rgba(0,0,0,0.25)" }}>
-                  <div style={{ display: "flex", justifyContent: "space-between", gap: 12 }}>
-                    <div style={{ fontWeight: 900 }}>{l.text}</div>
-                    {l.km != null ? <span className="badge">km {l.km}</span> : null}
-                  </div>
-                </div>
-              )) : (
-                <div className="small">Ingen feed-data endnu. (Event skal køres i admin.)</div>
-              )}
-            </div>
-          </div>
-        </div>
+        <section className="card">
+          <p className="eyebrow">Recorded race</p>
+          <h1>{data.run.stage_snapshot?.name || "Race report"}</h1>
+          <p>
+            {adapted && clock ?
+              "The saved race drives this schematic viewer. Each rider is shown at the recorded checkpoint kilometre. Group gaps are recorded seconds; exact lanes and simultaneous metres are unavailable." :
+              "This recording cannot be displayed in the 3D viewer. Its saved report is available below."}
+          </p>
+          {displayFeed && clock ? <ViewerScene feed={displayFeed}
+            coverage={adapted.coverage} version={adapted.version}
+            mode="guided" clock={clock}
+            serverOffsetMs={data.serverOffsetMs} /> : null}
+          <button
+            className="btn primary"
+            disabled={!canShowReport}
+            onClick={() => setShowReport(!showReport)}
+          >
+            {showReport
+              ? "Hide report"
+              : canShowReport ? "Show the full report" :
+                "Full report available at the finish"}
+          </button>
+          {showReport && canShowReport && (
+            <ol className="race-feed">
+              {(data.run.feed || []).map((x, i) => (
+                <li key={i}>
+                  <span className="feed-km">
+                    {x.km ?? "—"}
+                    <small>km</small>
+                  </span>
+                  <p>{commentaryText(x.text || x.message || String(x))}</p>
+                </li>
+              ))}
+            </ol>
+          )}
+          {clock?.paused ? <Link className="btn primary"
+            href={`/team/results/${eventId}${division ?
+              `?division=${division}` : ""}`}>
+            View results and points →
+          </Link> : null}
+        </section>
       )}
     </TeamShell>
   );

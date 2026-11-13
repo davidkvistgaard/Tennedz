@@ -3,6 +3,7 @@
 import { useEffect, useMemo, useState } from "react";
 import SmallButton from "./SmallButton";
 import { Pill } from "./ui";
+import {api} from '../../lib/api';
 
 function storageKey(teamId) {
   return `tennedz_lineup_presets_v1_${teamId}`;
@@ -24,6 +25,7 @@ function savePresets(teamId, presets) {
 
 export default function LineupPresets({
   teamId,
+  gender,
   riders,
   selectedIds,
   setSelectedIds,
@@ -32,18 +34,28 @@ export default function LineupPresets({
 }) {
   const [presets, setPresets] = useState([]);
   const [newName, setNewName] = useState("");
+  const [serverDefault,setServerDefault]=useState(null);
+  const [defaultMessage,setDefaultMessage]=useState('');
 
   useEffect(() => {
     if (!teamId) return;
     setPresets(loadPresets(teamId));
   }, [teamId]);
+  useEffect(()=>{
+    if(!teamId||!['M','F'].includes(gender))return;
+    let active=true;
+    api(`/api/team/default-race-plan?gender=${gender}`)
+      .then(result=>{if(active)setServerDefault(result.lineup);})
+      .catch(error=>{if(active)setDefaultMessage(error.message);});
+    return()=>{active=false;};
+  },[teamId,gender]);
 
   const selectedSet = useMemo(() => new Set(selectedIds), [selectedIds]);
 
   function applyPreset(p) {
     const ids = (p?.riderIds || []).filter((id) => riders.some((r) => r.id === id));
     if (ids.length !== 8) {
-      alert("Dette preset matcher ikke længere (mangler ryttere). Gem det igen.");
+      alert("This preset no longer matches your squad (riders are missing). Save it again.");
       return;
     }
     setSelectedIds(ids);
@@ -60,12 +72,12 @@ export default function LineupPresets({
   function saveCurrent() {
     if (!teamId) return;
     if (selectedIds.length !== 8) {
-      alert("Vælg præcis 8 ryttere før du gemmer et preset.");
+      alert("Select exactly 8 riders before saving a preset.");
       return;
     }
     const name = newName.trim();
     if (!name) {
-      alert("Skriv et navn til preset (fx 'Mountain team').");
+      alert("Enter a preset name (e.g. 'Mountain team').");
       return;
     }
 
@@ -79,17 +91,59 @@ export default function LineupPresets({
     setNewName("");
   }
 
+  async function saveServerDefault(){
+    if(selectedIds.length!==8||!selectedIds.includes(captainId)){
+      setDefaultMessage('Choose eight riders and their captain first.');
+      return;
+    }
+    try{
+      await api('/api/team/default-race-plan',{
+        method:'POST',headers:{'Content-Type':'application/json'},
+        body:JSON.stringify({kind:'lineup',gender,
+          selected_riders:selectedIds,captain_id:captainId})});
+      setServerDefault({selected_riders:[...selectedIds],
+        captain_id:captainId});
+      setDefaultMessage('Your default one-day team is saved.');
+    }catch(error){setDefaultMessage(error.message);}
+  }
+
+  function loadServerDefault(){
+    const ids=serverDefault?.selected_riders;
+    if(!Array.isArray(ids)||ids.length!==8||
+      ids.some(id=>!riders.some(rider=>rider.id===id))){
+      setDefaultMessage('Your saved default team is not eligible here.');
+      return;
+    }
+    setSelectedIds(ids);
+    setCaptainId(serverDefault.captain_id);
+    setDefaultMessage('Your default team is loaded.');
+  }
+
   return (
     <div className="card" style={{ padding: 14 }}>
       <div style={{ display: "flex", justifyContent: "space-between", gap: 10, flexWrap: "wrap" }}>
         <div>
           <div className="h2" style={{ fontWeight: 1000 }}>Lineup presets</div>
           <div className="small" style={{ marginTop: 4 }}>
-            Gem og indlæs faste “8-mands hold” (fx Mountain/Wind/Sprint). (Gemmes i din browser).
+            Save and load eight-rider lineups (e.g. Mountain/Wind/Sprint). Stored in your browser.
           </div>
         </div>
         <Pill tone="info">{presets.length} presets</Pill>
       </div>
+
+      <div className="hr" />
+
+      <div className="small">Your default one-day team is saved to your
+        account for this category. It is used only after you enter a race
+        and leave its lineup incomplete.</div>
+      <div style={{display:'flex',gap:8,flexWrap:'wrap',marginTop:10}}>
+        <SmallButton onClick={saveServerDefault}>
+          Save selected eight as default</SmallButton>
+        {serverDefault?<SmallButton onClick={loadServerDefault}>
+          Load my default team</SmallButton>:null}
+      </div>
+      {defaultMessage?<p role="status" className="small">
+        {defaultMessage}</p>:null}
 
       <div className="hr" />
 
@@ -98,17 +152,17 @@ export default function LineupPresets({
           className="input"
           value={newName}
           onChange={(e) => setNewName(e.target.value)}
-          placeholder='Navn på preset (fx "Mountain team")'
+          placeholder='Preset name (e.g. "Mountain team")'
           style={{ maxWidth: 360 }}
         />
         <SmallButton className="primary" onClick={saveCurrent}>
-          Gem nuværende 8
+          Save current eight
         </SmallButton>
       </div>
 
       <div style={{ marginTop: 12, display: "grid", gap: 10 }}>
         {presets.length === 0 ? (
-          <div className="small">Ingen presets endnu. Vælg 8 ryttere og gem et preset.</div>
+          <div className="small">No presets yet. Select 8 riders and save a preset.</div>
         ) : (
           presets.map((p) => {
             const matches = (p.riderIds || []).filter((id) => selectedSet.has(id)).length;
@@ -130,13 +184,13 @@ export default function LineupPresets({
                 <div>
                   <div style={{ fontWeight: 1000 }}>{p.name}</div>
                   <div className="small" style={{ marginTop: 4 }}>
-                    {p.riderIds?.length || 0} ryttere · matcher nuvalgte: {matches}/8
+                    {p.riderIds?.length || 0} riders · matching current selection: {matches}/8
                   </div>
                 </div>
 
                 <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
-                  <SmallButton onClick={() => applyPreset(p)}>Indlæs</SmallButton>
-                  <SmallButton className="danger" onClick={() => deletePreset(p.name)}>Slet</SmallButton>
+                  <SmallButton onClick={() => applyPreset(p)}>Load</SmallButton>
+                  <SmallButton className="danger" onClick={() => deletePreset(p.name)}>Delete</SmallButton>
                 </div>
               </div>
             );

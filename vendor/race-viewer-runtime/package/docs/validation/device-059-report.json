@@ -1,0 +1,219 @@
+{
+  "version": "0.59.0",
+  "synthetic": true,
+  "viewport": {
+    "width": 1323,
+    "height": 562,
+    "pixelRatio": 1
+  },
+  "runs": [
+    {
+      "riders": 30,
+      "renderer": "Compatibility",
+      "playback": {
+        "elapsedMs": 3057,
+        "renderedFrames": 3,
+        "renderedFps": 0.9813542688910697
+      },
+      "paused": {
+        "idleRendered": 0,
+        "idleSkipped": 1
+      },
+      "tabStayedVisible": true,
+      "sourceUnchanged": true,
+      "reverseSeek": true,
+      "cameraAndLightWake": true,
+      "remainingCanvases": 0,
+      "diagnostics": {
+        "renderer": "Compatibility",
+        "contextLost": false,
+        "renderFault": false,
+        "cameraSettled": false,
+        "renderedFrames": 22,
+        "skippedFrames": 1,
+        "cpuFrameMs": {
+          "samples": 22,
+          "p50": 327.6000000014901,
+          "p95": 517,
+          "max": 760.2000000029802
+        },
+        "samplingMs": {
+          "samples": 22,
+          "p50": 0.10000000149011612,
+          "p95": 0.20000000298023224,
+          "max": 0.20000000298023224
+        },
+        "rigMs": {
+          "samples": 22,
+          "p50": 0.8999999985098839,
+          "p95": 1.6000000014901161,
+          "max": 4.0999999940395355
+        },
+        "drawSubmissionMs": {
+          "samples": 22,
+          "p50": 326.80000000447035,
+          "p95": 516.1000000014901,
+          "max": 759.1000000014901
+        },
+        "errors": [],
+        "resources": null,
+        "caches": {
+          "riderBytes": 56426496,
+          "staticSpriteBytes": 16687104,
+          "terrainDetailBytes": 33177600,
+          "terrainCellCount": 3927,
+          "terrainCenterCount": 7031
+        }
+      },
+      "resourcesAfterDispose": null,
+      "cachesAfterDispose": {
+        "riderBytes": 0,
+        "staticSpriteBytes": 0,
+        "terrainDetailBytes": 0,
+        "terrainCellCount": 0,
+        "terrainCenterCount": 0
+      }
+    },
+    {
+      "riders": 150,
+      "renderer": "Compatibility",
+      "playback": {
+        "elapsedMs": 3057,
+        "renderedFrames": 3,
+        "renderedFps": 0.9813542688910697
+      },
+      "paused": {
+        "idleRendered": 0,
+        "idleSkipped": 2
+      },
+      "tabStayedVisible": true,
+      "sourceUnchanged": true,
+      "reverseSeek": true,
+      "cameraAndLightWake": true,
+      "remainingCanvases": 0,
+      "diagnostics": {
+        "renderer": "Compatibility",
+        "contextLost": false,
+        "renderFault": false,
+        "cameraSettled": false,
+        "renderedFrames": 19,
+        "skippedFrames": 2,
+        "cpuFrameMs": {
+          "samples": 19,
+          "p50": 432.6000000014901,
+          "p95": 975.5,
+          "max": 976.1999999955297
+        },
+        "samplingMs": {
+          "samples": 19,
+          "p50": 0.30000000447034836,
+          "p95": 0.6000000014901161,
+          "max": 1.5
+        },
+        "rigMs": {
+          "samples": 19,
+          "p50": 3.100000001490116,
+          "p95": 6.5,
+          "max": 9.600000001490116
+        },
+        "drawSubmissionMs": {
+          "samples": 19,
+          "p50": 429.3999999985099,
+          "p95": 967.5,
+          "max": 971.6999999955297
+        },
+        "errors": [],
+        "resources": null,
+        "caches": {
+          "riderBytes": 67092480,
+          "staticSpriteBytes": 16687104,
+          "terrainDetailBytes": 33177600,
+          "terrainCellCount": 3953,
+          "terrainCenterCount": 7031
+        }
+      },
+      "resourcesAfterDispose": null,
+      "cachesAfterDispose": {
+        "riderBytes": 0,
+        "staticSpriteBytes": 0,
+        "terrainDetailBytes": 0,
+        "terrainCellCount": 0,
+        "terrainCenterCount": 0
+      }
+    },
+    {
+      "riders": 150,
+      "renderer": "Compatibility",
+      "playback": {
+        "elapsedMs": 3962,
+        "renderedFrames": 4,
+        "renderedFps": 1.0095911155981827
+      },
+      "paused": {
+        "idleRendered": 0,
+        "idleSkipped": 2
+      },
+      "tabStayedVisible": true,
+      "sourceUnchanged": true,
+      "reverseSeek": true,
+      "cameraAndLightWake": true,
+      "remainingCanvases": 0,
+      "diagnostics": {
+        "renderer": "Compatibility",
+        "contextLost": false,
+        "renderFault": false,
+        "cameraSettled": false,
+        "renderedFrames": 20,
+        "skippedFrames": 2,
+        "cpuFrameMs": {
+          "samples": 20,
+          "p50": 402.80000000447035,
+          "p95": 885.6000000014901,
+          "max": 927.3999999985099
+        },
+        "samplingMs": {
+          "samples": 20,
+          "p50": 0.30000000447034836,
+          "p95": 0.7999999970197678,
+          "max": 1.2000000029802322
+        },
+        "rigMs": {
+          "samples": 20,
+          "p50": 3,
+          "p95": 7.399999998509884,
+          "max": 9.299999997019768
+        },
+        "drawSubmissionMs": {
+          "samples": 20,
+          "p50": 392.30000000447035,
+          "p95": 881.6000000014901,
+          "max": 922.0999999940395
+        },
+        "errors": [],
+        "resources": null,
+        "caches": {
+          "riderBytes": 67092480,
+          "staticSpriteBytes": 16687104,
+          "terrainDetailBytes": 33177600,
+          "terrainCellCount": 3957,
+          "terrainCenterCount": 7031
+        }
+      },
+      "resourcesAfterDispose": null,
+      "cachesAfterDispose": {
+        "riderBytes": 0,
+        "staticSpriteBytes": 0,
+        "terrainDetailBytes": 0,
+        "terrainCellCount": 0,
+        "terrainCenterCount": 0
+      }
+    }
+  ],
+  "hardwareSignOff": false,
+  "gpuExecutionTimings": false,
+  "completed": true,
+  "remainingChecks": [
+    "WebGL2 shader execution and visual review on target hardware",
+    "GPU resource stability and agreed playback thresholds"
+  ]
+}

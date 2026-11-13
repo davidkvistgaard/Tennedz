@@ -1,0 +1,22 @@
+{
+  "settings": {
+    "distanceKm": 40,
+    "terrain": "flat",
+    "teamCount": 4,
+    "gender": "M",
+    "fatigue": 0,
+    "effort": "steady",
+    "attack": "none",
+    "chase": "ignore",
+    "defaultRivalPlan": "chase",
+    "managerTactics": [],
+    "seed": "early-test"
+  },
+  "finalePlans": [
+    {
+      "teamId": "rival-3",
+      "finisherId": "rival-3-7",
+      "leadOutRiderId": "rival-3-5"
+    }
+  ]
+}

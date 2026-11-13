@@ -1,0 +1,109 @@
+"use client";
+import {useMemo,useState} from 'react';
+import TeamShell from '../../components/TeamShell';
+import {api} from '../../../lib/api';
+import './motor-lab.css';
+
+const PLANS=[
+ {id:'sprint',title:'Protect the sprinter',description:'Keep helpers around your leader and manage the break.'},
+ {id:'break',title:'Send the captain ahead',description:'Spend energy to get into a move before the finish.'},
+ {id:'balanced',title:'Race for opportunities',description:'Mix selective pursuit with attacks.'},
+ {id:'conserve',title:'Save energy',description:'Take fewer risks early and keep strength for later.'},
+];
+const seconds=value=>`${value.toFixed(1)} s`;
+
+export default function MotorLabPage(){
+ const [plan,setPlan]=useState('sprint');
+ const [seed,setSeed]=useState(1);
+ const [recording,setRecording]=useState(null);
+ const [frameIndex,setFrameIndex]=useState(0);
+ const [busy,setBusy]=useState(false);
+ const [error,setError]=useState('');
+ const highlights=useMemo(()=>recording?.frames
+  .map((frame,index)=>({...frame,index})).filter(frame=>frame.moments.length)??[],[recording]);
+ const frame=recording?.frames[frameIndex];
+ const amberCaptain=recording?.results.find(result=>result.name==='Amber Captain');
+ async function run(nextSeed=seed){
+  if(busy)return;
+  setBusy(true);setError('');
+  try{
+   const response=await api('/api/motor-lab',{method:'POST',headers:{'Content-Type':'application/json'},
+    body:JSON.stringify({plan,seed:nextSeed})});
+   setRecording(response.recording);setFrameIndex(0);setSeed(nextSeed);
+  }catch(cause){setError(cause.message||'The preview could not run. Please try again.');}
+  finally{setBusy(false);}
+ }
+ const previous=highlights.filter(moment=>moment.index<frameIndex).at(-1);
+ const next=highlights.find(moment=>moment.index>frameIndex);
+ return <TeamShell title="Motor Lab">
+  <main className="motor-lab">
+   <section className="motor-hero">
+    <div><p className="motor-kicker">FIRST PLAYABLE ENGINE PREVIEW</p>
+     <h2>Make a plan. Watch the road answer.</h2>
+     <p>Choose a simple order for Amber, then inspect every recorded kilometre of a fictional four-team race. Run the same scenario again with another plan to see what changes.</p>
+    </div><span className="motor-tag">Experimental · no live results</span>
+   </section>
+   <p className="motor-boundary">This laboratory uses fictional riders and a fixed 160 km route. It reads no team roster, makes no database changes and awards no points. The current live race engine is unchanged.</p>
+   <section className="motor-panel" aria-labelledby="motor-orders-title">
+    <div className="motor-section-heading"><span>01 / COMMIT A PLAN</span><h2 id="motor-orders-title">How should Amber race?</h2></div>
+    <div className="motor-plans" role="radiogroup" aria-label="Amber race plan">
+     {PLANS.map(option=><label key={option.id} className="motor-plan" data-selected={plan===option.id}>
+      <input type="radio" name="motor-plan" value={option.id} checked={plan===option.id}
+       onChange={()=>setPlan(option.id)} disabled={busy}/>
+      <span><strong>{option.title}</strong><small>{option.description}</small></span>
+     </label>)}
+    </div>
+    <div className="motor-run-row"><label>Scenario number
+     <input type="number" min="0" max="9999" step="1" value={seed}
+      onChange={event=>setSeed(event.target.value===''?'':Number(event.target.value))} disabled={busy}/>
+    </label><button type="button" className="motor-primary" onClick={()=>run()} disabled={busy||!Number.isInteger(seed)||seed<0||seed>9999}>
+     {busy?'Calculating…':'Run the race'}
+    </button><button type="button" onClick={()=>run(Number(seed)+1)} disabled={busy||!Number.isInteger(seed)||seed<0||seed>=9999}>Try another scenario</button></div>
+    <p className="motor-hint">Keep the scenario number when comparing plans. All four teams and the weather then start from the same conditions.</p>
+    {error&&<p role="alert" className="motor-error">{error}</p>}
+   </section>
+   {recording&&frame&&<>
+    <section className="motor-panel" aria-labelledby="motor-record-title">
+     <div className="motor-section-heading"><span>02 / RECORDED RACE</span><h2 id="motor-record-title">{recording.scenarioName}</h2></div>
+     <p>Amber rode <strong>{recording.planLabel}</strong> in scenario {recording.seed}. Birch protected its sprinter, Cedar attacked and Dune raced balanced. The entire result was calculated before this replay opened.</p>
+     <div className="motor-scoreboard"><div><small>KILOMETRE</small><strong>{frame.km} / {recording.distanceKm}</strong></div>
+      <div><small>GROUPS AHEAD</small><strong>{frame.groups.length}</strong></div>
+      <div><small>AMBER CAPTAIN</small><strong>#{amberCaptain?.position??'—'}</strong></div></div>
+     <label className="motor-scrubber">Inspect recorded kilometre
+      <input type="range" min="0" max={recording.frames.length-1} value={frameIndex}
+       onChange={event=>setFrameIndex(Number(event.target.value))}/>
+     </label>
+     <div className="motor-step"><button type="button" disabled={!previous} onClick={()=>setFrameIndex(previous.index)}>← Previous moment</button>
+      <button type="button" disabled={!next} onClick={()=>setFrameIndex(next.index)}>Next moment →</button></div>
+     <div className="motor-conditions"><span>{frame.terrain} · {frame.surface}{frame.exposed?' · exposed':''}</span>
+      <span>{frame.weather.temperatureC}°C · wind {frame.weather.windKph} km/h · rain {frame.weather.rainMm} mm</span>
+      <span>Amber mean energy {frame.amberEnergy?.toFixed(1)??'—'}</span></div>
+     <div className="motor-road" aria-label="Road groups at selected kilometre">
+      {frame.groups.map((group,index)=><article key={group.id}>
+       <div><span className="motor-group-marker">{index+1}</span><strong>Group {index+1} · {seconds(group.gapSeconds)} ahead</strong></div>
+       <p>{group.riders.join(', ')}</p><small>{group.workers.length?`Taking pulls: ${group.workers.join(', ')}`:'No recorded pulls this kilometre'}</small>
+      </article>)}
+      <article><div><span className="motor-group-marker motor-peloton">P</span><strong>Peloton · {frame.pelotonCount} riders</strong></div>
+       <p>{frame.chasingTeams.length?`Chasing: ${frame.chasingTeams.join(', ')}`:'No team chasing this kilometre'}</p>
+       {frame.droppedCount>0&&<small>{frame.droppedCount} rider{frame.droppedCount===1?'':'s'} behind the peloton</small>}</article>
+     </div>
+     {frame.moments.length>0&&<p className="motor-current-moment"><strong>At kilometre {frame.km}:</strong> {frame.moments.join(' · ')}</p>}
+    </section>
+    <div className="motor-bottom">
+     <section className="motor-panel"><div className="motor-section-heading"><span>03 / KEY MOMENTS</span><h2>How the race changed</h2></div>
+      <ol className="motor-moments">{highlights.map(moment=><li key={moment.km}>
+       <button type="button" aria-current={frameIndex===moment.index?'step':undefined} onClick={()=>setFrameIndex(moment.index)}>
+        <strong>{moment.km} km</strong><span>{moment.moments.join(' · ')}</span></button></li>)}</ol>
+     </section>
+     <section className="motor-panel"><div className="motor-section-heading"><span>04 / PROVISIONAL FINISH</span><h2>Who came home first?</h2></div>
+      <ol className="motor-results">{recording.results.slice(0,10).map(result=><li key={result.name}>
+       <span>{result.position}. <strong>{result.name}</strong><small>{result.team}</small></span>
+       <span>{result.position===1?'Winner':`+${seconds(result.gapSeconds)}`}</span></li>)}</ol>
+      {amberCaptain?.position>10&&<p>Amber Captain finished #{amberCaptain.position}.</p>}
+      <p className="motor-hint">These placings are experimental balance output, not official race results.</p>
+     </section>
+    </div>
+   </>}
+  </main>
+ </TeamShell>;
+}

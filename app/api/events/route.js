@@ -1,27 +1,84 @@
-// app/api/events/route.js
+import { protectedRoute } from "../../../lib/auth/server";
 import { NextResponse } from "next/server";
-import { createClient } from "@supabase/supabase-js";
+import { teamSizeFor } from "../../../lib/calendar/config.mjs";
+import { pointsForResult } from "../../../lib/calendar/points.mjs";
+import {positionRaceTargetV1} from
+  '../../../lib/race/position-race-target-v1.mjs';
 
-export async function GET(req) {
-  try {
-    const url = new URL(req.url);
-    const limit = Math.min(Number(url.searchParams.get("limit") ?? 20), 50);
-
-    const supabase = createClient(
-      process.env.SUPABASE_URL,
-      process.env.SUPABASE_SERVICE_ROLE_KEY
+// Upcoming entries must not disappear behind an ever-growing race archive.
+// Read each bucket independently, returning only public event metadata.
+const fields =
+  "id,name,kind,gender,country_code,stage_profile_id,entry_fee,status,deadline,calendar_source,race_tier,race_team_size,scheduled_at,source_date,calendar_pair_id,engine_version";
+async function handler(req, context, auth) {
+  const url = new URL(req.url);
+  const requested = Number(url.searchParams.get("limit") ?? 50);
+  if (!Number.isInteger(requested) || requested < 1 || requested > 100)
+    return NextResponse.json(
+      { ok: false, error: "The race count must be a whole number between 1 and 100." },
+      { status: 400 },
     );
-
-    const { data, error } = await supabase
+  const now = new Date().toISOString();
+  const [upcoming, pending, finished] = await Promise.all([
+    auth.db
       .from("events")
-      .select("*")
-      .order("deadline", { ascending: true })
-      .limit(limit);
-
-    if (error) throw new Error(error.message);
-
-    return NextResponse.json({ ok: true, events: data ?? [] });
-  } catch (e) {
-    return NextResponse.json({ ok: false, error: e?.message ?? String(e) }, { status: 500 });
-  }
+      .select(fields)
+      .eq("status", "OPEN")
+      .gt("deadline", now)
+      .order("deadline")
+      .limit(requested),
+    auth.db
+      .from("events")
+      .select(fields)
+      .eq("status", "OPEN")
+      .lte("deadline", now)
+      .order("deadline", { ascending: false })
+      .limit(requested),
+    auth.db
+      .from("events")
+      .select(fields)
+      .neq("status", "OPEN")
+      .order("deadline", { ascending: false })
+      .limit(requested),
+  ]);
+  if (upcoming.error || pending.error || finished.error)
+    throw new Error("Event query failed");
+  const all = [...upcoming.data, ...pending.data, ...finished.data];
+  const ids = all.map(event => event.id);
+  const {data: entries, error: entryError} = ids.length
+    ? await auth.db.from("event_teams").select("event_id,selected_riders,captain_id,orders")
+      .eq("team_id", auth.team.id).in("event_id", ids)
+    : {data: [], error: null};
+  if (entryError) throw new Error("Entry query failed");
+  const byEvent = new Map(entries.map(entry => [entry.event_id, entry]));
+  const physicalTargets=ids.filter(id=>
+    positionRaceTargetV1(id,process.env));
+  const physicalRows=physicalTargets.length?
+    await auth.db.from('recovery_physical_entry_inputs')
+      .select('event_id,selected_riders,captain_id,orders,stake')
+      .eq('team_id',auth.team.id).in('event_id',physicalTargets):
+    {data:[],error:null};
+  if(physicalRows.error)throw new Error('Physical entry query failed');
+  const physicalByEvent=new Map(physicalRows.data.map(row=>
+    [row.event_id,row]));
+  const events = all.map(event => {
+    const entry = byEvent.get(event.id);
+    const teamSize = teamSizeFor(event);
+    return {...event, team_size: teamSize,
+      team_count: entry?.selected_riders?.length ?? 0,
+      team_ready: !!entry && entry.selected_riders?.length === teamSize &&
+        entry.selected_riders.includes(entry.captain_id),
+      orders_ready: positionRaceTargetV1(event.id,process.env)?
+        !!physicalByEvent.get(event.id)?.orders:
+        !!entry?.orders,
+      winner_points: event.engine_version===
+        'physical-first-position-general-race-8'?null:event.race_tier
+        ? pointsForResult({tier: event.race_tier, resultType: event.kind === "one_day" ? "ONE_DAY" : "GC", placing: 1})
+        : null};
+  });
+  return NextResponse.json({
+    ok: true,
+    events,
+    server_time: now,
+  });
 }
+export const GET = protectedRoute(handler);

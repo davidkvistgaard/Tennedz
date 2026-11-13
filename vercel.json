@@ -1,0 +1,8 @@
+{
+  "$schema": "https://openapi.vercel.sh/vercel.json",
+  "git": { "deploymentEnabled": { "codex/recovery-supabase-auth": false } },
+  "crons": [
+    {"path":"/api/cron/winter-agent-tactics","schedule":"0 2 * * *"},
+    {"path":"/api/cron/november-2026-race","schedule":"0 17 * * *"}
+  ]
+}

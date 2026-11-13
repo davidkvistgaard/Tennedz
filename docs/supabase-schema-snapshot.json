@@ -1,0 +1,3208 @@
+{
+  "observed": "2026-09-23",
+  "project": "thacsxtnycmnnpjobgiv",
+  "note": "Schema and ACL metadata only; row estimates omitted; not a database backup.",
+  "tables": [
+    {
+      "name": "public.teams",
+      "rls_enabled": true,
+      "columns": [
+        {
+          "name": "id",
+          "data_type": "uuid",
+          "format": "uuid",
+          "options": [
+            "updatable"
+          ],
+          "default_value": "gen_random_uuid()"
+        },
+        {
+          "name": "user_id",
+          "data_type": "uuid",
+          "format": "uuid",
+          "options": [
+            "updatable"
+          ]
+        },
+        {
+          "name": "name",
+          "data_type": "text",
+          "format": "text",
+          "options": [
+            "updatable"
+          ]
+        },
+        {
+          "name": "budget",
+          "data_type": "integer",
+          "format": "int4",
+          "options": [
+            "updatable"
+          ],
+          "default_value": "1000000"
+        },
+        {
+          "name": "created_at",
+          "data_type": "timestamp with time zone",
+          "format": "timestamptz",
+          "options": [
+            "updatable"
+          ],
+          "default_value": "now()"
+        },
+        {
+          "name": "coins",
+          "data_type": "integer",
+          "format": "int4",
+          "options": [
+            "nullable",
+            "updatable"
+          ],
+          "default_value": "100000"
+        },
+        {
+          "name": "gems",
+          "data_type": "integer",
+          "format": "int4",
+          "options": [
+            "nullable",
+            "updatable"
+          ],
+          "default_value": "0"
+        },
+        {
+          "name": "has_claimed_starter_pack",
+          "data_type": "boolean",
+          "format": "bool",
+          "options": [
+            "nullable",
+            "updatable"
+          ],
+          "default_value": "false"
+        },
+        {
+          "name": "rating",
+          "data_type": "integer",
+          "format": "int4",
+          "options": [
+            "updatable"
+          ],
+          "default_value": "0"
+        }
+      ],
+      "primary_keys": [
+        "id"
+      ],
+      "foreign_key_constraints": [
+        {
+          "name": "event_team_results_team_id_fkey",
+          "source_table": "public.event_team_results",
+          "source_columns": [
+            "team_id"
+          ],
+          "target_table": "public.teams",
+          "target_columns": [
+            "id"
+          ]
+        },
+        {
+          "name": "event_divisions_team_id_fkey",
+          "source_table": "public.event_divisions",
+          "source_columns": [
+            "team_id"
+          ],
+          "target_table": "public.teams",
+          "target_columns": [
+            "id"
+          ]
+        },
+        {
+          "name": "event_teams_team_id_fkey",
+          "source_table": "public.event_teams",
+          "source_columns": [
+            "team_id"
+          ],
+          "target_table": "public.teams",
+          "target_columns": [
+            "id"
+          ]
+        },
+        {
+          "name": "stage_orders_team_id_fkey",
+          "source_table": "public.stage_orders",
+          "source_columns": [
+            "team_id"
+          ],
+          "target_table": "public.teams",
+          "target_columns": [
+            "id"
+          ]
+        },
+        {
+          "name": "team_stage_points_team_id_fkey",
+          "source_table": "public.team_stage_points",
+          "source_columns": [
+            "team_id"
+          ],
+          "target_table": "public.teams",
+          "target_columns": [
+            "id"
+          ]
+        },
+        {
+          "name": "stage_results_team_id_fkey",
+          "source_table": "public.stage_results",
+          "source_columns": [
+            "team_id"
+          ],
+          "target_table": "public.teams",
+          "target_columns": [
+            "id"
+          ]
+        },
+        {
+          "name": "race_results_team_id_fkey",
+          "source_table": "public.race_results",
+          "source_columns": [
+            "team_id"
+          ],
+          "target_table": "public.teams",
+          "target_columns": [
+            "id"
+          ]
+        },
+        {
+          "name": "team_riders_team_id_fkey",
+          "source_table": "public.team_riders",
+          "source_columns": [
+            "team_id"
+          ],
+          "target_table": "public.teams",
+          "target_columns": [
+            "id"
+          ]
+        },
+        {
+          "name": "teams_user_id_fkey",
+          "source_table": "public.teams",
+          "source_columns": [
+            "user_id"
+          ],
+          "target_table": "auth.users",
+          "target_columns": [
+            "id"
+          ]
+        },
+        {
+          "name": "login_accounts_team_id_fkey",
+          "source_table": "public.login_accounts",
+          "source_columns": [
+            "team_id"
+          ],
+          "target_table": "public.teams",
+          "target_columns": [
+            "id"
+          ]
+        },
+        {
+          "name": "event_rider_results_team_id_fkey",
+          "source_table": "public.event_rider_results",
+          "source_columns": [
+            "team_id"
+          ],
+          "target_table": "public.teams",
+          "target_columns": [
+            "id"
+          ]
+        }
+      ]
+    },
+    {
+      "name": "public.riders",
+      "rls_enabled": false,
+      "columns": [
+        {
+          "name": "id",
+          "data_type": "uuid",
+          "format": "uuid",
+          "options": [
+            "updatable"
+          ],
+          "default_value": "gen_random_uuid()"
+        },
+        {
+          "name": "name",
+          "data_type": "text",
+          "format": "text",
+          "options": [
+            "updatable"
+          ]
+        },
+        {
+          "name": "sprint",
+          "data_type": "integer",
+          "format": "int4",
+          "options": [
+            "updatable"
+          ]
+        },
+        {
+          "name": "flat",
+          "data_type": "integer",
+          "format": "int4",
+          "options": [
+            "updatable"
+          ]
+        },
+        {
+          "name": "hills",
+          "data_type": "integer",
+          "format": "int4",
+          "options": [
+            "updatable"
+          ]
+        },
+        {
+          "name": "mountain",
+          "data_type": "integer",
+          "format": "int4",
+          "options": [
+            "updatable"
+          ]
+        },
+        {
+          "name": "cobbles",
+          "data_type": "integer",
+          "format": "int4",
+          "options": [
+            "updatable"
+          ]
+        },
+        {
+          "name": "leadership",
+          "data_type": "integer",
+          "format": "int4",
+          "options": [
+            "updatable"
+          ]
+        },
+        {
+          "name": "endurance",
+          "data_type": "integer",
+          "format": "int4",
+          "options": [
+            "updatable"
+          ]
+        },
+        {
+          "name": "moral",
+          "data_type": "integer",
+          "format": "int4",
+          "options": [
+            "updatable"
+          ]
+        },
+        {
+          "name": "luck",
+          "data_type": "integer",
+          "format": "int4",
+          "options": [
+            "updatable"
+          ]
+        },
+        {
+          "name": "wind",
+          "data_type": "integer",
+          "format": "int4",
+          "options": [
+            "updatable"
+          ]
+        },
+        {
+          "name": "form",
+          "data_type": "integer",
+          "format": "int4",
+          "options": [
+            "updatable"
+          ]
+        },
+        {
+          "name": "timetrial",
+          "data_type": "integer",
+          "format": "int4",
+          "options": [
+            "updatable"
+          ]
+        },
+        {
+          "name": "created_at",
+          "data_type": "timestamp with time zone",
+          "format": "timestamptz",
+          "options": [
+            "updatable"
+          ],
+          "default_value": "now()"
+        },
+        {
+          "name": "nationality",
+          "data_type": "text",
+          "format": "text",
+          "options": [
+            "nullable",
+            "updatable"
+          ]
+        },
+        {
+          "name": "first_name",
+          "data_type": "text",
+          "format": "text",
+          "options": [
+            "nullable",
+            "updatable"
+          ]
+        },
+        {
+          "name": "last_name",
+          "data_type": "text",
+          "format": "text",
+          "options": [
+            "nullable",
+            "updatable"
+          ]
+        },
+        {
+          "name": "display_name",
+          "data_type": "text",
+          "format": "text",
+          "options": [
+            "nullable",
+            "updatable"
+          ]
+        },
+        {
+          "name": "age",
+          "data_type": "integer",
+          "format": "int4",
+          "options": [
+            "nullable",
+            "updatable"
+          ]
+        },
+        {
+          "name": "strength",
+          "data_type": "integer",
+          "format": "int4",
+          "options": [
+            "updatable"
+          ],
+          "default_value": "25"
+        },
+        {
+          "name": "gender",
+          "data_type": "text",
+          "format": "text",
+          "options": [
+            "nullable",
+            "updatable"
+          ],
+          "check": "gender = ANY (ARRAY['M'::text, 'F'::text])"
+        },
+        {
+          "name": "birth_date",
+          "data_type": "date",
+          "format": "date",
+          "options": [
+            "nullable",
+            "updatable"
+          ]
+        },
+        {
+          "name": "fatigue",
+          "data_type": "integer",
+          "format": "int4",
+          "options": [
+            "nullable",
+            "updatable"
+          ],
+          "default_value": "0"
+        },
+        {
+          "name": "injury_until",
+          "data_type": "date",
+          "format": "date",
+          "options": [
+            "nullable",
+            "updatable"
+          ]
+        },
+        {
+          "name": "sprint_cap",
+          "data_type": "integer",
+          "format": "int4",
+          "options": [
+            "nullable",
+            "updatable"
+          ]
+        },
+        {
+          "name": "flat_cap",
+          "data_type": "integer",
+          "format": "int4",
+          "options": [
+            "nullable",
+            "updatable"
+          ]
+        },
+        {
+          "name": "hills_cap",
+          "data_type": "integer",
+          "format": "int4",
+          "options": [
+            "nullable",
+            "updatable"
+          ]
+        },
+        {
+          "name": "mountain_cap",
+          "data_type": "integer",
+          "format": "int4",
+          "options": [
+            "nullable",
+            "updatable"
+          ]
+        },
+        {
+          "name": "cobbles_cap",
+          "data_type": "integer",
+          "format": "int4",
+          "options": [
+            "nullable",
+            "updatable"
+          ]
+        },
+        {
+          "name": "timetrial_cap",
+          "data_type": "integer",
+          "format": "int4",
+          "options": [
+            "nullable",
+            "updatable"
+          ]
+        },
+        {
+          "name": "strength_cap",
+          "data_type": "integer",
+          "format": "int4",
+          "options": [
+            "nullable",
+            "updatable"
+          ]
+        },
+        {
+          "name": "endurance_cap",
+          "data_type": "integer",
+          "format": "int4",
+          "options": [
+            "nullable",
+            "updatable"
+          ]
+        },
+        {
+          "name": "wind_cap",
+          "data_type": "integer",
+          "format": "int4",
+          "options": [
+            "nullable",
+            "updatable"
+          ]
+        },
+        {
+          "name": "last_raced_on",
+          "data_type": "date",
+          "format": "date",
+          "options": [
+            "nullable",
+            "updatable"
+          ]
+        },
+        {
+          "name": "rating",
+          "data_type": "integer",
+          "format": "int4",
+          "options": [
+            "updatable"
+          ],
+          "default_value": "0"
+        }
+      ],
+      "primary_keys": [
+        "id"
+      ],
+      "foreign_key_constraints": [
+        {
+          "name": "event_rider_results_rider_id_fkey",
+          "source_table": "public.event_rider_results",
+          "source_columns": [
+            "rider_id"
+          ],
+          "target_table": "public.riders",
+          "target_columns": [
+            "id"
+          ]
+        },
+        {
+          "name": "team_riders_rider_id_fkey",
+          "source_table": "public.team_riders",
+          "source_columns": [
+            "rider_id"
+          ],
+          "target_table": "public.riders",
+          "target_columns": [
+            "id"
+          ]
+        },
+        {
+          "name": "stage_points_rider_id_fkey",
+          "source_table": "public.stage_points",
+          "source_columns": [
+            "rider_id"
+          ],
+          "target_table": "public.riders",
+          "target_columns": [
+            "id"
+          ]
+        },
+        {
+          "name": "stage_results_rider_id_fkey",
+          "source_table": "public.stage_results",
+          "source_columns": [
+            "rider_id"
+          ],
+          "target_table": "public.riders",
+          "target_columns": [
+            "id"
+          ]
+        },
+        {
+          "name": "race_results_rider_id_fkey",
+          "source_table": "public.race_results",
+          "source_columns": [
+            "rider_id"
+          ],
+          "target_table": "public.riders",
+          "target_columns": [
+            "id"
+          ]
+        }
+      ]
+    },
+    {
+      "name": "public.team_riders",
+      "rls_enabled": true,
+      "columns": [
+        {
+          "name": "id",
+          "data_type": "uuid",
+          "format": "uuid",
+          "options": [
+            "updatable"
+          ],
+          "default_value": "gen_random_uuid()"
+        },
+        {
+          "name": "team_id",
+          "data_type": "uuid",
+          "format": "uuid",
+          "options": [
+            "nullable",
+            "updatable"
+          ]
+        },
+        {
+          "name": "rider_id",
+          "data_type": "uuid",
+          "format": "uuid",
+          "options": [
+            "nullable",
+            "updatable"
+          ]
+        },
+        {
+          "name": "created_at",
+          "data_type": "timestamp with time zone",
+          "format": "timestamptz",
+          "options": [
+            "updatable"
+          ],
+          "default_value": "now()"
+        }
+      ],
+      "primary_keys": [
+        "id"
+      ],
+      "foreign_key_constraints": [
+        {
+          "name": "team_riders_team_id_fkey",
+          "source_table": "public.team_riders",
+          "source_columns": [
+            "team_id"
+          ],
+          "target_table": "public.teams",
+          "target_columns": [
+            "id"
+          ]
+        },
+        {
+          "name": "team_riders_rider_id_fkey",
+          "source_table": "public.team_riders",
+          "source_columns": [
+            "rider_id"
+          ],
+          "target_table": "public.riders",
+          "target_columns": [
+            "id"
+          ]
+        }
+      ]
+    },
+    {
+      "name": "public.stages",
+      "rls_enabled": false,
+      "columns": [
+        {
+          "name": "id",
+          "data_type": "uuid",
+          "format": "uuid",
+          "options": [
+            "updatable"
+          ],
+          "default_value": "gen_random_uuid()"
+        },
+        {
+          "name": "name",
+          "data_type": "text",
+          "format": "text",
+          "options": [
+            "updatable"
+          ]
+        },
+        {
+          "name": "distance_km",
+          "data_type": "integer",
+          "format": "int4",
+          "options": [
+            "updatable"
+          ]
+        },
+        {
+          "name": "profile",
+          "data_type": "jsonb",
+          "format": "jsonb",
+          "options": [
+            "updatable"
+          ]
+        },
+        {
+          "name": "created_at",
+          "data_type": "timestamp with time zone",
+          "format": "timestamptz",
+          "options": [
+            "updatable"
+          ],
+          "default_value": "now()"
+        }
+      ],
+      "primary_keys": [
+        "id"
+      ],
+      "foreign_key_constraints": [
+        {
+          "name": "event_stages_stage_template_id_fkey",
+          "source_table": "public.event_stages",
+          "source_columns": [
+            "stage_template_id"
+          ],
+          "target_table": "public.stages",
+          "target_columns": [
+            "id"
+          ]
+        },
+        {
+          "name": "races_stage_id_fkey",
+          "source_table": "public.races",
+          "source_columns": [
+            "stage_id"
+          ],
+          "target_table": "public.stages",
+          "target_columns": [
+            "id"
+          ]
+        }
+      ]
+    },
+    {
+      "name": "public.races",
+      "rls_enabled": false,
+      "columns": [
+        {
+          "name": "id",
+          "data_type": "uuid",
+          "format": "uuid",
+          "options": [
+            "updatable"
+          ],
+          "default_value": "gen_random_uuid()"
+        },
+        {
+          "name": "name",
+          "data_type": "text",
+          "format": "text",
+          "options": [
+            "updatable"
+          ]
+        },
+        {
+          "name": "stage_id",
+          "data_type": "uuid",
+          "format": "uuid",
+          "options": [
+            "updatable"
+          ]
+        },
+        {
+          "name": "start_at",
+          "data_type": "timestamp with time zone",
+          "format": "timestamptz",
+          "options": [
+            "updatable"
+          ],
+          "default_value": "now()"
+        },
+        {
+          "name": "lock_at",
+          "data_type": "timestamp with time zone",
+          "format": "timestamptz",
+          "options": [
+            "updatable"
+          ],
+          "default_value": "now()"
+        },
+        {
+          "name": "wind_speed_ms",
+          "data_type": "numeric",
+          "format": "numeric",
+          "options": [
+            "updatable"
+          ],
+          "default_value": "8"
+        },
+        {
+          "name": "rain",
+          "data_type": "boolean",
+          "format": "bool",
+          "options": [
+            "updatable"
+          ],
+          "default_value": "false"
+        },
+        {
+          "name": "seed",
+          "data_type": "text",
+          "format": "text",
+          "options": [
+            "updatable"
+          ],
+          "default_value": "encode(extensions.gen_random_bytes(16), 'hex'::text)"
+        },
+        {
+          "name": "created_at",
+          "data_type": "timestamp with time zone",
+          "format": "timestamptz",
+          "options": [
+            "updatable"
+          ],
+          "default_value": "now()"
+        }
+      ],
+      "primary_keys": [
+        "id"
+      ],
+      "foreign_key_constraints": [
+        {
+          "name": "race_results_race_id_fkey",
+          "source_table": "public.race_results",
+          "source_columns": [
+            "race_id"
+          ],
+          "target_table": "public.races",
+          "target_columns": [
+            "id"
+          ]
+        },
+        {
+          "name": "races_stage_id_fkey",
+          "source_table": "public.races",
+          "source_columns": [
+            "stage_id"
+          ],
+          "target_table": "public.stages",
+          "target_columns": [
+            "id"
+          ]
+        }
+      ]
+    },
+    {
+      "name": "public.race_results",
+      "rls_enabled": true,
+      "columns": [
+        {
+          "name": "id",
+          "data_type": "uuid",
+          "format": "uuid",
+          "options": [
+            "updatable"
+          ],
+          "default_value": "gen_random_uuid()"
+        },
+        {
+          "name": "race_id",
+          "data_type": "uuid",
+          "format": "uuid",
+          "options": [
+            "updatable"
+          ]
+        },
+        {
+          "name": "team_id",
+          "data_type": "uuid",
+          "format": "uuid",
+          "options": [
+            "updatable"
+          ]
+        },
+        {
+          "name": "rider_id",
+          "data_type": "uuid",
+          "format": "uuid",
+          "options": [
+            "updatable"
+          ]
+        },
+        {
+          "name": "time_sec",
+          "data_type": "numeric",
+          "format": "numeric",
+          "options": [
+            "updatable"
+          ]
+        },
+        {
+          "name": "position",
+          "data_type": "integer",
+          "format": "int4",
+          "options": [
+            "updatable"
+          ]
+        },
+        {
+          "name": "created_at",
+          "data_type": "timestamp with time zone",
+          "format": "timestamptz",
+          "options": [
+            "updatable"
+          ],
+          "default_value": "now()"
+        },
+        {
+          "name": "engine_version",
+          "data_type": "text",
+          "format": "text",
+          "options": [
+            "nullable",
+            "updatable"
+          ]
+        },
+        {
+          "name": "seed",
+          "data_type": "text",
+          "format": "text",
+          "options": [
+            "nullable",
+            "updatable"
+          ]
+        }
+      ],
+      "primary_keys": [
+        "id"
+      ],
+      "foreign_key_constraints": [
+        {
+          "name": "race_results_race_id_fkey",
+          "source_table": "public.race_results",
+          "source_columns": [
+            "race_id"
+          ],
+          "target_table": "public.races",
+          "target_columns": [
+            "id"
+          ]
+        },
+        {
+          "name": "race_results_rider_id_fkey",
+          "source_table": "public.race_results",
+          "source_columns": [
+            "rider_id"
+          ],
+          "target_table": "public.riders",
+          "target_columns": [
+            "id"
+          ]
+        },
+        {
+          "name": "race_results_team_id_fkey",
+          "source_table": "public.race_results",
+          "source_columns": [
+            "team_id"
+          ],
+          "target_table": "public.teams",
+          "target_columns": [
+            "id"
+          ]
+        }
+      ]
+    },
+    {
+      "name": "public.countries",
+      "rls_enabled": false,
+      "columns": [
+        {
+          "name": "code",
+          "data_type": "text",
+          "format": "text",
+          "options": [
+            "updatable"
+          ]
+        },
+        {
+          "name": "name",
+          "data_type": "text",
+          "format": "text",
+          "options": [
+            "updatable"
+          ]
+        },
+        {
+          "name": "weight",
+          "data_type": "integer",
+          "format": "int4",
+          "options": [
+            "updatable"
+          ],
+          "default_value": "1"
+        }
+      ],
+      "primary_keys": [
+        "code"
+      ],
+      "foreign_key_constraints": [
+        {
+          "name": "last_names_country_code_fkey",
+          "source_table": "public.last_names",
+          "source_columns": [
+            "country_code"
+          ],
+          "target_table": "public.countries",
+          "target_columns": [
+            "code"
+          ]
+        },
+        {
+          "name": "first_names_country_code_fkey",
+          "source_table": "public.first_names",
+          "source_columns": [
+            "country_code"
+          ],
+          "target_table": "public.countries",
+          "target_columns": [
+            "code"
+          ]
+        }
+      ]
+    },
+    {
+      "name": "public.first_names",
+      "rls_enabled": false,
+      "columns": [
+        {
+          "name": "id",
+          "data_type": "bigint",
+          "format": "int8",
+          "options": [
+            "updatable"
+          ],
+          "default_value": "nextval('first_names_id_seq'::regclass)"
+        },
+        {
+          "name": "country_code",
+          "data_type": "text",
+          "format": "text",
+          "options": [
+            "updatable"
+          ]
+        },
+        {
+          "name": "name",
+          "data_type": "text",
+          "format": "text",
+          "options": [
+            "updatable"
+          ]
+        },
+        {
+          "name": "weight",
+          "data_type": "integer",
+          "format": "int4",
+          "options": [
+            "updatable"
+          ],
+          "default_value": "1"
+        }
+      ],
+      "primary_keys": [
+        "id"
+      ],
+      "foreign_key_constraints": [
+        {
+          "name": "first_names_country_code_fkey",
+          "source_table": "public.first_names",
+          "source_columns": [
+            "country_code"
+          ],
+          "target_table": "public.countries",
+          "target_columns": [
+            "code"
+          ]
+        }
+      ]
+    },
+    {
+      "name": "public.last_names",
+      "rls_enabled": false,
+      "columns": [
+        {
+          "name": "id",
+          "data_type": "bigint",
+          "format": "int8",
+          "options": [
+            "updatable"
+          ],
+          "default_value": "nextval('last_names_id_seq'::regclass)"
+        },
+        {
+          "name": "country_code",
+          "data_type": "text",
+          "format": "text",
+          "options": [
+            "updatable"
+          ]
+        },
+        {
+          "name": "name",
+          "data_type": "text",
+          "format": "text",
+          "options": [
+            "updatable"
+          ]
+        },
+        {
+          "name": "weight",
+          "data_type": "integer",
+          "format": "int4",
+          "options": [
+            "updatable"
+          ],
+          "default_value": "1"
+        }
+      ],
+      "primary_keys": [
+        "id"
+      ],
+      "foreign_key_constraints": [
+        {
+          "name": "last_names_country_code_fkey",
+          "source_table": "public.last_names",
+          "source_columns": [
+            "country_code"
+          ],
+          "target_table": "public.countries",
+          "target_columns": [
+            "code"
+          ]
+        }
+      ]
+    },
+    {
+      "name": "public.events",
+      "rls_enabled": false,
+      "columns": [
+        {
+          "name": "id",
+          "data_type": "uuid",
+          "format": "uuid",
+          "options": [
+            "updatable"
+          ],
+          "default_value": "gen_random_uuid()"
+        },
+        {
+          "name": "name",
+          "data_type": "text",
+          "format": "text",
+          "options": [
+            "updatable"
+          ]
+        },
+        {
+          "name": "kind",
+          "data_type": "text",
+          "format": "text",
+          "options": [
+            "updatable"
+          ],
+          "check": "kind = ANY (ARRAY['one_day'::text, 'stage_race'::text])"
+        },
+        {
+          "name": "created_at",
+          "data_type": "timestamp with time zone",
+          "format": "timestamptz",
+          "options": [
+            "updatable"
+          ],
+          "default_value": "now()"
+        },
+        {
+          "name": "deadline",
+          "data_type": "timestamp with time zone",
+          "format": "timestamptz",
+          "options": [
+            "updatable"
+          ]
+        },
+        {
+          "name": "type",
+          "data_type": "text",
+          "format": "text",
+          "options": [
+            "nullable",
+            "updatable"
+          ]
+        },
+        {
+          "name": "gender",
+          "data_type": "text",
+          "format": "text",
+          "options": [
+            "nullable",
+            "updatable"
+          ]
+        },
+        {
+          "name": "entry_fee",
+          "data_type": "integer",
+          "format": "int4",
+          "options": [
+            "nullable",
+            "updatable"
+          ],
+          "default_value": "0"
+        },
+        {
+          "name": "prize_pool",
+          "data_type": "integer",
+          "format": "int4",
+          "options": [
+            "nullable",
+            "updatable"
+          ],
+          "default_value": "0"
+        },
+        {
+          "name": "rake_percent",
+          "data_type": "numeric",
+          "format": "numeric",
+          "options": [
+            "nullable",
+            "updatable"
+          ],
+          "default_value": "0.03"
+        },
+        {
+          "name": "status",
+          "data_type": "text",
+          "format": "text",
+          "options": [
+            "nullable",
+            "updatable"
+          ],
+          "default_value": "'OPEN'::text"
+        },
+        {
+          "name": "engine_version",
+          "data_type": "text",
+          "format": "text",
+          "options": [
+            "nullable",
+            "updatable"
+          ],
+          "default_value": "'2.1'::text"
+        },
+        {
+          "name": "seed",
+          "data_type": "text",
+          "format": "text",
+          "options": [
+            "nullable",
+            "updatable"
+          ]
+        },
+        {
+          "name": "country_code",
+          "data_type": "text",
+          "format": "text",
+          "options": [
+            "nullable",
+            "updatable"
+          ]
+        },
+        {
+          "name": "weather_locked",
+          "data_type": "jsonb",
+          "format": "jsonb",
+          "options": [
+            "nullable",
+            "updatable"
+          ]
+        },
+        {
+          "name": "weather_locked_at",
+          "data_type": "timestamp with time zone",
+          "format": "timestamptz",
+          "options": [
+            "nullable",
+            "updatable"
+          ]
+        },
+        {
+          "name": "weather_source",
+          "data_type": "text",
+          "format": "text",
+          "options": [
+            "nullable",
+            "updatable"
+          ]
+        },
+        {
+          "name": "stage_profile_id",
+          "data_type": "uuid",
+          "format": "uuid",
+          "options": [
+            "nullable",
+            "updatable"
+          ]
+        }
+      ],
+      "primary_keys": [
+        "id"
+      ],
+      "foreign_key_constraints": [
+        {
+          "name": "event_stages_event_id_fkey",
+          "source_table": "public.event_stages",
+          "source_columns": [
+            "event_id"
+          ],
+          "target_table": "public.events",
+          "target_columns": [
+            "id"
+          ]
+        },
+        {
+          "name": "event_rider_results_event_id_fkey",
+          "source_table": "public.event_rider_results",
+          "source_columns": [
+            "event_id"
+          ],
+          "target_table": "public.events",
+          "target_columns": [
+            "id"
+          ]
+        },
+        {
+          "name": "event_team_results_event_id_fkey",
+          "source_table": "public.event_team_results",
+          "source_columns": [
+            "event_id"
+          ],
+          "target_table": "public.events",
+          "target_columns": [
+            "id"
+          ]
+        },
+        {
+          "name": "event_division_runs_event_id_fkey",
+          "source_table": "public.event_division_runs",
+          "source_columns": [
+            "event_id"
+          ],
+          "target_table": "public.events",
+          "target_columns": [
+            "id"
+          ]
+        },
+        {
+          "name": "event_divisions_event_id_fkey",
+          "source_table": "public.event_divisions",
+          "source_columns": [
+            "event_id"
+          ],
+          "target_table": "public.events",
+          "target_columns": [
+            "id"
+          ]
+        },
+        {
+          "name": "events_stage_profile_id_fkey",
+          "source_table": "public.events",
+          "source_columns": [
+            "stage_profile_id"
+          ],
+          "target_table": "public.stage_profiles",
+          "target_columns": [
+            "id"
+          ]
+        },
+        {
+          "name": "event_runs_event_id_fkey",
+          "source_table": "public.event_runs",
+          "source_columns": [
+            "event_id"
+          ],
+          "target_table": "public.events",
+          "target_columns": [
+            "id"
+          ]
+        },
+        {
+          "name": "event_teams_event_id_fkey",
+          "source_table": "public.event_teams",
+          "source_columns": [
+            "event_id"
+          ],
+          "target_table": "public.events",
+          "target_columns": [
+            "id"
+          ]
+        }
+      ]
+    },
+    {
+      "name": "public.event_stages",
+      "rls_enabled": false,
+      "columns": [
+        {
+          "name": "id",
+          "data_type": "uuid",
+          "format": "uuid",
+          "options": [
+            "updatable"
+          ],
+          "default_value": "gen_random_uuid()"
+        },
+        {
+          "name": "event_id",
+          "data_type": "uuid",
+          "format": "uuid",
+          "options": [
+            "updatable"
+          ]
+        },
+        {
+          "name": "stage_no",
+          "data_type": "integer",
+          "format": "int4",
+          "options": [
+            "updatable"
+          ]
+        },
+        {
+          "name": "stage_template_id",
+          "data_type": "uuid",
+          "format": "uuid",
+          "options": [
+            "updatable"
+          ]
+        },
+        {
+          "name": "wind_speed_ms",
+          "data_type": "numeric",
+          "format": "numeric",
+          "options": [
+            "updatable"
+          ],
+          "default_value": "8"
+        },
+        {
+          "name": "rain",
+          "data_type": "boolean",
+          "format": "bool",
+          "options": [
+            "updatable"
+          ],
+          "default_value": "false"
+        },
+        {
+          "name": "seed",
+          "data_type": "text",
+          "format": "text",
+          "options": [
+            "updatable"
+          ],
+          "default_value": "encode(extensions.gen_random_bytes(16), 'hex'::text)"
+        },
+        {
+          "name": "created_at",
+          "data_type": "timestamp with time zone",
+          "format": "timestamptz",
+          "options": [
+            "updatable"
+          ],
+          "default_value": "now()"
+        }
+      ],
+      "primary_keys": [
+        "id"
+      ],
+      "foreign_key_constraints": [
+        {
+          "name": "event_stages_stage_template_id_fkey",
+          "source_table": "public.event_stages",
+          "source_columns": [
+            "stage_template_id"
+          ],
+          "target_table": "public.stages",
+          "target_columns": [
+            "id"
+          ]
+        },
+        {
+          "name": "stage_results_event_stage_id_fkey",
+          "source_table": "public.stage_results",
+          "source_columns": [
+            "event_stage_id"
+          ],
+          "target_table": "public.event_stages",
+          "target_columns": [
+            "id"
+          ]
+        },
+        {
+          "name": "stage_points_event_stage_id_fkey",
+          "source_table": "public.stage_points",
+          "source_columns": [
+            "event_stage_id"
+          ],
+          "target_table": "public.event_stages",
+          "target_columns": [
+            "id"
+          ]
+        },
+        {
+          "name": "race_snapshots_event_stage_id_fkey",
+          "source_table": "public.race_snapshots",
+          "source_columns": [
+            "event_stage_id"
+          ],
+          "target_table": "public.event_stages",
+          "target_columns": [
+            "id"
+          ]
+        },
+        {
+          "name": "race_feed_event_stage_id_fkey",
+          "source_table": "public.race_feed",
+          "source_columns": [
+            "event_stage_id"
+          ],
+          "target_table": "public.event_stages",
+          "target_columns": [
+            "id"
+          ]
+        },
+        {
+          "name": "stage_orders_event_stage_id_fkey",
+          "source_table": "public.stage_orders",
+          "source_columns": [
+            "event_stage_id"
+          ],
+          "target_table": "public.event_stages",
+          "target_columns": [
+            "id"
+          ]
+        },
+        {
+          "name": "team_stage_points_event_stage_id_fkey",
+          "source_table": "public.team_stage_points",
+          "source_columns": [
+            "event_stage_id"
+          ],
+          "target_table": "public.event_stages",
+          "target_columns": [
+            "id"
+          ]
+        },
+        {
+          "name": "event_stages_event_id_fkey",
+          "source_table": "public.event_stages",
+          "source_columns": [
+            "event_id"
+          ],
+          "target_table": "public.events",
+          "target_columns": [
+            "id"
+          ]
+        }
+      ]
+    },
+    {
+      "name": "public.stage_results",
+      "rls_enabled": true,
+      "columns": [
+        {
+          "name": "id",
+          "data_type": "uuid",
+          "format": "uuid",
+          "options": [
+            "updatable"
+          ],
+          "default_value": "gen_random_uuid()"
+        },
+        {
+          "name": "event_stage_id",
+          "data_type": "uuid",
+          "format": "uuid",
+          "options": [
+            "updatable"
+          ]
+        },
+        {
+          "name": "team_id",
+          "data_type": "uuid",
+          "format": "uuid",
+          "options": [
+            "updatable"
+          ]
+        },
+        {
+          "name": "rider_id",
+          "data_type": "uuid",
+          "format": "uuid",
+          "options": [
+            "updatable"
+          ]
+        },
+        {
+          "name": "time_sec",
+          "data_type": "numeric",
+          "format": "numeric",
+          "options": [
+            "updatable"
+          ]
+        },
+        {
+          "name": "position",
+          "data_type": "integer",
+          "format": "int4",
+          "options": [
+            "updatable"
+          ]
+        },
+        {
+          "name": "created_at",
+          "data_type": "timestamp with time zone",
+          "format": "timestamptz",
+          "options": [
+            "updatable"
+          ],
+          "default_value": "now()"
+        }
+      ],
+      "primary_keys": [
+        "id"
+      ],
+      "foreign_key_constraints": [
+        {
+          "name": "stage_results_team_id_fkey",
+          "source_table": "public.stage_results",
+          "source_columns": [
+            "team_id"
+          ],
+          "target_table": "public.teams",
+          "target_columns": [
+            "id"
+          ]
+        },
+        {
+          "name": "stage_results_event_stage_id_fkey",
+          "source_table": "public.stage_results",
+          "source_columns": [
+            "event_stage_id"
+          ],
+          "target_table": "public.event_stages",
+          "target_columns": [
+            "id"
+          ]
+        },
+        {
+          "name": "stage_results_rider_id_fkey",
+          "source_table": "public.stage_results",
+          "source_columns": [
+            "rider_id"
+          ],
+          "target_table": "public.riders",
+          "target_columns": [
+            "id"
+          ]
+        }
+      ]
+    },
+    {
+      "name": "public.stage_points",
+      "rls_enabled": true,
+      "columns": [
+        {
+          "name": "id",
+          "data_type": "uuid",
+          "format": "uuid",
+          "options": [
+            "updatable"
+          ],
+          "default_value": "gen_random_uuid()"
+        },
+        {
+          "name": "event_stage_id",
+          "data_type": "uuid",
+          "format": "uuid",
+          "options": [
+            "updatable"
+          ]
+        },
+        {
+          "name": "rider_id",
+          "data_type": "uuid",
+          "format": "uuid",
+          "options": [
+            "updatable"
+          ]
+        },
+        {
+          "name": "classification",
+          "data_type": "text",
+          "format": "text",
+          "options": [
+            "updatable"
+          ],
+          "check": "classification = ANY (ARRAY['gc'::text, 'points'::text, 'kom'::text, 'youth'::text])"
+        },
+        {
+          "name": "points",
+          "data_type": "integer",
+          "format": "int4",
+          "options": [
+            "updatable"
+          ]
+        },
+        {
+          "name": "created_at",
+          "data_type": "timestamp with time zone",
+          "format": "timestamptz",
+          "options": [
+            "updatable"
+          ],
+          "default_value": "now()"
+        }
+      ],
+      "primary_keys": [
+        "id"
+      ],
+      "foreign_key_constraints": [
+        {
+          "name": "stage_points_rider_id_fkey",
+          "source_table": "public.stage_points",
+          "source_columns": [
+            "rider_id"
+          ],
+          "target_table": "public.riders",
+          "target_columns": [
+            "id"
+          ]
+        },
+        {
+          "name": "stage_points_event_stage_id_fkey",
+          "source_table": "public.stage_points",
+          "source_columns": [
+            "event_stage_id"
+          ],
+          "target_table": "public.event_stages",
+          "target_columns": [
+            "id"
+          ]
+        }
+      ]
+    },
+    {
+      "name": "public.team_stage_points",
+      "rls_enabled": true,
+      "columns": [
+        {
+          "name": "id",
+          "data_type": "uuid",
+          "format": "uuid",
+          "options": [
+            "updatable"
+          ],
+          "default_value": "gen_random_uuid()"
+        },
+        {
+          "name": "event_stage_id",
+          "data_type": "uuid",
+          "format": "uuid",
+          "options": [
+            "updatable"
+          ]
+        },
+        {
+          "name": "team_id",
+          "data_type": "uuid",
+          "format": "uuid",
+          "options": [
+            "updatable"
+          ]
+        },
+        {
+          "name": "classification",
+          "data_type": "text",
+          "format": "text",
+          "options": [
+            "updatable"
+          ],
+          "check": "classification = ANY (ARRAY['points'::text, 'kom'::text])"
+        },
+        {
+          "name": "points",
+          "data_type": "integer",
+          "format": "int4",
+          "options": [
+            "updatable"
+          ]
+        },
+        {
+          "name": "created_at",
+          "data_type": "timestamp with time zone",
+          "format": "timestamptz",
+          "options": [
+            "updatable"
+          ],
+          "default_value": "now()"
+        }
+      ],
+      "primary_keys": [
+        "id"
+      ],
+      "foreign_key_constraints": [
+        {
+          "name": "team_stage_points_event_stage_id_fkey",
+          "source_table": "public.team_stage_points",
+          "source_columns": [
+            "event_stage_id"
+          ],
+          "target_table": "public.event_stages",
+          "target_columns": [
+            "id"
+          ]
+        },
+        {
+          "name": "team_stage_points_team_id_fkey",
+          "source_table": "public.team_stage_points",
+          "source_columns": [
+            "team_id"
+          ],
+          "target_table": "public.teams",
+          "target_columns": [
+            "id"
+          ]
+        }
+      ]
+    },
+    {
+      "name": "public.tactic_presets",
+      "rls_enabled": false,
+      "columns": [
+        {
+          "name": "id",
+          "data_type": "uuid",
+          "format": "uuid",
+          "options": [
+            "updatable"
+          ],
+          "default_value": "gen_random_uuid()"
+        },
+        {
+          "name": "user_id",
+          "data_type": "uuid",
+          "format": "uuid",
+          "options": [
+            "updatable"
+          ]
+        },
+        {
+          "name": "name",
+          "data_type": "text",
+          "format": "text",
+          "options": [
+            "updatable"
+          ]
+        },
+        {
+          "name": "payload",
+          "data_type": "jsonb",
+          "format": "jsonb",
+          "options": [
+            "updatable"
+          ]
+        },
+        {
+          "name": "created_at",
+          "data_type": "timestamp with time zone",
+          "format": "timestamptz",
+          "options": [
+            "updatable"
+          ],
+          "default_value": "now()"
+        }
+      ],
+      "primary_keys": [
+        "id"
+      ]
+    },
+    {
+      "name": "public.stage_orders",
+      "rls_enabled": false,
+      "columns": [
+        {
+          "name": "id",
+          "data_type": "uuid",
+          "format": "uuid",
+          "options": [
+            "updatable"
+          ],
+          "default_value": "gen_random_uuid()"
+        },
+        {
+          "name": "event_stage_id",
+          "data_type": "uuid",
+          "format": "uuid",
+          "options": [
+            "updatable"
+          ]
+        },
+        {
+          "name": "team_id",
+          "data_type": "uuid",
+          "format": "uuid",
+          "options": [
+            "updatable"
+          ]
+        },
+        {
+          "name": "payload",
+          "data_type": "jsonb",
+          "format": "jsonb",
+          "options": [
+            "updatable"
+          ]
+        },
+        {
+          "name": "created_at",
+          "data_type": "timestamp with time zone",
+          "format": "timestamptz",
+          "options": [
+            "updatable"
+          ],
+          "default_value": "now()"
+        }
+      ],
+      "primary_keys": [
+        "id"
+      ],
+      "foreign_key_constraints": [
+        {
+          "name": "stage_orders_event_stage_id_fkey",
+          "source_table": "public.stage_orders",
+          "source_columns": [
+            "event_stage_id"
+          ],
+          "target_table": "public.event_stages",
+          "target_columns": [
+            "id"
+          ]
+        },
+        {
+          "name": "stage_orders_team_id_fkey",
+          "source_table": "public.stage_orders",
+          "source_columns": [
+            "team_id"
+          ],
+          "target_table": "public.teams",
+          "target_columns": [
+            "id"
+          ]
+        }
+      ]
+    },
+    {
+      "name": "public.race_feed",
+      "rls_enabled": false,
+      "columns": [
+        {
+          "name": "id",
+          "data_type": "uuid",
+          "format": "uuid",
+          "options": [
+            "updatable"
+          ],
+          "default_value": "gen_random_uuid()"
+        },
+        {
+          "name": "event_stage_id",
+          "data_type": "uuid",
+          "format": "uuid",
+          "options": [
+            "updatable"
+          ]
+        },
+        {
+          "name": "km",
+          "data_type": "integer",
+          "format": "int4",
+          "options": [
+            "updatable"
+          ]
+        },
+        {
+          "name": "type",
+          "data_type": "text",
+          "format": "text",
+          "options": [
+            "updatable"
+          ]
+        },
+        {
+          "name": "message",
+          "data_type": "text",
+          "format": "text",
+          "options": [
+            "updatable"
+          ]
+        },
+        {
+          "name": "payload",
+          "data_type": "jsonb",
+          "format": "jsonb",
+          "options": [
+            "nullable",
+            "updatable"
+          ]
+        },
+        {
+          "name": "created_at",
+          "data_type": "timestamp with time zone",
+          "format": "timestamptz",
+          "options": [
+            "updatable"
+          ],
+          "default_value": "now()"
+        }
+      ],
+      "primary_keys": [
+        "id"
+      ],
+      "foreign_key_constraints": [
+        {
+          "name": "race_feed_event_stage_id_fkey",
+          "source_table": "public.race_feed",
+          "source_columns": [
+            "event_stage_id"
+          ],
+          "target_table": "public.event_stages",
+          "target_columns": [
+            "id"
+          ]
+        }
+      ]
+    },
+    {
+      "name": "public.race_snapshots",
+      "rls_enabled": false,
+      "columns": [
+        {
+          "name": "id",
+          "data_type": "uuid",
+          "format": "uuid",
+          "options": [
+            "updatable"
+          ],
+          "default_value": "gen_random_uuid()"
+        },
+        {
+          "name": "event_stage_id",
+          "data_type": "uuid",
+          "format": "uuid",
+          "options": [
+            "updatable"
+          ]
+        },
+        {
+          "name": "km",
+          "data_type": "integer",
+          "format": "int4",
+          "options": [
+            "updatable"
+          ]
+        },
+        {
+          "name": "state",
+          "data_type": "jsonb",
+          "format": "jsonb",
+          "options": [
+            "updatable"
+          ]
+        },
+        {
+          "name": "created_at",
+          "data_type": "timestamp with time zone",
+          "format": "timestamptz",
+          "options": [
+            "updatable"
+          ],
+          "default_value": "now()"
+        }
+      ],
+      "primary_keys": [
+        "id"
+      ],
+      "foreign_key_constraints": [
+        {
+          "name": "race_snapshots_event_stage_id_fkey",
+          "source_table": "public.race_snapshots",
+          "source_columns": [
+            "event_stage_id"
+          ],
+          "target_table": "public.event_stages",
+          "target_columns": [
+            "id"
+          ]
+        }
+      ]
+    },
+    {
+      "name": "public.game_state",
+      "rls_enabled": false,
+      "columns": [
+        {
+          "name": "id",
+          "data_type": "integer",
+          "format": "int4",
+          "options": [
+            "updatable"
+          ],
+          "default_value": "1"
+        },
+        {
+          "name": "game_date",
+          "data_type": "date",
+          "format": "date",
+          "options": [
+            "updatable"
+          ]
+        }
+      ],
+      "primary_keys": [
+        "id"
+      ]
+    },
+    {
+      "name": "public.event_teams",
+      "rls_enabled": false,
+      "columns": [
+        {
+          "name": "id",
+          "data_type": "uuid",
+          "format": "uuid",
+          "options": [
+            "updatable"
+          ],
+          "default_value": "gen_random_uuid()"
+        },
+        {
+          "name": "event_id",
+          "data_type": "uuid",
+          "format": "uuid",
+          "options": [
+            "nullable",
+            "updatable"
+          ]
+        },
+        {
+          "name": "team_id",
+          "data_type": "uuid",
+          "format": "uuid",
+          "options": [
+            "nullable",
+            "updatable"
+          ]
+        },
+        {
+          "name": "captain_id",
+          "data_type": "uuid",
+          "format": "uuid",
+          "options": [
+            "nullable",
+            "updatable"
+          ]
+        },
+        {
+          "name": "selected_riders",
+          "data_type": "ARRAY",
+          "format": "_uuid",
+          "options": [
+            "nullable",
+            "updatable"
+          ]
+        }
+      ],
+      "primary_keys": [
+        "id"
+      ],
+      "foreign_key_constraints": [
+        {
+          "name": "event_teams_team_id_fkey",
+          "source_table": "public.event_teams",
+          "source_columns": [
+            "team_id"
+          ],
+          "target_table": "public.teams",
+          "target_columns": [
+            "id"
+          ]
+        },
+        {
+          "name": "event_teams_event_id_fkey",
+          "source_table": "public.event_teams",
+          "source_columns": [
+            "event_id"
+          ],
+          "target_table": "public.events",
+          "target_columns": [
+            "id"
+          ]
+        }
+      ]
+    },
+    {
+      "name": "public.event_runs",
+      "rls_enabled": false,
+      "columns": [
+        {
+          "name": "event_id",
+          "data_type": "uuid",
+          "format": "uuid",
+          "options": [
+            "updatable"
+          ]
+        },
+        {
+          "name": "created_at",
+          "data_type": "timestamp without time zone",
+          "format": "timestamp",
+          "options": [
+            "nullable",
+            "updatable"
+          ],
+          "default_value": "now()"
+        },
+        {
+          "name": "seed",
+          "data_type": "text",
+          "format": "text",
+          "options": [
+            "nullable",
+            "updatable"
+          ]
+        },
+        {
+          "name": "engine_version",
+          "data_type": "text",
+          "format": "text",
+          "options": [
+            "nullable",
+            "updatable"
+          ]
+        },
+        {
+          "name": "stage_snapshot",
+          "data_type": "jsonb",
+          "format": "jsonb",
+          "options": [
+            "nullable",
+            "updatable"
+          ]
+        },
+        {
+          "name": "feed",
+          "data_type": "jsonb",
+          "format": "jsonb",
+          "options": [
+            "nullable",
+            "updatable"
+          ]
+        },
+        {
+          "name": "results",
+          "data_type": "jsonb",
+          "format": "jsonb",
+          "options": [
+            "nullable",
+            "updatable"
+          ]
+        }
+      ],
+      "primary_keys": [
+        "event_id"
+      ],
+      "foreign_key_constraints": [
+        {
+          "name": "event_runs_event_id_fkey",
+          "source_table": "public.event_runs",
+          "source_columns": [
+            "event_id"
+          ],
+          "target_table": "public.events",
+          "target_columns": [
+            "id"
+          ]
+        }
+      ]
+    },
+    {
+      "name": "public.stage_profiles",
+      "rls_enabled": false,
+      "columns": [
+        {
+          "name": "id",
+          "data_type": "uuid",
+          "format": "uuid",
+          "options": [
+            "updatable"
+          ],
+          "default_value": "gen_random_uuid()"
+        },
+        {
+          "name": "name",
+          "data_type": "text",
+          "format": "text",
+          "options": [
+            "updatable"
+          ]
+        },
+        {
+          "name": "country_code",
+          "data_type": "text",
+          "format": "text",
+          "options": [
+            "updatable"
+          ],
+          "default_value": "'FR'::text"
+        },
+        {
+          "name": "distance_km",
+          "data_type": "integer",
+          "format": "int4",
+          "options": [
+            "updatable"
+          ]
+        },
+        {
+          "name": "profile_points",
+          "data_type": "jsonb",
+          "format": "jsonb",
+          "options": [
+            "updatable"
+          ]
+        },
+        {
+          "name": "keypoints",
+          "data_type": "jsonb",
+          "format": "jsonb",
+          "options": [
+            "updatable"
+          ],
+          "default_value": "'[]'::jsonb"
+        },
+        {
+          "name": "tags",
+          "data_type": "ARRAY",
+          "format": "_text",
+          "options": [
+            "updatable"
+          ],
+          "default_value": "'{}'::text[]"
+        },
+        {
+          "name": "created_at",
+          "data_type": "timestamp with time zone",
+          "format": "timestamptz",
+          "options": [
+            "updatable"
+          ],
+          "default_value": "now()"
+        }
+      ],
+      "primary_keys": [
+        "id"
+      ],
+      "foreign_key_constraints": [
+        {
+          "name": "events_stage_profile_id_fkey",
+          "source_table": "public.events",
+          "source_columns": [
+            "stage_profile_id"
+          ],
+          "target_table": "public.stage_profiles",
+          "target_columns": [
+            "id"
+          ]
+        }
+      ]
+    },
+    {
+      "name": "public.event_divisions",
+      "rls_enabled": false,
+      "columns": [
+        {
+          "name": "event_id",
+          "data_type": "uuid",
+          "format": "uuid",
+          "options": [
+            "updatable"
+          ]
+        },
+        {
+          "name": "team_id",
+          "data_type": "uuid",
+          "format": "uuid",
+          "options": [
+            "updatable"
+          ]
+        },
+        {
+          "name": "division_index",
+          "data_type": "integer",
+          "format": "int4",
+          "options": [
+            "updatable"
+          ]
+        },
+        {
+          "name": "total_divisions",
+          "data_type": "integer",
+          "format": "int4",
+          "options": [
+            "updatable"
+          ]
+        },
+        {
+          "name": "team_rating",
+          "data_type": "numeric",
+          "format": "numeric",
+          "options": [
+            "updatable"
+          ],
+          "default_value": "0"
+        },
+        {
+          "name": "created_at",
+          "data_type": "timestamp with time zone",
+          "format": "timestamptz",
+          "options": [
+            "updatable"
+          ],
+          "default_value": "now()"
+        }
+      ],
+      "primary_keys": [
+        "event_id",
+        "team_id"
+      ],
+      "foreign_key_constraints": [
+        {
+          "name": "event_divisions_event_id_fkey",
+          "source_table": "public.event_divisions",
+          "source_columns": [
+            "event_id"
+          ],
+          "target_table": "public.events",
+          "target_columns": [
+            "id"
+          ]
+        },
+        {
+          "name": "event_divisions_team_id_fkey",
+          "source_table": "public.event_divisions",
+          "source_columns": [
+            "team_id"
+          ],
+          "target_table": "public.teams",
+          "target_columns": [
+            "id"
+          ]
+        }
+      ]
+    },
+    {
+      "name": "public.event_division_runs",
+      "rls_enabled": false,
+      "columns": [
+        {
+          "name": "event_id",
+          "data_type": "uuid",
+          "format": "uuid",
+          "options": [
+            "updatable"
+          ]
+        },
+        {
+          "name": "division_index",
+          "data_type": "integer",
+          "format": "int4",
+          "options": [
+            "updatable"
+          ]
+        },
+        {
+          "name": "seed",
+          "data_type": "text",
+          "format": "text",
+          "options": [
+            "updatable"
+          ]
+        },
+        {
+          "name": "engine_version",
+          "data_type": "text",
+          "format": "text",
+          "options": [
+            "updatable"
+          ]
+        },
+        {
+          "name": "stage_snapshot",
+          "data_type": "jsonb",
+          "format": "jsonb",
+          "options": [
+            "updatable"
+          ]
+        },
+        {
+          "name": "feed",
+          "data_type": "jsonb",
+          "format": "jsonb",
+          "options": [
+            "updatable"
+          ]
+        },
+        {
+          "name": "results",
+          "data_type": "jsonb",
+          "format": "jsonb",
+          "options": [
+            "updatable"
+          ]
+        },
+        {
+          "name": "created_at",
+          "data_type": "timestamp with time zone",
+          "format": "timestamptz",
+          "options": [
+            "updatable"
+          ],
+          "default_value": "now()"
+        }
+      ],
+      "primary_keys": [
+        "event_id",
+        "division_index"
+      ],
+      "foreign_key_constraints": [
+        {
+          "name": "event_division_runs_event_id_fkey",
+          "source_table": "public.event_division_runs",
+          "source_columns": [
+            "event_id"
+          ],
+          "target_table": "public.events",
+          "target_columns": [
+            "id"
+          ]
+        }
+      ]
+    },
+    {
+      "name": "public.event_team_results",
+      "rls_enabled": false,
+      "columns": [
+        {
+          "name": "event_id",
+          "data_type": "uuid",
+          "format": "uuid",
+          "options": [
+            "updatable"
+          ]
+        },
+        {
+          "name": "team_id",
+          "data_type": "uuid",
+          "format": "uuid",
+          "options": [
+            "updatable"
+          ]
+        },
+        {
+          "name": "division_index",
+          "data_type": "integer",
+          "format": "int4",
+          "options": [
+            "updatable"
+          ]
+        },
+        {
+          "name": "total_divisions",
+          "data_type": "integer",
+          "format": "int4",
+          "options": [
+            "updatable"
+          ]
+        },
+        {
+          "name": "captain_id",
+          "data_type": "uuid",
+          "format": "uuid",
+          "options": [
+            "nullable",
+            "updatable"
+          ]
+        },
+        {
+          "name": "position",
+          "data_type": "integer",
+          "format": "int4",
+          "options": [
+            "updatable"
+          ]
+        },
+        {
+          "name": "time_sec",
+          "data_type": "numeric",
+          "format": "numeric",
+          "options": [
+            "updatable"
+          ]
+        },
+        {
+          "name": "points",
+          "data_type": "integer",
+          "format": "int4",
+          "options": [
+            "updatable"
+          ],
+          "default_value": "0"
+        },
+        {
+          "name": "multiplier",
+          "data_type": "numeric",
+          "format": "numeric",
+          "options": [
+            "updatable"
+          ],
+          "default_value": "1"
+        },
+        {
+          "name": "created_at",
+          "data_type": "timestamp with time zone",
+          "format": "timestamptz",
+          "options": [
+            "updatable"
+          ],
+          "default_value": "now()"
+        }
+      ],
+      "primary_keys": [
+        "event_id",
+        "team_id"
+      ],
+      "foreign_key_constraints": [
+        {
+          "name": "event_team_results_team_id_fkey",
+          "source_table": "public.event_team_results",
+          "source_columns": [
+            "team_id"
+          ],
+          "target_table": "public.teams",
+          "target_columns": [
+            "id"
+          ]
+        },
+        {
+          "name": "event_team_results_event_id_fkey",
+          "source_table": "public.event_team_results",
+          "source_columns": [
+            "event_id"
+          ],
+          "target_table": "public.events",
+          "target_columns": [
+            "id"
+          ]
+        }
+      ]
+    },
+    {
+      "name": "public.event_rider_results",
+      "rls_enabled": false,
+      "columns": [
+        {
+          "name": "event_id",
+          "data_type": "uuid",
+          "format": "uuid",
+          "options": [
+            "updatable"
+          ]
+        },
+        {
+          "name": "rider_id",
+          "data_type": "uuid",
+          "format": "uuid",
+          "options": [
+            "updatable"
+          ]
+        },
+        {
+          "name": "team_id",
+          "data_type": "uuid",
+          "format": "uuid",
+          "options": [
+            "updatable"
+          ]
+        },
+        {
+          "name": "division_index",
+          "data_type": "integer",
+          "format": "int4",
+          "options": [
+            "updatable"
+          ]
+        },
+        {
+          "name": "total_divisions",
+          "data_type": "integer",
+          "format": "int4",
+          "options": [
+            "updatable"
+          ]
+        },
+        {
+          "name": "position",
+          "data_type": "integer",
+          "format": "int4",
+          "options": [
+            "updatable"
+          ]
+        },
+        {
+          "name": "time_sec",
+          "data_type": "numeric",
+          "format": "numeric",
+          "options": [
+            "updatable"
+          ]
+        },
+        {
+          "name": "points",
+          "data_type": "integer",
+          "format": "int4",
+          "options": [
+            "updatable"
+          ],
+          "default_value": "0"
+        },
+        {
+          "name": "multiplier",
+          "data_type": "numeric",
+          "format": "numeric",
+          "options": [
+            "updatable"
+          ],
+          "default_value": "1"
+        },
+        {
+          "name": "created_at",
+          "data_type": "timestamp with time zone",
+          "format": "timestamptz",
+          "options": [
+            "updatable"
+          ],
+          "default_value": "now()"
+        }
+      ],
+      "primary_keys": [
+        "event_id",
+        "rider_id"
+      ],
+      "foreign_key_constraints": [
+        {
+          "name": "event_rider_results_event_id_fkey",
+          "source_table": "public.event_rider_results",
+          "source_columns": [
+            "event_id"
+          ],
+          "target_table": "public.events",
+          "target_columns": [
+            "id"
+          ]
+        },
+        {
+          "name": "event_rider_results_rider_id_fkey",
+          "source_table": "public.event_rider_results",
+          "source_columns": [
+            "rider_id"
+          ],
+          "target_table": "public.riders",
+          "target_columns": [
+            "id"
+          ]
+        },
+        {
+          "name": "event_rider_results_team_id_fkey",
+          "source_table": "public.event_rider_results",
+          "source_columns": [
+            "team_id"
+          ],
+          "target_table": "public.teams",
+          "target_columns": [
+            "id"
+          ]
+        }
+      ]
+    },
+    {
+      "name": "public.login_accounts",
+      "rls_enabled": false,
+      "columns": [
+        {
+          "name": "id",
+          "data_type": "uuid",
+          "format": "uuid",
+          "options": [
+            "updatable"
+          ],
+          "default_value": "gen_random_uuid()"
+        },
+        {
+          "name": "team_id",
+          "data_type": "uuid",
+          "format": "uuid",
+          "options": [
+            "updatable",
+            "unique"
+          ]
+        },
+        {
+          "name": "login_name",
+          "data_type": "text",
+          "format": "text",
+          "options": [
+            "updatable",
+            "unique"
+          ]
+        },
+        {
+          "name": "password_hash",
+          "data_type": "text",
+          "format": "text",
+          "options": [
+            "updatable"
+          ]
+        },
+        {
+          "name": "created_at",
+          "data_type": "timestamp with time zone",
+          "format": "timestamptz",
+          "options": [
+            "updatable"
+          ],
+          "default_value": "now()"
+        }
+      ],
+      "primary_keys": [
+        "id"
+      ],
+      "foreign_key_constraints": [
+        {
+          "name": "login_accounts_team_id_fkey",
+          "source_table": "public.login_accounts",
+          "source_columns": [
+            "team_id"
+          ],
+          "target_table": "public.teams",
+          "target_columns": [
+            "id"
+          ]
+        },
+        {
+          "name": "auth_sessions_login_account_id_fkey",
+          "source_table": "public.auth_sessions",
+          "source_columns": [
+            "login_account_id"
+          ],
+          "target_table": "public.login_accounts",
+          "target_columns": [
+            "id"
+          ]
+        }
+      ]
+    },
+    {
+      "name": "public.auth_sessions",
+      "rls_enabled": false,
+      "columns": [
+        {
+          "name": "id",
+          "data_type": "uuid",
+          "format": "uuid",
+          "options": [
+            "updatable"
+          ],
+          "default_value": "gen_random_uuid()"
+        },
+        {
+          "name": "login_account_id",
+          "data_type": "uuid",
+          "format": "uuid",
+          "options": [
+            "updatable"
+          ]
+        },
+        {
+          "name": "expires_at",
+          "data_type": "timestamp with time zone",
+          "format": "timestamptz",
+          "options": [
+            "updatable"
+          ]
+        },
+        {
+          "name": "created_at",
+          "data_type": "timestamp with time zone",
+          "format": "timestamptz",
+          "options": [
+            "updatable"
+          ],
+          "default_value": "now()"
+        }
+      ],
+      "primary_keys": [
+        "id"
+      ],
+      "foreign_key_constraints": [
+        {
+          "name": "auth_sessions_login_account_id_fkey",
+          "source_table": "public.auth_sessions",
+          "source_columns": [
+            "login_account_id"
+          ],
+          "target_table": "public.login_accounts",
+          "target_columns": [
+            "id"
+          ]
+        }
+      ]
+    }
+  ],
+  "permissions": {
+    "table_acl": [
+      {
+        "acl": "{postgres=arwdDxtm/postgres,anon=arwdDxtm/postgres,authenticated=arwdDxtm/postgres,service_role=arwdDxtm/postgres}",
+        "rls": true,
+        "table": "teams",
+        "service_write": true,
+        "service_select": true
+      },
+      {
+        "acl": "{postgres=arwdDxtm/postgres,anon=arwdDxtm/postgres,authenticated=arwdDxtm/postgres,service_role=arwdDxtm/postgres}",
+        "rls": true,
+        "table": "team_stage_points",
+        "service_write": true,
+        "service_select": true
+      },
+      {
+        "acl": "{postgres=arwdDxtm/postgres,anon=arwdDxtm/postgres,authenticated=arwdDxtm/postgres,service_role=arwdDxtm/postgres}",
+        "rls": true,
+        "table": "team_riders",
+        "service_write": true,
+        "service_select": true
+      },
+      {
+        "acl": "{postgres=arwdDxtm/postgres,anon=arwdDxtm/postgres,authenticated=arwdDxtm/postgres,service_role=arwdDxtm/postgres}",
+        "rls": false,
+        "table": "tactic_presets",
+        "service_write": true,
+        "service_select": true
+      },
+      {
+        "acl": "{postgres=arwdDxtm/postgres,anon=arwdDxtm/postgres,authenticated=arwdDxtm/postgres,service_role=arwdDxtm/postgres}",
+        "rls": false,
+        "table": "stages",
+        "service_write": true,
+        "service_select": true
+      },
+      {
+        "acl": "{postgres=arwdDxtm/postgres,anon=arwdDxtm/postgres,authenticated=arwdDxtm/postgres,service_role=arwdDxtm/postgres}",
+        "rls": false,
+        "table": "races",
+        "service_write": true,
+        "service_select": true
+      },
+      {
+        "acl": "{postgres=arwdDxtm/postgres,anon=arwdDxtm/postgres,authenticated=arwdDxtm/postgres,service_role=arwdDxtm/postgres}",
+        "rls": false,
+        "table": "stage_orders",
+        "service_write": true,
+        "service_select": true
+      },
+      {
+        "acl": "{postgres=arwdDxtm/postgres,anon=arwdDxtm/postgres,authenticated=arwdDxtm/postgres,service_role=arwdDxtm/postgres}",
+        "rls": false,
+        "table": "race_feed",
+        "service_write": true,
+        "service_select": true
+      },
+      {
+        "acl": "{postgres=arwdDxtm/postgres,anon=arwdDxtm/postgres,authenticated=arwdDxtm/postgres,service_role=arwdDxtm/postgres}",
+        "rls": true,
+        "table": "race_results",
+        "service_write": true,
+        "service_select": true
+      },
+      {
+        "acl": "{postgres=arwdDxtm/postgres,anon=arwdDxtm/postgres,authenticated=arwdDxtm/postgres,service_role=arwdDxtm/postgres}",
+        "rls": false,
+        "table": "countries",
+        "service_write": true,
+        "service_select": true
+      },
+      {
+        "acl": "{postgres=arwdDxtm/postgres,anon=arwdDxtm/postgres,authenticated=arwdDxtm/postgres,service_role=arwdDxtm/postgres}",
+        "rls": false,
+        "table": "first_names",
+        "service_write": true,
+        "service_select": true
+      },
+      {
+        "acl": "{postgres=arwdDxtm/postgres,anon=arwdDxtm/postgres,authenticated=arwdDxtm/postgres,service_role=arwdDxtm/postgres}",
+        "rls": false,
+        "table": "race_snapshots",
+        "service_write": true,
+        "service_select": true
+      },
+      {
+        "acl": "{postgres=arwdDxtm/postgres,anon=arwdDxtm/postgres,authenticated=arwdDxtm/postgres,service_role=arwdDxtm/postgres}",
+        "rls": false,
+        "table": "last_names",
+        "service_write": true,
+        "service_select": true
+      },
+      {
+        "acl": "{postgres=arwdDxtm/postgres,anon=arwdDxtm/postgres,authenticated=arwdDxtm/postgres,service_role=arwdDxtm/postgres}",
+        "rls": false,
+        "table": "event_teams",
+        "service_write": true,
+        "service_select": true
+      },
+      {
+        "acl": "{postgres=arwdDxtm/postgres,anon=arwdDxtm/postgres,authenticated=arwdDxtm/postgres,service_role=arwdDxtm/postgres}",
+        "rls": false,
+        "table": "login_accounts",
+        "service_write": true,
+        "service_select": true
+      },
+      {
+        "acl": "{postgres=arwdDxtm/postgres,anon=arwdDxtm/postgres,authenticated=arwdDxtm/postgres,service_role=arwdDxtm/postgres}",
+        "rls": false,
+        "table": "auth_sessions",
+        "service_write": true,
+        "service_select": true
+      },
+      {
+        "acl": "{postgres=arwdDxtm/postgres,anon=arwdDxtm/postgres,authenticated=arwdDxtm/postgres,service_role=arwdDxtm/postgres}",
+        "rls": false,
+        "table": "event_runs",
+        "service_write": true,
+        "service_select": true
+      },
+      {
+        "acl": "{postgres=arwdDxtm/postgres,anon=arwdDxtm/postgres,authenticated=arwdDxtm/postgres,service_role=arwdDxtm/postgres}",
+        "rls": false,
+        "table": "stage_profiles",
+        "service_write": true,
+        "service_select": true
+      },
+      {
+        "acl": "{postgres=arwdDxtm/postgres,anon=arwdDxtm/postgres,authenticated=arwdDxtm/postgres,service_role=arwdDxtm/postgres}",
+        "rls": false,
+        "table": "event_team_results",
+        "service_write": true,
+        "service_select": true
+      },
+      {
+        "acl": "{postgres=arwdDxtm/postgres,anon=arwdDxtm/postgres,authenticated=arwdDxtm/postgres,service_role=arwdDxtm/postgres}",
+        "rls": false,
+        "table": "event_divisions",
+        "service_write": true,
+        "service_select": true
+      },
+      {
+        "acl": "{postgres=arwdDxtm/postgres,anon=arwdDxtm/postgres,authenticated=arwdDxtm/postgres,service_role=arwdDxtm/postgres}",
+        "rls": false,
+        "table": "event_division_runs",
+        "service_write": true,
+        "service_select": true
+      },
+      {
+        "acl": "{postgres=arwdDxtm/postgres,anon=arwdDxtm/postgres,authenticated=arwdDxtm/postgres,service_role=arwdDxtm/postgres}",
+        "rls": false,
+        "table": "event_rider_results",
+        "service_write": true,
+        "service_select": true
+      },
+      {
+        "acl": "{postgres=arwdDxtm/postgres,anon=arwdDxtm/postgres,authenticated=arwdDxtm/postgres,service_role=arwdDxtm/postgres}",
+        "rls": false,
+        "table": "game_state",
+        "service_write": true,
+        "service_select": true
+      },
+      {
+        "acl": "{postgres=arwdDxtm/postgres,anon=arwdDxtm/postgres,authenticated=arwdDxtm/postgres,service_role=arwdDxtm/postgres}",
+        "rls": false,
+        "table": "events",
+        "service_write": true,
+        "service_select": true
+      },
+      {
+        "acl": "{postgres=arwdDxtm/postgres,anon=arwdDxtm/postgres,authenticated=arwdDxtm/postgres,service_role=arwdDxtm/postgres}",
+        "rls": false,
+        "table": "riders",
+        "service_write": true,
+        "service_select": true
+      },
+      {
+        "acl": "{postgres=arwdDxtm/postgres,anon=arwdDxtm/postgres,authenticated=arwdDxtm/postgres,service_role=arwdDxtm/postgres}",
+        "rls": false,
+        "table": "event_stages",
+        "service_write": true,
+        "service_select": true
+      },
+      {
+        "acl": "{postgres=arwdDxtm/postgres,anon=arwdDxtm/postgres,authenticated=arwdDxtm/postgres,service_role=arwdDxtm/postgres}",
+        "rls": true,
+        "table": "stage_results",
+        "service_write": true,
+        "service_select": true
+      },
+      {
+        "acl": "{postgres=arwdDxtm/postgres,anon=arwdDxtm/postgres,authenticated=arwdDxtm/postgres,service_role=arwdDxtm/postgres}",
+        "rls": true,
+        "table": "stage_points",
+        "service_write": true,
+        "service_select": true
+      }
+    ],
+    "function_acl": [
+      {
+        "acl": "{=X/postgres,postgres=X/postgres,anon=X/postgres,authenticated=X/postgres,service_role=X/postgres}",
+        "args": "p_count integer",
+        "name": "grant_starter_pack",
+        "service_execute": true
+      },
+      {
+        "acl": "{=X/postgres,postgres=X/postgres,anon=X/postgres,authenticated=X/postgres,service_role=X/postgres}",
+        "args": "candidate_tables text[], candidate_cols text[]",
+        "name": "_pick_random_text_from_any",
+        "service_execute": true
+      },
+      {
+        "acl": "{=X/postgres,postgres=X/postgres,anon=X/postgres,authenticated=X/postgres,service_role=X/postgres}",
+        "args": "",
+        "name": "pick_first_name",
+        "service_execute": true
+      },
+      {
+        "acl": "{=X/postgres,postgres=X/postgres,anon=X/postgres,authenticated=X/postgres,service_role=X/postgres}",
+        "args": "",
+        "name": "pick_last_name",
+        "service_execute": true
+      },
+      {
+        "acl": "{=X/postgres,postgres=X/postgres,anon=X/postgres,authenticated=X/postgres,service_role=X/postgres}",
+        "args": "",
+        "name": "pick_nationality",
+        "service_execute": true
+      },
+      {
+        "acl": "{=X/postgres,postgres=X/postgres,anon=X/postgres,authenticated=X/postgres,service_role=X/postgres}",
+        "args": "",
+        "name": "pick_weighted_country",
+        "service_execute": true
+      },
+      {
+        "acl": "{=X/postgres,postgres=X/postgres,anon=X/postgres,authenticated=X/postgres,service_role=X/postgres}",
+        "args": "p_table text, p_country text",
+        "name": "pick_weighted_name",
+        "service_execute": true
+      },
+      {
+        "acl": "{=X/postgres,postgres=X/postgres,anon=X/postgres,authenticated=X/postgres,service_role=X/postgres}",
+        "args": "p_count integer",
+        "name": "generate_riders",
+        "service_execute": true
+      }
+    ],
+    "custom_link_summary": {
+      "accounts_linked_to_existing_team": 1
+    },
+    "account_link_summary": {
+      "users_with_team": 1,
+      "confirmed_accounts": 2,
+      "users_without_team": 1
+    }
+  }
+}

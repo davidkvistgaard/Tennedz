@@ -1,0 +1,457 @@
+import test from 'node:test';
+import assert from 'node:assert/strict';
+import {createV94RaceDynamicsPreview} from
+  '../../lib/engine/v2/playtest-race-dynamics-v94.mjs';
+import {replayRaceDynamicsRecording} from
+  '../../lib/engine/v2/replay-race-dynamics-v94.mjs';
+import {validateRecordedTour} from
+  '../../lib/engine/v2/recording.mjs';
+import {prepareV91Playtest} from
+  '../../lib/engine/v2/playtest.mjs';
+import {decideV94PaidBunchWorkersV1} from
+  '../../lib/engine/v2/v94-paid-bunch-worker-decisions-v1.mjs';
+import {inspectV94PelotonHoldCeilingV1} from
+  '../../lib/engine/v2/v94-peloton-hold-ceiling-v1.mjs';
+
+const settings={distanceKm:120,teamCount:20,terrain:'flat',fatigue:0,
+  attack:'none',chase:'selective',seed:'chase-turn-holdout-1-flat-0'};
+
+test('opt-in shared bunch front pays one leader on every road metre',()=>{
+  const {recording}=createV94RaceDynamicsPreview({format:'one_day',settings,
+    chaseTurnVersion:1,bunchFrontTurnVersion:1,pelotonFrontTurnVersion:1});
+  assert.equal(recording.frames.length,120);
+  assert.ok(recording.frames.some(frame=>
+    frame.chaseTurnPlan.status==='worked'&&frame.paidBunchPace));
+  for(const frame of recording.frames){
+    const plan=frame.pelotonFrontTurnPlan;
+    assert.equal(plan.status,'worked');
+    assert.equal(plan.turns[0].startM,0);
+    assert.equal(plan.turns.at(-1).endM,1000);
+    assert.equal(plan.extraEnergyCosts.reduce((sum,row)=>
+      sum+row.leadingM,0),1000);
+    assert.ok(Math.abs(plan.chasePower-frame.chasePower)<1e-8);
+  }
+  assert.equal(replayRaceDynamicsRecording(recording).frames.length,120);
+  const forged=structuredClone(recording);
+  forged.frames.find(frame=>frame.pelotonFrontTurnPlan.turns.length>0)
+    .pelotonFrontTurnPlan.turns[0].ability=100;
+  assert.throws(()=>replayRaceDynamicsRecording(forged),/differ|invalid/i);
+});
+
+test('explicit V94 stakes source-replay named paid bunch worker choices',()=>{
+  const sportingStakes=prepareV91Playtest(settings).teams.map(
+    (team,index)=>({teamId:team.id,
+      goal:index===0?'sprint_finish':'none',
+      captainId:team.orders.captainId}));
+  const options={format:'one_day',settings,sportingStakes,
+    chaseTurnVersion:1,bunchFrontTurnVersion:1,
+    pelotonFrontTurnVersion:1};
+  const {recording}=createV94RaceDynamicsPreview(options);
+  assert.equal(recording.committedInputs.rivalIntentVersion,5);
+  assert.ok(recording.frames.every(frame=>
+    frame.pelotonRiderDecisions.length===
+    frame.pelotonFrontTurnPlan.turns.length));
+  for(const frame of recording.frames){
+    for(const choice of frame.pelotonRiderDecisions){
+      const turn=frame.pelotonFrontTurnPlan.turns.find(row=>
+        row.leaderRiderId===choice.riderId);
+      assert.equal(choice.sourceKm,frame.km);
+      assert.equal(choice.teamId,turn.teamId);
+      assert.equal(choice.startM,turn.startM);
+      assert.equal(choice.endM,turn.endM);
+      assert.equal(choice.goal,sportingStakes.find(row=>
+        row.teamId===choice.teamId).goal);
+      assert.ok(choice.paidExtraCost>0);
+    }
+  }
+  assert.deepEqual(replayRaceDynamicsRecording(recording),recording);
+  const forged=structuredClone(recording);
+  forged.frames[0].pelotonRiderDecisions[0].goal='summit_attack';
+  assert.throws(()=>replayRaceDynamicsRecording(forged),
+    /paid worker choices differ/);
+  const chaseFrame=recording.frames.find(frame=>
+    frame.pelotonFrontTurnPlan.turns.some(turn=>
+      turn.workKind==='chase'));
+  assert.ok(chaseFrame);
+  assert.throws(()=>decideV94PaidBunchWorkersV1({
+    plan:chaseFrame.pelotonFrontTurnPlan,
+    teams:recording.committedInputs.teams,
+    intent:recording.committedInputs.rivalIntent,
+    chaseContributions:[],km:chaseFrame.km}),
+  /Paid worker choice differs/);
+  const historical=createV94RaceDynamicsPreview({
+    ...options,sportingStakes:null}).recording;
+  assert.ok(historical.frames.every(frame=>
+    !Object.hasOwn(frame,'pelotonRiderDecisions')));
+});
+
+test('opt-in peloton draft lowers sourced follower base cost',()=>{
+  const sportingStakes=prepareV91Playtest(settings).teams.map(team=>({
+    teamId:team.id,goal:'none',
+    captainId:team.orders.captainId}));
+  const options={format:'one_day',settings,sportingStakes,
+    chaseTurnVersion:1,bunchFrontTurnVersion:1,
+    pelotonFrontTurnVersion:1};
+  const historical=createV94RaceDynamicsPreview(options).recording;
+  assert.throws(()=>createV94RaceDynamicsPreview({
+    ...options,sportingStakes:null,pelotonDraftCostVersion:1}),
+  /valid experimental race settings/);
+  const drafted=createV94RaceDynamicsPreview({
+    ...options,pelotonDraftCostVersion:1}).recording;
+  const frame=drafted.frames[0];
+  assert.equal(frame.pelotonFrontTurnPlan.status,'worked');
+  const follower=frame.pelotonDraftCosts.find(row=>
+    row.leadingM===0&&!frame.breakawayRiderIds.includes(row.riderId));
+  assert.ok(follower);
+  assert.equal(follower.sourceKm,1);
+  assert.equal(follower.baseCostFraction,.8);
+  const cost=frame.energyLedger.find(row=>
+    row.riderId===follower.riderId).requestedWorkDemand;
+  const oldCost=historical.frames[0].energyLedger.find(row=>
+    row.riderId===follower.riderId).requestedWorkDemand;
+  assert.ok(cost<oldCost);
+  assert.ok(frame.pelotonDraftCosts.some(row=>
+    row.leadingM>0&&row.baseCostFraction>.8));
+  assert.deepEqual(replayRaceDynamicsRecording(drafted),drafted);
+  const forged=structuredClone(drafted);
+  forged.frames[0].pelotonDraftCosts.find(row=>
+    row.riderId===follower.riderId).baseCostFraction=1;
+  assert.throws(()=>replayRaceDynamicsRecording(forged),
+    /draft costs differ/);
+  assert.ok(historical.frames.every(row=>
+    !Object.hasOwn(row,'pelotonDraftCosts')));
+  assert.ok(drafted.frames.every(row=>
+    !Object.hasOwn(row,'pelotonFollowerDecisions')));
+});
+
+test('opt-in paid front exposure uses the physical leader price',()=>{
+  const sportingStakes=prepareV91Playtest(settings).teams.map(team=>({
+    teamId:team.id,goal:'none',
+    captainId:team.orders.captainId}));
+  const options={format:'one_day',settings,sportingStakes,
+    chaseTurnVersion:1,bunchFrontTurnVersion:1,
+    pelotonFrontTurnVersion:1,pelotonDraftCostVersion:1};
+  const historical=createV94RaceDynamicsPreview(options).recording;
+  const physical=createV94RaceDynamicsPreview({
+    ...options,pelotonExposureCostVersion:1}).recording;
+  const oldPlan=historical.frames[0].pelotonFrontTurnPlan;
+  const plan=physical.frames[0].pelotonFrontTurnPlan;
+  assert.equal(plan.exposureCostVersion,1);
+  const front=plan.turns.find(turn=>turn.workKind==='front');
+  assert.ok(front);
+  const cost=plan.extraEnergyCosts.find(row=>
+    row.riderId===front.leaderRiderId);
+  const oldCost=oldPlan.extraEnergyCosts.find(row=>
+    row.riderId===front.leaderRiderId);
+  assert.equal(cost.extraCost,
+    +(.18*(front.endM-front.startM)/1000).toFixed(6));
+  assert.ok(cost.extraCost>oldCost.extraCost);
+  assert.deepEqual(replayRaceDynamicsRecording(physical),physical);
+  const forged=structuredClone(physical);
+  forged.frames[0].pelotonFrontTurnPlan.extraEnergyCosts[0]
+    .extraCost=.001;
+  assert.throws(()=>validateRecordedTour(forged),
+    /shared peloton turns differ/);
+  assert.throws(()=>createV94RaceDynamicsPreview({
+    ...options,pelotonDraftCostVersion:0,
+    pelotonExposureCostVersion:1}),
+  /valid experimental race settings/);
+});
+
+test('strict draft refuses a rider lost during discounted kilometre',()=>{
+  const longSettings={...settings,distanceKm:260};
+  const sportingStakes=prepareV91Playtest(longSettings).teams.map(
+    team=>({teamId:team.id,goal:'none',
+      captainId:team.orders.captainId}));
+  assert.throws(()=>createV94RaceDynamicsPreview({
+    format:'one_day',settings:longSettings,sportingStakes,
+    chaseTurnVersion:1,bunchFrontTurnVersion:1,
+    pelotonFrontTurnVersion:1,pelotonDraftCostVersion:2}),
+  error=>{
+    assert.match(error.message,/Unresolved peloton draft contact/);
+    assert.equal(error.sourceKm,140);
+    assert.equal(error.sourceEvidence.riderId,'rival-14-0');
+    assert.equal(error.sourceEvidence.priorGroup,'peloton');
+    assert.equal(error.sourceEvidence.finalGroup,'dropped');
+    return true;
+  });
+});
+
+test('strict peloton loss refuses a drop without paid within-km contact',()=>{
+  const longSettings={...settings,distanceKm:260};
+  assert.throws(()=>createV94RaceDynamicsPreview({
+    format:'one_day',settings:longSettings,
+    roadGroupPaceVersion:3,chaseTurnVersion:1,
+    bunchFrontTurnVersion:1,pelotonFrontTurnVersion:1,
+    pelotonDropContactVersion:1}),error=>{
+    assert.match(error.message,/Unresolved peloton drop contact/);
+    assert.equal(error.sourceEvidence.priorGroup,'peloton');
+    assert.equal(error.sourceEvidence.finalGroup,'dropped');
+    assert.ok(error.sourceEvidence.finalDeficitSeconds>
+      error.sourceEvidence.priorDeficitSeconds);
+    assert.equal(error.sourceEvidence.energyLedger.riderId,
+      error.sourceEvidence.riderId);
+    return true;
+  });
+  assert.throws(()=>createV94RaceDynamicsPreview({
+    format:'one_day',settings:longSettings,
+    pelotonDropContactVersion:1}),
+  /valid experimental race settings/);
+  const completed=createV94RaceDynamicsPreview({
+    format:'one_day',settings,
+    roadGroupPaceVersion:3,chaseTurnVersion:1,
+    bunchFrontTurnVersion:1,pelotonFrontTurnVersion:1,
+    pelotonDropContactVersion:1}).recording;
+  assert.deepEqual(replayRaceDynamicsRecording(completed),completed);
+  const forged=structuredClone(completed);
+  forged.frames[0].riderGroups.find(row=>
+    row.group==='peloton').group='dropped';
+  assert.throws(()=>validateRecordedTour(forged),
+    /Recorded peloton drop lacks paid contact/);
+});
+
+test('strict deficit onset refuses before a peloton drop label',()=>{
+  const longSettings={...settings,distanceKm:260};
+  const options={format:'one_day',settings:longSettings,
+    roadGroupPaceVersion:3,chaseTurnVersion:1,
+    bunchFrontTurnVersion:1,pelotonFrontTurnVersion:1,
+    pelotonDropContactVersion:1};
+  let dropKm=null;
+  assert.throws(()=>createV94RaceDynamicsPreview(options),error=>{
+    assert.match(error.message,/Unresolved peloton drop contact/);
+    dropKm=error.sourceKm;
+    return true;
+  });
+  assert.throws(()=>createV94RaceDynamicsPreview({
+    ...options,pelotonDeficitContactVersion:1}),error=>{
+    assert.match(error.message,/Unresolved peloton deficit onset/);
+    assert.ok(error.sourceKm<dropKm);
+    assert.equal(error.sourceEvidence.priorGroup,'peloton');
+    assert.equal(error.sourceEvidence.priorDeficitSeconds,0);
+    assert.ok(error.sourceEvidence.finalDeficitSeconds>0);
+    assert.equal(error.sourceEvidence.sustainedShortfallStartKm,
+      error.sourceKm-error.sourceEvidence.finalLowKilometres+1);
+    assert.equal(error.sourceEvidence.energyLedger.riderId,
+      error.sourceEvidence.riderId);
+    assert.ok(error.sourceEvidence.paidFrontTurns.length>0);
+    return true;
+  });
+  assert.throws(()=>createV94RaceDynamicsPreview({
+    ...options,pelotonDropContactVersion:0,
+    pelotonDeficitContactVersion:1}),
+  /valid experimental race settings/);
+  const completed=createV94RaceDynamicsPreview({
+    ...options,settings,pelotonDeficitContactVersion:1}).recording;
+  assert.deepEqual(replayRaceDynamicsRecording(completed),completed);
+  const forged=structuredClone(completed);
+  forged.frames[0].riderGroups.find(row=>row.group==='peloton')
+    .deficitSeconds=.1;
+  assert.throws(()=>validateRecordedTour(forged),
+    /Recorded peloton deficit onset lacks paid contact/);
+});
+
+test('strict hold ceiling exposes an unholdable named turn before deficit',()=>{
+  const mountain={...settings,terrain:'mountain',
+    seed:'preview-recorded-road-1'};
+  const sportingStakes=prepareV91Playtest(mountain).teams.map(team=>({
+    teamId:team.id,goal:'sprint_finish',captainId:team.orders.captainId}));
+  const options={format:'one_day',settings:mountain,sportingStakes,
+    roadGroupPaceVersion:3,chaseTurnVersion:1,
+    bunchFrontTurnVersion:1,pelotonFrontTurnVersion:1,
+    pelotonDropContactVersion:1,pelotonDeficitContactVersion:1};
+  assert.throws(()=>createV94RaceDynamicsPreview({
+    ...options,pelotonHoldCeilingVersion:1}),error=>{
+    assert.match(error.message,/Unholdable paid peloton turn/);
+    assert.ok(error.sourceKm<3);
+    assert.ok(error.sourceEvidence.holdAbilityCeiling<
+      error.sourceEvidence.leaderAbility);
+    assert.ok(error.sourceEvidence.turnEndM>
+      error.sourceEvidence.turnStartM);
+    assert.ok(error.sourceEvidence.energyBefore>0);
+    return true;
+  });
+  assert.throws(()=>createV94RaceDynamicsPreview({
+    ...options,pelotonDeficitContactVersion:0,
+    pelotonHoldCeilingVersion:1}),/valid experimental race settings/);
+  const historic=createV94RaceDynamicsPreview({
+    ...options,pelotonDropContactVersion:0,
+    pelotonDeficitContactVersion:0}).recording;
+  const first=historic.frames[0];
+  const risk=inspectV94PelotonHoldCeilingV1({
+    plan:first.pelotonFrontTurnPlan,
+    priorRiderStates:historic.committedInputs.teams.flatMap(team=>
+      team.riders.map(rider=>({id:rider.id,teamId:team.id,
+        group:'peloton',energy:first.energyLedger.find(row=>
+          row.riderId===rider.id).energyBefore}))),
+    aheadRiderIds:first.breakawayRiderIds,
+    teams:historic.committedInputs.teams,
+    segment:historic.route.kilometres[0],km:1});
+  assert.ok(risk.length>0);
+  const forged=structuredClone(historic);
+  forged.committedInputs.raceContext.pelotonDropContactVersion=1;
+  forged.committedInputs.raceContext.pelotonDeficitContactVersion=1;
+  forged.committedInputs.raceContext.pelotonHoldCeilingVersion=1;
+  assert.throws(()=>validateRecordedTour(forged),
+    /Recorded peloton turn exceeds rider hold ceiling/);
+});
+
+test('opt-in follower payment choices replay strength, orders and stakes',()=>{
+  const sportingStakes=prepareV91Playtest(settings).teams.map(team=>({
+    teamId:team.id,goal:'sprint_finish',
+    captainId:team.orders.captainId}));
+  const options={format:'one_day',settings,sportingStakes,
+    roadGroupPaceVersion:3,chaseTurnVersion:1,
+    bunchFrontTurnVersion:1,pelotonFrontTurnVersion:1,
+    pelotonDraftCostVersion:1,pelotonDropContactVersion:1,
+    pelotonFollowerDecisionVersion:1};
+  const {recording}=createV94RaceDynamicsPreview(options);
+  assert.ok(recording.frames.every(frame=>
+    frame.pelotonFollowerDecisions.length>0));
+  for(const frame of recording.frames){
+    const leaders=new Set(frame.pelotonFrontTurnPlan.turns.map(turn=>
+      turn.leaderRiderId));
+    for(const choice of frame.pelotonFollowerDecisions){
+      assert.equal(choice.sourceKm,frame.km);
+      assert.equal(choice.goal,'sprint_finish');
+      assert.ok(choice.perceivedAbility>0);
+      assert.ok(!leaders.has(choice.riderId));
+      const ledger=frame.energyLedger.find(row=>
+        row.riderId===choice.riderId);
+      assert.equal(choice.requestedWorkDemand,
+        ledger.requestedWorkDemand);
+      assert.equal(choice.choice===
+        'coast_after_reserve_exhausted',
+      ledger.coastDelaySeconds>0);
+    }
+  }
+  assert.deepEqual(replayRaceDynamicsRecording(recording),recording);
+  const forged=structuredClone(recording);
+  forged.frames[0].pelotonFollowerDecisions[0].goal='none';
+  assert.throws(()=>validateRecordedTour(forged),
+    /peloton follower choices differ/);
+  assert.throws(()=>createV94RaceDynamicsPreview({
+    ...options,pelotonDropContactVersion:0}),
+  /valid experimental race settings/);
+  assert.throws(()=>createV94RaceDynamicsPreview({
+    ...options,settings:{...settings,distanceKm:260}}),
+  /Unresolved peloton drop contact/);
+});
+
+test('opt-in follower effort records actual peloton rest separately from order',()=>{
+  const sportingStakes=prepareV91Playtest(settings).teams.map(team=>({
+    teamId:team.id,goal:'sprint_finish',
+    captainId:team.orders.captainId}));
+  const options={
+    format:'one_day',settings,sportingStakes,
+    roadGroupPaceVersion:3,chaseTurnVersion:1,
+    bunchFrontTurnVersion:1,pelotonFrontTurnVersion:1,
+    pelotonDraftCostVersion:1,pelotonDropContactVersion:1,
+    pelotonFollowerDecisionVersion:2};
+  const {recording}=createV94RaceDynamicsPreview(options);
+  const choices=recording.frames.flatMap(frame=>
+    frame.pelotonFollowerDecisions);
+  assert.ok(choices.length>0);
+  assert.ok(choices.every(choice=>choice.version===
+    'v94-peloton-follower-effort-2'));
+  assert.ok(choices.every(choice=>choice.appliedEffort===
+    (choice.effortSource==='recorded_peloton_rest'?
+      'conserve':choice.teamOrderEffort)));
+  const rested=choices.find(choice=>
+    choice.effortSource==='recorded_peloton_rest'&&
+    choice.teamOrderEffort!=='conserve');
+  assert.ok(rested);
+  assert.equal(rested.reason,'payable_recorded_rest_work');
+  assert.deepEqual(replayRaceDynamicsRecording(recording),recording);
+  const forged=structuredClone(recording);
+  forged.frames.find(frame=>frame.pelotonFollowerDecisions.some(row=>
+    row.riderId===rested.riderId&&row.sourceKm===rested.sourceKm))
+    .pelotonFollowerDecisions.find(row=>row.riderId===rested.riderId)
+    .appliedEffort='steady';
+  assert.throws(()=>validateRecordedTour(forged),
+    /Invalid V94 follower applied effort source/);
+  const disguised=structuredClone(recording);
+  const changed=disguised.frames.find(frame=>
+    frame.km===rested.sourceKm).pelotonFollowerDecisions.find(row=>
+    row.riderId===rested.riderId);
+  changed.appliedEffort='steady';
+  changed.effortSource='team_order';
+  changed.reason='payable_ordered_work';
+  assert.throws(()=>validateRecordedTour(disguised),
+    /Invalid V94 follower applied effort source/);
+  assert.throws(()=>createV94RaceDynamicsPreview({
+    ...options,pelotonDropContactVersion:0}),
+  /valid experimental race settings/);
+});
+
+test('fresh paid attackers receive source-replayed launch choices',()=>{
+  const sportingStakes=prepareV91Playtest(settings).teams.map(team=>({
+    teamId:team.id,goal:'none',
+    captainId:team.orders.captainId}));
+  const options={format:'one_day',settings,sportingStakes,
+    roadGroupPaceVersion:3,chaseTurnVersion:1,
+    bunchFrontTurnVersion:1,pelotonFrontTurnVersion:1,
+    freshAttackDecisionVersion:1};
+  const {recording}=createV94RaceDynamicsPreview(options);
+  const launches=recording.frames.filter(frame=>
+    frame.attackers.length);
+  assert.ok(launches.length>0);
+  for(const frame of recording.frames){
+    assert.equal(frame.freshAttackRiderDecisions.length,
+      frame.attackers.length);
+    for(const row of frame.freshAttackRiderDecisions){
+      assert.equal(row.sourceKm,frame.km);
+      assert.ok(frame.attackers.includes(row.riderId));
+      assert.equal(row.choice,'launch_paid_attack');
+      assert.ok(row.paidExtraCost>0);
+      assert.ok(row.attackPressure>0);
+    }
+  }
+  assert.deepEqual(replayRaceDynamicsRecording(recording),recording);
+  const forged=structuredClone(recording);
+  forged.frames.find(frame=>frame.attackers.length)
+    .freshAttackRiderDecisions[0].goal='break_stage';
+  assert.throws(()=>replayRaceDynamicsRecording(forged),
+    /fresh attack choices differ/);
+  assert.throws(()=>createV94RaceDynamicsPreview({
+    ...options,sportingStakes:null}),
+  /valid experimental race settings/);
+});
+
+test('historical opt-in chase version retains its separate road contract',()=>{
+  const {recording}=createV94RaceDynamicsPreview({format:'one_day',settings,
+    chaseTurnVersion:1,bunchFrontTurnVersion:1});
+  assert.equal(recording.frames.length,120);
+  assert.ok(recording.frames.every(frame=>
+    !Object.hasOwn(frame,'pelotonFrontTurnPlan')));
+  assert.equal(replayRaceDynamicsRecording(recording).frames.length,120);
+});
+
+test('simultaneous attack and paid pursuit refuses with source facts',()=>{
+  const mountain={distanceKm:120,teamCount:20,
+    terrain:'mountain',fatigue:30,
+    attack:'none',chase:'selective',
+    seed:'chase-turn-holdout-1-mountain-30'};
+  assert.throws(()=>createV94RaceDynamicsPreview({
+    format:'one_day',settings:mountain,
+    roadGroupPaceVersion:3,chaseTurnVersion:1,
+    bunchFrontTurnVersion:1,pelotonFrontTurnVersion:1}),
+  error=>{
+    assert.match(error.message,
+      /Combined fresh attack and paid pursuit/);
+    assert.equal(error.sourceKm,80);
+    const evidence=error.sourceEvidence;
+    assert.equal(evidence.segment.km,80);
+    assert.ok(evidence.attackers.length>0);
+    assert.ok(evidence.attackers.every(row=>
+      row.riderId&&row.teamId&&
+      Number.isFinite(row.energyBefore)&&
+      Number.isFinite(row.abstractPressure)&&
+      row.teamOrderEffort));
+    assert.equal(evidence.paidBunchTurns[0].startM,0);
+    assert.equal(evidence.paidBunchTurns.at(-1).endM,
+      1000);
+    assert.ok(evidence.paidBunchTurns.some(row=>
+      row.workKind==='chase'));
+    return true;
+  });
+});

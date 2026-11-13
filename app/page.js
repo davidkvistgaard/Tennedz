@@ -1,58 +1,20 @@
-"use client";
-
 import Link from "next/link";
-import SmallButton from "./components/SmallButton";
-
+import Image from "next/image";
+import "./identity.css";
 export default function Home() {
-  return (
-    <main style={{ display: "grid", gap: 14 }}>
-      <div className="card" style={{ padding: 22 }}>
-        <div className="badge" style={{ marginBottom: 12 }}>
-          <span style={{ color: "var(--accent)", fontWeight: 1000 }}>TEN</span>
-          <span style={{ color: "var(--muted)" }}>nedz</span>
-          <span style={{ marginLeft: 8, opacity: 0.85 }}>Cycling Manager</span>
-        </div>
-
-        <div className="h1" style={{ fontSize: 34, lineHeight: 1.05 }}>
-          Byg dit hold. Sæt taktik. Vind løb.
-        </div>
-
-        <p style={{ color: "var(--muted)", maxWidth: 720, marginTop: 10, lineHeight: 1.55 }}>
-          Tennedz er et online managerspil i cykling, inspireret af klassiske manager-spil:
-          fokus på strategi, forberedelse og et løb du kan følge i en viewer. Ingen fordel ved at være online
-          i løbsøjeblikket — ordrer låses ved deadline.
-        </p>
-
-        <div style={{ display: "flex", gap: 10, flexWrap: "wrap", marginTop: 14 }}>
-          <Link href="/team" style={{ textDecoration: "none" }}>
-            <SmallButton className="primary">Gå til mit hold</SmallButton>
-          </Link>
-          <Link href="/team/run" style={{ textDecoration: "none" }}>
-            <SmallButton>Kør løb</SmallButton>
-          </Link>
-          <Link href="/admin" style={{ textDecoration: "none" }}>
-            <SmallButton>Admin</SmallButton>
-          </Link>
-        </div>
-      </div>
-
-      <div className="kpi">
-        <div className="k card" style={{ padding: 14 }}>
-          <div className="small">Føles som et spil</div>
-          <b>Live feed + viewer</b>
-          <div className="small" style={{ marginTop: 6 }}>Masser af tekstvariation og navne i feedet.</div>
-        </div>
-        <div className="k card" style={{ padding: 14 }}>
-          <div className="small">Fairness</div>
-          <b>Deadline lock</b>
-          <div className="small" style={{ marginTop: 6 }}>Ordrer kan ikke ændres efter deadline.</div>
-        </div>
-        <div className="k card" style={{ padding: 14 }}>
-          <div className="small">Progression</div>
-          <b>Form + fatigue</b>
-          <div className="small" style={{ marginTop: 6 }}>Game-år = 90 dage (hurtigere karrierer).</div>
-        </div>
-      </div>
-    </main>
-  );
+  return <div className="identity-home">
+    <header className="identity-nav"><Link href="/" className="identity-logo">pelotonia<span>CYCLING MANAGER</span></Link><nav aria-label="Navigation"><Link href="/login">Sign in</Link><Link className="btn primary" href="/signup">Create your team ↗</Link></nav></header>
+    <section className="identity-hero">
+      <div className="identity-copy"><p className="identity-eyebrow">BIG PERSONALITIES. BIG RACES.</p><h1>A team to<br/>believe in.<br/><em>A race to live for.</em></h1><p className="identity-lead">They have the legs. You have the plan. Build your team, read the route, and send the right eight riders to the start.</p><Link className="btn primary identity-cta" href="/signup">Your story starts here ↗</Link><p className="identity-note">Start with 16 riders · Separate races for men and women</p></div>
+      <figure className="identity-race-art"><Image src="/images/pelotonia-men-sprint.png" alt="Riders sprint through Pelotonia with a waterfront cathedral and mountains behind them" width={1536} height={1024} sizes="(max-width: 700px) 100vw, 60vw" priority /><figcaption>The finish is theirs. The plan is yours.</figcaption></figure>
+    </section>
+    <section className="identity-victory"><Image src="/images/pelotonia-women-podium.png" alt="Three women cyclists celebrate on the podium above Pelotonia's sunlit coastline" width={1536} height={1024} sizes="(max-width: 700px) 100vw, 65vw" /><div><p className="identity-eyebrow">TWO SQUADS. SHARED AMBITION.</p><h2>Build a team.<br/>Live for moments like this.</h2><p>Eight men. Eight women. Separate races and rankings, with a whole club to believe in.</p><Link href="/signup" className="btn primary">Build your first team ↗</Link></div></section>
+    <section className="identity-steps" aria-label="How to play">{[
+      ["01", "Get to know your team", "Sprinters, climbers, and dedicated domestiques. Discover their strengths and build your own story."],
+      ["02", "Make your plan before the deadline", "Choose eight riders and a captain for the route. Your decisions are locked when the deadline passes."],
+      ["03", "Watch the race unfold", "The race is calculated before playback. Watch the replay and discover how your plan played out."],
+    ].map(([n,title,copy])=><article key={n}><span>{n}</span><h2>{title}</h2><p>{copy}</p></article>)}</section>
+    <section className="identity-questions" aria-labelledby="welcome-questions"><div><p className="identity-eyebrow">A MANAGER'S LIFE</p><h2 id="welcome-questions">Your plan.<br/>Their moment.</h2><p>Get to know the rhythm before you join the team office.</p></div><div><details><summary>Do I need to be online during the race?</summary><p>No. Choose your lineup and orders before the deadline. The whole race is calculated before you watch its replay.</p></details><details><summary>Do the men's and women's squads race together?</summary><p>No. Each squad has its own races and rankings. You manage both as part of the same club.</p></details><details><summary>What does my first team include?</summary><p>You begin with 16 riders: eight men and eight women. Get to know their existing skills and choose a captain for each race.</p></details></div></section>
+    <footer className="identity-footer"><strong>pelotonia</strong><p>A cycling manager game in development. Scene illustrations show our visual world; team portraits currently use illustrated avatars.</p><Link href="/signup">Build your first team ↗</Link></footer>
+  </div>;
 }

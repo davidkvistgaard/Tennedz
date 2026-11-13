@@ -1,221 +1,42 @@
 "use client";
-
 import { useEffect, useState } from "react";
-
+import Link from "next/link";
+import WelcomeFrame from "../components/WelcomeFrame";
+import { signalAuthChange } from "../components/AuthProvider";
 export default function LoginPage() {
   const [loginName, setLoginName] = useState("");
   const [password, setPassword] = useState("");
   const [status, setStatus] = useState("");
+  const [error, setError] = useState("");
   const [busy, setBusy] = useState(false);
-
   useEffect(() => {
     let mounted = true;
-
-    async function checkSession() {
-      try {
-        const j = await fetch("/api/auth/me", { cache: "no-store" }).then(r => r.json());
-        if (!mounted) return;
-        if (j?.logged_in) {
-          window.location.href = "/team";
-        }
-      } catch {
-        // ignore
-      }
-    }
-
-    checkSession();
-
-    return () => {
-      mounted = false;
-    };
+    if (new URLSearchParams(window.location.search).get("confirmation") === "failed") setError("The confirmation link could not be used in this browser. Try signing in with your email and password.");
+    fetch("/api/auth/me", { cache: "no-store" }).then(r => r.json()).then(data => {
+      if (mounted && data?.logged_in) window.location.href = "/team";
+    }).catch(() => {});
+    return () => { mounted = false; };
   }, []);
-
-  async function handleLogin(e) {
-    e.preventDefault();
-    setBusy(true);
-    setStatus("Logger ind...");
-
+  async function handleLogin(event) {
+    event.preventDefault(); setBusy(true); setError(""); setStatus("Signing in…");
     try {
-      const res = await fetch("/api/auth/login", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json"
-        },
-        body: JSON.stringify({
-          login_name: loginName.trim(),
-          password
-        })
-      });
-
-      const j = await res.json();
-
-      if (!j?.ok) throw new Error(j?.error || "Login fejlede");
-
-      setStatus("Logget ind ✅");
-      window.location.href = "/team";
-    } catch (err) {
-      setStatus("Fejl: " + (err?.message ?? String(err)));
-    } finally {
-      setBusy(false);
-    }
+      const response = await fetch("/api/auth/login", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ login_name: loginName.trim(), password }) });
+      const data = await response.json();
+      if (!response.ok || !data?.ok) throw new Error(data?.error || "Sign-in failed. Please try again.");
+      signalAuthChange(); setStatus("Signed in. Opening your team…"); window.location.href = "/onboarding";
+    } catch (err) { setError(err?.message || "Could not connect. Please try again."); setStatus(""); }
+    finally { setBusy(false); }
   }
-
-  return (
-    <main
-      style={{
-        minHeight: "100vh",
-        background: "#f5f6f4",
-        display: "flex",
-        alignItems: "center",
-        justifyContent: "center",
-        padding: 24,
-      }}
-    >
-      <div
-        style={{
-          width: "100%",
-          maxWidth: 440,
-          background: "#fff",
-          border: "1px solid rgba(15,23,42,0.08)",
-          borderRadius: 18,
-          boxShadow: "0 10px 30px rgba(15,23,42,0.08)",
-          padding: 24,
-        }}
-      >
-        <div style={{ marginBottom: 18 }}>
-          <div style={{ fontSize: 30, fontWeight: 900, color: "#0f172a" }}>
-            PELOTONIA
-          </div>
-          <div style={{ fontSize: 15, color: "rgba(15,23,42,0.72)" }}>
-            Cycling Manager
-          </div>
-        </div>
-
-        <h1
-          style={{
-            fontSize: 30,
-            lineHeight: 1.1,
-            margin: "0 0 8px 0",
-            color: "#0f172a",
-          }}
-        >
-          Log ind
-        </h1>
-
-        <p style={{ margin: "0 0 20px 0", color: "rgba(15,23,42,0.72)" }}>
-          Log ind med login-navn og kodeord for at se dit hold.
-        </p>
-
-        <form onSubmit={handleLogin} style={{ display: "grid", gap: 14 }}>
-          <div>
-            <label
-              htmlFor="login_name"
-              style={{
-                display: "block",
-                marginBottom: 6,
-                fontSize: 14,
-                fontWeight: 700,
-                color: "#0f172a",
-              }}
-            >
-              Login-navn
-            </label>
-            <input
-              id="login_name"
-              type="text"
-              autoComplete="username"
-              value={loginName}
-              onChange={(e) => setLoginName(e.target.value)}
-              placeholder="fx Tennedz"
-              required
-              style={{
-                width: "100%",
-                padding: "12px 14px",
-                borderRadius: 12,
-                border: "1px solid rgba(15,23,42,0.14)",
-                fontSize: 16,
-                outline: "none",
-              }}
-            />
-          </div>
-
-          <div>
-            <label
-              htmlFor="password"
-              style={{
-                display: "block",
-                marginBottom: 6,
-                fontSize: 14,
-                fontWeight: 700,
-                color: "#0f172a",
-              }}
-            >
-              Kodeord
-            </label>
-            <input
-              id="password"
-              type="password"
-              autoComplete="current-password"
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-              placeholder="••••••••"
-              required
-              style={{
-                width: "100%",
-                padding: "12px 14px",
-                borderRadius: 12,
-                border: "1px solid rgba(15,23,42,0.14)",
-                fontSize: 16,
-                outline: "none",
-              }}
-            />
-          </div>
-
-          <button
-            type="submit"
-            disabled={busy}
-            style={{
-              marginTop: 4,
-              padding: "12px 16px",
-              borderRadius: 999,
-              border: "1px solid rgba(14,143,70,0.4)",
-              background: busy
-                ? "rgba(31,175,90,0.75)"
-                : "linear-gradient(180deg,#1FAF5A 0%, #0E8F46 100%)",
-              color: "#fff",
-              fontSize: 16,
-              fontWeight: 800,
-              cursor: busy ? "default" : "pointer",
-            }}
-          >
-            {busy ? "Logger ind..." : "Log ind"}
-          </button>
-        </form>
-
-        <div
-          style={{
-            marginTop: 18,
-            minHeight: 22,
-            color: status.startsWith("Fejl") ? "#b91c1c" : "rgba(15,23,42,0.72)",
-            fontSize: 14,
-          }}
-        >
-          {status}
-        </div>
-
-        <div style={{ marginTop: 18 }}>
-          <a
-            href="/"
-            style={{
-              color: "#0E8F46",
-              fontWeight: 700,
-              textDecoration: "none",
-            }}
-          >
-            ← Tilbage til forsiden
-          </a>
-        </div>
-      </div>
-    </main>
-  );
+  return <WelcomeFrame eyebrow="BACK IN THE TEAM OFFICE" title="Welcome back, manager." intro="Your riders. Your next race. Your next great decision.">
+    <form onSubmit={handleLogin} className="welcome-fields" aria-busy={busy}>
+      <label htmlFor="login_name">Email or username<input id="login_name" type="text" autoComplete="username" autoCapitalize="none" spellCheck={false} required value={loginName} onChange={e => setLoginName(e.target.value)} placeholder="you@example.com" /></label>
+      <label htmlFor="password">Password<input id="password" type="password" autoComplete="current-password" required value={password} onChange={e => setPassword(e.target.value)} /></label>
+      <p className="small">Existing managers can also use their original username.</p>
+      {error && <p role="alert" className="welcome-error">{error}</p>}
+      <button type="submit" className="btn primary" disabled={busy}>{busy ? "Signing in…" : "Sign in"}<span aria-hidden="true"> ↗</span></button>
+      <p role="status" className="welcome-status">{status}</p>
+    </form>
+    <p className="welcome-footer">New to the peloton? <Link href="/signup">Create your team</Link></p>
+    <Link className="welcome-back" href="/">← Back to home</Link>
+  </WelcomeFrame>;
 }

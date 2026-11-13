@@ -1,0 +1,73 @@
+# Optaget løb i den nye viewer
+
+## Datavejen
+
+`buildRace` og den eksisterende guided motor bestemmer stadig alle sportslige
+udfald. `recovery_finish_race` gemmer motorens replay v1 uændret bortset fra et
+separat `appearance` v1-snapshot med spillets valgte holddragter. Snapshotten
+kommer fra `club_identities`; uden et valgt design bruges spillets egen
+deterministiske standarddragt. Gamle optagelser får ikke efterkonstruerede
+trøjer og vises neutralt.
+Spillets nuværende holddragt gemmer palette og mønster, men intet særskilt
+hjelmvalg. Vieweren bruger derfor holdets primærfarve på hjelmen; den
+påstår ikke at vise et optaget, individuelt hjelmdesign.
+
+`guided-replay-to-pelotonia.viewer.v1-3` konverterer den gemte optagelse til
+`pelotonia.viewer.v1`. Den kopierer hele rytterlisten, alle checkpoints,
+grupper, gruppetidsgab i sekunder, engelske registrerede hændelser,
+ruteprofil og officielle måltider/placeringer. Den accepterer 1–160 ryttere i
+én kønskategori og afviser ufuldstændige optagelser. Viewerens resultater
+publiceres ved den gemte måltid. En fælles serverforankret visningscyklus
+spiller løbet ved 60×, holder målet i 15 sekunder og starter så forfra.
+Kameravalg er lokalt. Adapteren ordner grupperne efter deres registrerede
+tidsgab. Et fremtidigt replay med en anden array-rækkefølge får derfor ikke
+en forkert fører i gruppeoversigten. Den ordner også målrækker efter
+registreret placering og udleder visningens tidsforskel fra den registrerede
+førsteplads og de registrerede måltider. Motorens placeringer og tider ændres
+ikke, selv hvis kildens array-rækkefølge ændrer sig.
+
+## Kendte datagrænser
+
+Replay v1 har et fælles `km` for hvert checkpoint og gruppetidsgab, men ikke
+præcise samtidige meter mellem grupper eller indbyrdes hjulplacering, bane og
+rækkefølge i gruppen. Alle ryttere forankres ved det registrerede kilometer.
+Optagelsen gemmer heller ikke eksplicitte grupperoller. Overskrifterne
+"leaders", "peloton" og "dropped" er derfor visningsetiketter udledt af
+tidsgabsrækkefølge og gruppestørrelse. Den nuværende guided motors replay
+danner desuden sine gruppetidsgab ud fra
+simulerede faser og de endelige resultater. Det er motorens gemte model, ikke
+en måling af fysisk betalt kontakt ved hvert kilometer. Den eksperimentelle
+V94-motor er fortsat separat.
+`illustrative-group-layout-3` spreder kun cyklerne visuelt inden for gruppen
+og er mærket illustrativt i brugerfladen. Gruppens sekunder bliver aldrig
+omregnet til opdigtede meter. En rytter, som optagelsen placerer på
+målstregen, bliver vist præcis dér. Ruten er en skematisk distanceakse.
+Træer, terræn og tilskuere er `guided-illustrative-scenery-1`, ikke kanonisk
+geografi.
+Vieweren beregner ikke angreb, kontakt, gruppering eller resultat.
+
+API'et udleverer i øjeblikket den komplette replay til en autoriseret
+divisionsdeltager, også før visningens måltid. Brugerfladen skjuler fremtidig
+kommentering, rapport og resultat indtil mål, men en teknisk bruger kan læse
+den fremtidige optagelse i netværkssvaret. Serverstyret, tidsopdelt levering
+kræves, hvis udfaldet også skal være hemmeligt i browserens netværksdata.
+
+## Kontrolleret lokalt
+
+- Aktuelle motorgenererede optagelser: 32, 144 og 160 mænd og kvinder;
+  fuld frame- og resultatdækning uden ændring af source replay.
+- Edge/WebGL2 med 160 mænd og 160 kvinder: alle ryttere synlige, lokal
+  rytterfølgning, fælles tidslinje og 160 officielle resultatlinjer ved mål.
+  Intel UHD Graphics via ANGLE målte 30–31 fps i en kort lokal kørsel,
+  cirka 2,4 mio. trekanter og 88 draw calls. Det er ikke godkendelse af
+  andre GPU'er eller mobilhardware.
+- Fuldt managerforløb på 390 og 1440 px fra oprettelse og taktik til replay
+  og resultater. Ét afbrudt træ-asset gav en synlig fejlbesked, mens canvas
+  og løbet fortsatte.
+
+Den nye viewer er nu udgivet på `tennedz.eu`. Den præcise commit, produktionens
+side og JavaScript, den autentificerede Motor Lab-API, WebGL og rollback er
+kontrolleret; se [udgivelsesrapporten](VIEWER_RELEASE_2026-11-10_DA.md).
+Produktionskontoen havde endnu intet gemt guidet løb, så den gemte
+spiloptagelse er verificeret gennem beskyttede lokale API-fixtures og
+browsertests, men ikke gennem et faktisk gemt løb på produktionskontoen.

@@ -1,0 +1,168 @@
+# Motor Lab viewer release gate
+
+**Scope of this audit:** `pnpm audit:viewer:release` runs the older
+`physical-first-group-clock-probe-v1`, not the experimental V7 wheel-position
+engine. Its 8,592 unresolved group-clock finishes must not be reported as V7
+finish ties. The V7 audit is
+`node scripts/audit-position-general-motor-lab-v1.mjs --position-version=7 --source-version=2 --require-ready`.
+The latter checks replay, kilometre decisions, recorded positions and finish
+crossings, and exits unsuccessfully while official results or other required
+release evidence are missing. Neither audit alone authorizes production.
+
+Run `pnpm audit:viewer:release` from the Motor Lab worktree. It covers 72
+complete paid 120 km races: two distinct seeds, both rider categories, three
+route profiles, two chase orders and three attack orders. The command prints
+versioned JSON for every case and exits unsuccessfully unless every case
+finishes, every same-seed finish matches the guided source, each rider has
+an independently resolved finish, and official results are available.
+`node scripts/audit-motor-viewer-release.mjs --smoke`
+runs one seed with a smaller 20-case matrix for diagnostics.
+
+The current `motor-viewer-release-audit-2` run on 9 November 2026
+completed all 72 races and paid all 8,640 rider finishes. Of those,
+8,592 riders had a shared exact finish clock and no recorded order within
+their group. Every race had at least one unresolved tie. Twenty-four
+no-attack races matched the old source finish clocks; all 48 attack races
+disagreed. No race had official results. Thus a matching group clock alone
+cannot authorize placement or the existing place-based points. The 20-case
+smoke run likewise had 2,392 unresolved riders out of 2,400. These counts
+come from the motor recorder's exact clock groups, carried through the
+versioned viewer adapter. The audit explicitly refuses guided-race
+readiness while any such group remains unresolved.
+
+Historical baseline on `d9c25e592464852cec59624d5161da4d77d51ec2` (9 November
+2026): **72/72 complete exports, 12/72 calibrated, 60/72 with a same-seed
+finish discrepancy, 0/72 with official results**. Both seeds generated
+different document hashes and durations. The release gate is red.
+
+| Chase / attack | Cases | Fully calibrated | Finish mismatches per race |
+| --- | ---: | ---: | ---: |
+| Selective / none | 12 | 12 | 0 |
+| Selective / selective | 12 | 0 | 1 |
+| Selective / repeated | 12 | 0 | 1 |
+| All helpers / none | 12 | 0 | 20–50 |
+| All helpers / selective | 12 | 0 | 21–51 |
+| All helpers / repeated | 12 | 0 | 21–51 |
+
+In that historical baseline, the largest observed discrepancy was 421.48
+seconds. The complete exports
+prove that the experimental physical race can pay and replay every rider to
+the finish in this matrix. They do **not** establish that its chase timing,
+attack outcome, official ranking or general race validity is ready for
+guided races. A subsequent versioned leader plan resolved the full-chase
+clock differences in the no-attack cases. The remaining source comparison
+differs in every attack case; finish order is independently unresolved in
+every case. The viewer
+still lacks individual lane and wheel positions, canonical geography and
+official results. The production viewer cannot be approved from this audit.
+
+In the historical baseline, the 120 km mountain, all-helpers chase had 50 riders finishing on paid rear
+roads and 50 same-seed finish discrepancies. The selective chase has no
+rear-road finishers and no discrepancy. This points to the physical treatment
+of dropped workers as the dominant difference from the guided source. It is
+not a reason to erase the paid rear groups or force their times to match a
+historical gap claim.
+
+The current official one-day pipeline (`recovery-one-day-3`) still calls
+`simulateStage` and stores a version 1 group replay. Its entry snapshot
+contains selected riders and a captain, but no submitted tactical timeline.
+It cannot yet run the physical Motor Lab decisions from the user's actual
+orders. Migrating that pipeline and providing official results remains a
+separate release blocker.
+
+The newer, still opt-in positional contracts have separate diagnostics:
+`pnpm audit:motor:rotation:diagnose` and
+`pnpm audit:motor:attack:diagnose`. The staged-start rotation contract
+completed 24/24 no-attack 120 km races with an individually paid finish
+for every rider and 24 paid front passes. The one-attack contract completed
+48/48 attack-order races with one paid departure and every finish crossing.
+All 48 had the same final road count and peloton membership as the older
+paid source, while their exact clocks still differed.
+These are new motor-owned wheel positions, not positions retrofitted to
+the historical recording. The first 48-case attack audit found up to
+39.5 seconds of solo finish-clock difference and 1.7 seconds of peloton
+front-clock difference against the older paid source. Its completed
+races still have no official places, sprint, awarded points, or verified
+catch and dropped-worker movement. The position model remains separate
+from guided races and the production viewer; successful distance coverage
+does not clear the release gate.
+
+A separate 160-rider mountain diagnostic with an explicitly named,
+committed front worker reproduces 66 first-kilometre start drops in the
+older paid source. The opt-in wheel-position model stops at kilometre 1:
+it cannot yet pay and record the slow riders sliding through the bunch.
+`physical-first-position-rear-tail-drop-km-1` proves the narrower case
+of a single last wheel losing measured contact after paid sheltered travel,
+then paying solo travel. This is replayable but is not wired into the
+whole-race runner, does not settle interior sliding or rear-group contact,
+and does not change the production viewer or release decision.
+
+The experimental fixed-lane convoy now pays and replays all 160 riders
+for all 120 kilometres of that same no-attack mountain input. Its front
+clock matches the older paid source exactly; peloton membership and road
+count agree at 118/120 kilometre boundaries. Five measured contact
+topology changes create six final components. The first two boundaries
+still disagree, lane changes and overtaking are unavailable, and the
+last rider is about 3 km behind when the front finishes. A separate
+paid continuation carries all 160 riders to the real line, without
+extending the route after the finish. Its replay covers 160/160
+crossings; only one clock exactly matches the old group-clock source,
+and the largest difference is 129.7 seconds. There is still no sprint
+or official placement. These counts are diagnostic and leave the
+release gate red.
+
+The opt-in hybrid policy combines paid rotation and measured fixed-lane
+drop movement without copying old group positions. Its 24-case no-attack
+matrix completed every 120 km trace and every rider's paid crossing;
+the maximum front-clock difference from the old source was 1.69536
+seconds. All standard cases selected rotation for every kilometre,
+so this does not validate a mixed drop-and-rotation race. A separate
+160-rider mountain case selected fixed-lane movement for all 120 km.
+Attack orders on detached roads, general lane passing, a competitive
+sprint and official results remain unsupported; the recorder remains
+opt-in.
+
+A separate 160-rider mountain variant now combines early measured drops
+and a later paid peloton front pass while rear roads continue on the
+same clock. An actual order at the 25 km marker selects the new worker.
+The old source changes front at km 26; the positional race refuses 42
+unpayable attempts and records the pass at km 68. Both gender-labelled
+fixtures complete 19,200 rider-kilometres and 160/160 paid crossings,
+but the front clock differs by up to 13.45 seconds and individual finish
+clocks by roughly 129 seconds from the old group-clock recording.
+The synthetic rosters share numerical skills across gender labels.
+This is not whole-matrix calibration, and it does not authorize guided
+races, official results, viewer export or deployment.
+
+A synthetic five-point weaker front worker previously stopped the mixed
+race at kilometre 43 because the coarse rotation model predicted a
+shelter loss during the proposed pass. A separate versioned movement
+step now pays the pass and all 160 wheels at quarter-second resolution;
+the measured contact topology does not actually change in that step.
+Both category-labelled 120 km races complete 19,200 decisions,
+160/160 crossings and whole-recording replay. A ten-point weaker worker
+produces an explicit earlier refusal followed by a paid pass at km 43.
+The five-point weaker profile matches the old source's peloton
+membership at only 50/120 kilometre boundaries, so the release gate
+is still red. A pass with an actual concurrent contact split has not
+been validated.
+
+The separate multi-solo position recorder can pay two sequential
+departures in a three-kilometre synthetic mechanics test and replay all
+crossings. On a four-case, ten-point weaker-attacker whole-race smoke
+set it instead records later attempted attacks as physically refused:
+one refusal on each flat race and three on each mountain race. All four
+120 km recordings finish with every rider paid, but the older source
+places a second rider in the forward road. No positional lane change
+has yet made that second attempt payable, and no caught solo has been
+validated. The multi-solo recorder is opt-in and has no official results
+or viewer export.
+
+Local browser WebGL checks with the deliberately synthetic renderer fixture
+showed all 30 or 150 rider rigs for both categories, 51 draw calls and no
+renderer errors. Observed status samples after settling were 68 fps for 30
+men, 81 fps for 30 women, 47 fps for 150 men and 39–47 fps for 150 women.
+The 150-women missing-asset case still rendered at 47 fps and reported one
+asset error. These snapshots establish actual WebGL rendering on this local
+browser, not a device-wide performance guarantee. The fixture fabricates
+spacing solely for load testing and is not Motor Lab position evidence.

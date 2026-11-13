@@ -1,0 +1,84 @@
+diff --git a/source/package.json b/source/package.json
+--- a/source/package.json
++++ b/source/package.json
+@@ -1,6 +1,6 @@
+ {
+   "name": "pelotonia-viewer",
+-  "version": "0.98.2",
++  "version": "0.98.3",
+   "type": "module",
+   "scripts": {
+     "dev": "vite --host 0.0.0.0",
+diff --git a/source/src/version.js b/source/src/version.js
+--- a/source/src/version.js
++++ b/source/src/version.js
+@@ -1 +1 @@
+-export const VIEWER_VERSION = '0.98.2';
++export const VIEWER_VERSION = '0.98.3';
+diff --git a/source/src/viewer/cameraRig.js b/source/src/viewer/cameraRig.js
+--- a/source/src/viewer/cameraRig.js
++++ b/source/src/viewer/cameraRig.js
+@@ -25,6 +25,13 @@ export function dampOrbit(current, desired, dt) {
+   };
+ }
+-
++
++/** Keep the followed rider in view when race time advances faster than wall time. */
++export function focusDamping(dt, playbackRate = 1) {
++  const elapsed = Math.max(0, Math.min(dt, 0.5));
++  const rate = Number.isFinite(playbackRate) ? Math.max(1, playbackRate) : 1;
++  return 1 - Math.exp(-elapsed * rate * 3.8);
++}
++
+ /** Fit conservative cyclist envelopes in the real perspective frustum. No source movement. */
+ export function fitTargetScale(poses, focus, yaw, verticalFovDegrees, aspect, inset = .12, safeArea = {}) {
+   if (!poses.length) return .88;
+diff --git a/source/src/viewer/ViewerController.js b/source/src/viewer/ViewerController.js
+--- a/source/src/viewer/ViewerController.js
++++ b/source/src/viewer/ViewerController.js
+@@ -14,6 +14,7 @@ import {
+   normaliseYaw,
+   orbitOffset,
+   dampOrbit,
++  focusDamping,
+   fitTargetScale,
+ } from "./cameraRig.js";
+ import { targetPoses, initialCameraTarget, finishCameraFrame } from "./cameraTargets.js";
+@@ -387,6 +388,7 @@ export class ViewerController {
+     const scale=this.zoom*(finishFrame ? .77 : this.mode === "overview" ?
+       Math.max(2.8,this.lastFitScale || .88) : this.lastFitScale || .88);
+-    const damping = 1 - Math.exp(-Math.max(0, Math.min(dt, 0.5)) * 3.8);
++    const damping = focusDamping(dt,
++      this.shared?.clock?.rate ?? this.local.rate);
+     if (this.initial) {
+       this.focus.copy(target);
+       this.orbitState = { yaw: this.yaw, scale };
+diff --git a/source/test/camera.test.js b/source/test/camera.test.js
+--- a/source/test/camera.test.js
++++ b/source/test/camera.test.js
+@@ -4,6 +4,7 @@ import {
+   CAMERA_ELEVATION,
+   orbitOffset,
+   dampOrbit,
++  focusDamping,
+ } from "../src/viewer/cameraRig.js";
+ import { attachCameraInput } from "../src/viewer/cameraInput.js";
+ import { ViewerController } from "../src/viewer/ViewerController.js";
+@@ -30,4 +31,17 @@ test("all orbit/zoom positions and damped transitions preserve the elevated viewing angle", () => {
+   assert.ok(Math.abs(state.scale - 2) < 1e-4);
+ });
++test("the follow camera keeps pace with accelerated shared race time", () => {
++  const regular=focusDamping(1/60,1);
++  const accelerated=focusDamping(1/60,60);
++  assert.ok(regular>0&&regular<0.1);
++  assert.ok(accelerated>0.95&&accelerated<1);
++  let focus=0;
++  for(let frame=1;frame<=60;frame++)
++    focus+=(frame*10-focus)*accelerated;
++  assert.ok(600-focus<1,
++    'A 60× race must not leave the camera behind the riders');
++  assert.equal(focusDamping(0,60),0);
++  assert.equal(focusDamping(1/60,0),regular);
++});
+ test("camera controls are bounded, reject invalid settings atomically and leave shared playback untouched", () => {
+   const c = Object.create(ViewerController.prototype);

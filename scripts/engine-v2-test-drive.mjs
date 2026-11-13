@@ -1,0 +1,1433 @@
+// Offline v91 motor test drive. It reads fictional settings and never saves a
+// result, awards points, or calls the production game/database path.
+import {readFileSync} from 'node:fs';
+import {resolve} from 'node:path';
+import {pathToFileURL} from 'node:url';
+import {isDeepStrictEqual} from 'node:util';
+import {prepareV91Playtest,createV91Playtest} from
+  '../lib/engine/v2/playtest.mjs';
+import {simulateTacticalTour} from '../lib/engine/v2/tour.mjs';
+import {validateRecordedTour} from '../lib/engine/v2/recording.mjs';
+import {MOTOR_ATTACK_TRACE_VERSION,MOTOR_ENERGY_LEDGER_VERSION} from
+  '../lib/engine/v2/tuning.mjs';
+import {orderAt} from '../lib/engine/v2/orders.mjs';
+import {recordFinaleConcurrentDoubleCatchLineFromTour,
+  validateFinaleConcurrentDoubleCatchLineFromTour,
+  recordFinaleConcurrentDoubleCatchAssembledLineFromTour,
+  validateFinaleConcurrentDoubleCatchAssembledLineFromTour,
+  recordFinaleConcurrentDoubleCatchLaneQueuedLineFromTour,
+  validateFinaleConcurrentDoubleCatchLaneQueuedLineFromTour} from
+  '../lib/engine/v2/finale-concurrent-double-catch-line.mjs';
+import {recordFinaleConcurrentCommonTimeStateFromTour,
+  validateFinaleConcurrentCommonTimeStateFromTour} from
+  '../lib/engine/v2/finale-concurrent-common-time-state.mjs';
+import {recordFinaleConcurrentNextBoundaryFromTour,
+  validateFinaleConcurrentNextBoundaryFromTour} from
+  '../lib/engine/v2/finale-concurrent-next-boundary.mjs';
+import {recordFinaleConcurrentFullCatchContinuationFromTour,
+  validateFinaleConcurrentFullCatchContinuationFromTour,
+  recordFinaleConcurrentPriorRearCatchContinuationFromTour,
+  validateFinaleConcurrentPriorRearCatchContinuationFromTour} from
+  '../lib/engine/v2/finale-concurrent-band-continuation.mjs';
+import {recordFinaleConcurrentLateCatchLineFromTour,
+  validateFinaleConcurrentLateCatchLineFromTour} from
+  '../lib/engine/v2/finale-concurrent-late-catch-line.mjs';
+import {recordFinaleConcurrentSurvivorLineFromTour,
+  validateFinaleConcurrentSurvivorLineFromTour,
+  recordFinaleConcurrentPriorRearCatchLedgerLineFromTour,
+  validateFinaleConcurrentPriorRearCatchLedgerLineFromTour} from
+  '../lib/engine/v2/finale-concurrent-survivor-line.mjs';
+import {recordFinaleConcurrentRearCaught400StepFromTour,
+  validateFinaleConcurrentRearCaught400StepFromTour} from
+  '../lib/engine/v2/finale-concurrent-rear-caught-400-step.mjs';
+import {recordFinaleConcurrentDualSurvivorLineFromTour,
+  validateFinaleConcurrentDualSurvivorLineFromTour,
+  recordFinaleConcurrentDualSurvivorSprintLineFromTour,
+  validateFinaleConcurrentDualSurvivorSprintLineFromTour} from
+  '../lib/engine/v2/finale-concurrent-dual-survivor-line.mjs';
+import {validateRequestedFinalePlans,createV91FinaleTrial} from
+  '../lib/engine/v2/playtest-finale-trial.mjs';
+import {recordFinaleLaneQueuedEarlyBunchRunnerFromTour,
+  validateFinaleLaneQueuedEarlyBunchRunnerFromTour,
+  recordFinaleLaneQueuedCaughtBunchRunnerFromTour,
+  validateFinaleLaneQueuedCaughtBunchRunnerFromTour} from
+  '../lib/engine/v2/finale-paid-bunch-runner.mjs';
+import {projectFinaleLaneQueuedPointPreview} from
+  '../lib/engine/v2/finale-lane-queued-point-preview.mjs';
+import {finaleSnapshotFromTour} from
+  '../lib/engine/v2/finale-snapshot.mjs';
+import {hasFinaleConditionalCrossingBounds,
+  recordFinaleConditionalCrossingBounds,
+  validateFinaleConditionalCrossingBounds} from
+  '../lib/engine/v2/finale-conditional-crossing-bounds.mjs';
+import {createV91ConditionalRaceFinal,
+  createV91ConditionalRaceFinalFromLockedRace,
+  createV91GroupFallbackFromLockedRace,
+  validateV91ConditionalRaceFinal} from
+  '../lib/engine/v2/playtest-race-final.mjs';
+import {recordFinaleMultibandIndividualLine,
+  validateFinaleMultibandIndividualLine} from
+  '../lib/engine/v2/finale-multiband-individual-line.mjs';
+import {recordFinaleSeparatedIndividualLine,
+  validateFinaleSeparatedIndividualLine} from
+  '../lib/engine/v2/finale-separated-individual-line.mjs';
+import {recordFinaleUnorderedDroppedIndividualLine,
+  validateFinaleDepletedIndividualLine} from
+  '../lib/engine/v2/finale-depleted-individual-line.mjs';
+import {recordFinaleSingletonFrontIndividualLine,
+  validateFinaleSingletonFrontIndividualLine} from
+  '../lib/engine/v2/finale-singleton-front-individual-line.mjs';
+import {recordFinaleNamedAttackDroppedRoadFromTour,
+  validateFinaleNamedAttackDroppedRoadFromTour,
+  recordFinaleNamedAttackMultipleDroppedRoadFromTour,
+  validateFinaleNamedAttackMultipleDroppedRoadFromTour,
+  recordFinaleNamedAttackMultipleDroppedSprintRoadFromTour,
+  validateFinaleNamedAttackMultipleDroppedSprintRoadFromTour,
+  FINALE_NAMED_ATTACK_MULTIPLE_DROPPED_ROAD_VERSION,
+  FINALE_NAMED_ATTACK_MULTIPLE_DROPPED_SPRINT_ROAD_VERSION} from
+  '../lib/engine/v2/finale-named-attack-dropped-road.mjs';
+import {recordFinaleNamedDroppedIndividualLine,
+  validateFinaleNamedDroppedIndividualLine,
+  recordFinaleNamedMultipleDroppedIndividualLine,
+  validateFinaleNamedMultipleDroppedIndividualLine} from
+  '../lib/engine/v2/finale-named-dropped-individual-line.mjs';
+import {recordFinaleNamedDroppedSurvivorLine,
+  validateFinaleNamedDroppedSurvivorLine,
+  recordFinaleNamedMultipleDroppedSurvivorLine,
+  validateFinaleNamedMultipleDroppedSurvivorLine,
+  recordFinaleNamedMultipleDroppedSprintSurvivorLine,
+  validateFinaleNamedMultipleDroppedSprintSurvivorLine,
+  FINALE_NAMED_DROPPED_SURVIVOR_LINE_VERSION,
+  FINALE_NAMED_MULTIPLE_DROPPED_SURVIVOR_LINE_VERSION,
+  FINALE_NAMED_MULTIPLE_DROPPED_SPRINT_SURVIVOR_LINE_VERSION} from
+  '../lib/engine/v2/finale-named-dropped-survivor-line.mjs';
+import {recordFinaleNamedDroppedLateCatchLine,
+  validateFinaleNamedDroppedLateCatchLine,
+  recordFinaleNamedMultipleDroppedLateCatchLine,
+  validateFinaleNamedMultipleDroppedLateCatchLine,
+  recordFinaleNamedMultipleDroppedSprintLateCatchLine,
+  validateFinaleNamedMultipleDroppedSprintLateCatchLine,
+  FINALE_NAMED_DROPPED_LATE_CATCH_LINE_VERSION,
+  FINALE_NAMED_MULTIPLE_DROPPED_LATE_CATCH_LINE_VERSION,
+  FINALE_NAMED_MULTIPLE_DROPPED_SPRINT_LATE_CATCH_LINE_VERSION} from
+  '../lib/engine/v2/finale-named-dropped-late-catch-line.mjs';
+import {projectV91ProvisionalPointPreview,
+  projectV91ProvisionalMultibandPointPreview,
+  projectV91ProvisionalNamedDroppedPointPreview,
+  projectV91ProvisionalNamedMultipleDroppedPointPreview,
+  projectV91ProvisionalNamedDroppedSurvivorPointPreview,
+  projectV91ProvisionalNamedMultipleDroppedSurvivorPointPreview,
+  projectV91ProvisionalNamedMultipleDroppedSprintSurvivorPointPreview,
+  projectV91ProvisionalNamedDroppedLateCatchPointPreview,
+  projectV91ProvisionalNamedMultipleDroppedLateCatchPointPreview,
+  projectV91ProvisionalNamedMultipleDroppedSprintLateCatchPointPreview} from
+  '../lib/engine/v2/playtest-point-preview.mjs';
+
+const REFUSALS=new Set([
+  'The inactive-intents bunch has an unresolved road action.',
+  'The cooperative group has an unresolved last-kilometre road action.',
+  'The cooperative group has unpaid last-kilometre rider travel.',
+  'The selective chase needs a recorded last-kilometre change.',
+  'Finisher and lead-out plans are not paid for a road group.',
+  'Finisher and lead-out plans are not paid for road groups.',
+  'Finisher and lead-out plans are not paid for depleted road bands.',
+  'Finisher and lead-out plans are not paid for dropped road bands.',
+  'The separated last-kilometre finale needs recorded response or front rotation.',
+  'An early bunch plan needs one inactive-attack bunch.',
+  'The nominated lead-out cannot work beside the finisher.',
+  'The controlled finale trial needs one complete source bunch.',
+]);
+
+function expectedRefusal(message){
+  return REFUSALS.has(message)||
+    /^An early lead-out helper needs an adjacent lane: (?:you|rival-[1-9]\d*)\.$/
+      .test(message);
+}
+
+// A helper outside the source lane cannot assemble without an unrecorded
+// lateral move. Keep the manager's request visible, but replay the payable
+// race with only that unavailable helper removed from the applied orders.
+function createWithAvailableEarlyLeadOuts(settings,request){
+  let appliedRequest=request;
+  let lockedRace=null;
+  const unavailableLeadOuts=[];
+  for(;;){
+    try{return {trial:lockedRace?
+      createV91ConditionalRaceFinalFromLockedRace(settings,appliedRequest,
+        lockedRace):createV91ConditionalRaceFinal(settings,appliedRequest),
+      appliedRequest,unavailableLeadOuts};}
+    catch(error){
+      const teamId=/^An early lead-out helper needs an adjacent lane: ((?:you|rival-[1-9]\d*))\.$/
+        .exec(error.message)?.[1];
+      const plan=appliedRequest.plans?.find(row=>row.teamId===teamId);
+      if(request.attackTeamId!==undefined||!plan?.leadOutRiderId)
+        throw error;
+      lockedRace??=error.cause?.playtestSource??null;
+      if(!lockedRace)throw error;
+      unavailableLeadOuts.push({teamId,helperId:plan.leadOutRiderId,
+        finisherId:plan.finisherId,
+        status:'unavailable_source_lane',helperEnergySpent:0});
+      appliedRequest={...appliedRequest,plans:appliedRequest.plans.map(
+        row=>row.teamId===teamId?{...row,leadOutRiderId:null}:row)};
+    }
+  }
+}
+
+function requestFor(scenario){
+  const settings=scenario?.settings;
+  const {teams}=prepareV91Playtest(settings);
+  const overrides=scenario?.finalePlans??[];
+  if(!Array.isArray(overrides)||overrides.some(row=>!row||
+    typeof row!=='object'||Array.isArray(row)||
+    Object.keys(row).some(key=>
+      !['teamId','finisherId','leadOutRiderId'].includes(key))||
+    !teams.some(team=>team.id===row.teamId))||
+    new Set(overrides.map(row=>row.teamId)).size!==overrides.length)
+    throw new Error('Choose at most one finale override per known manager.');
+  const request={};
+  if(scenario?.attack!==undefined){
+    if(!scenario.attack||typeof scenario.attack!=='object'||
+      Array.isArray(scenario.attack)||
+      Object.keys(scenario.attack).sort().join(',')!=='riderId,teamId')
+      throw new Error('Choose one named team and rider attack.');
+    request.attackTeamId=scenario.attack.teamId;
+    request.attackRiderId=scenario.attack.riderId;
+  }
+  if(overrides.length){
+    const byTeam=new Map(overrides.map(row=>[row.teamId,row]));
+    request.plans=teams.map(team=>({teamId:team.id,
+      finisherId:byTeam.get(team.id)?.finisherId??team.orders.captainId,
+      leadOutRiderId:byTeam.get(team.id)?.leadOutRiderId??null}));
+    validateRequestedFinalePlans(request.plans,teams);
+  }
+  return request;
+}
+
+function unsupportedRefusal(error,scenario,request,pointContext){
+  const source=error.cause?.playtestSource??null;
+  const energyAudit=source?sourceEnergyAudit(source.recording,scenario.settings):null;
+  const snapshot=source?finaleSnapshotFromTour(source.recording,{
+    remainingKm:1,includeAttackLoad:true}):null;
+  return {version:request.attackTeamId!==undefined&&source?
+    'v91-offline-test-drive-6':'v91-offline-test-drive-1',
+    status:'unsupported',
+    input:prepareV91Playtest(scenario.settings).settings,
+    request,reason:error.message,
+    ...(energyAudit?{sourceEnergyAudit:energyAudit}:{}),
+    ...(snapshot?{lastKmSource:{
+      roadGroups:snapshot.roadGroups.map(group=>({
+        id:group.id,gapSeconds:group.gapSeconds,
+        riderIds:group.riderIds})),
+      droppedRiderIds:snapshot.droppedRiderIds,
+      chaserTeamIds:source.recording.frames[snapshot.sourceKm-1].chasers
+    }}:{}),pointsStatus:'withheld',
+    ...(pointContext?{provisionalPointPreview:{status:'unavailable',
+      reason:'No complete individual line.'}}:{}),
+    canCommitAwards:false};
+}
+
+function matchingEnergyLedger(recording,settings){
+  if(recording.tuningVersion!==MOTOR_ATTACK_TRACE_VERSION)return null;
+  const {stage,weather,teams,seed}=prepareV91Playtest(settings);
+  const replay=simulateTacticalTour({stage,weather,teams,seed,
+    motorVersion:MOTOR_ENERGY_LEDGER_VERSION});
+  validateRecordedTour(replay);
+  const original=structuredClone(replay);
+  original.tuningVersion=MOTOR_ATTACK_TRACE_VERSION;
+  for(const frame of original.frames)delete frame.energyLedger;
+  return isDeepStrictEqual(original,recording)?replay.frames:null;
+}
+
+function sourceEnergyAudit(recording,settings){
+  const frames=recording.frames.slice(0,-1);
+  const ledgerFrames=matchingEnergyLedger(recording,settings)?.slice(0,-1);
+  const unpaid=ledgerFrames?.flatMap(frame=>frame.energyLedger
+    .filter(row=>row.unmetEnergyDemand>.000001).map(row=>({
+      riderId:row.riderId,km:frame.km,demand:row.unmetEnergyDemand})))??[];
+  const riders=new Map();
+  for(let index=1;index<frames.length;index++){
+    const previous=new Set(frames[index-1].riderGroups.filter(row=>
+      row.energy===0).map(row=>row.id));
+    for(const row of frames[index].riderGroups){
+      if(row.energy===0&&previous.has(row.id)&&!riders.has(row.id))
+        riders.set(row.id,{riderId:row.id,
+          firstZeroKm:frames[index-1].km,
+          repeatedZeroKm:frames[index].km});
+    }
+  }
+  return riders.size||unpaid.length?{status:riders.size?
+    'sustained_zero_reserve':'unpaid_whole_kilometre_work',
+    ...(ledgerFrames?{ledgerVersion:MOTOR_ENERGY_LEDGER_VERSION,
+      firstUnpaidKm:unpaid[0]?.km??null,unpaidRiderKilometres:unpaid.length,
+      totalUnmetEnergyDemand:+unpaid.reduce((sum,row)=>sum+row.demand,0).toFixed(3)}:{}),
+    riders:[...riders.values()].sort((a,b)=>
+      a.firstZeroKm-b.firstZeroKm||a.riderId.localeCompare(b.riderId))}:null;
+}
+
+function summaryFor(trial,request,pointContext){
+  const {recording,paidFinale}=trial;
+  const energyAudit=sourceEnergyAudit(recording,trial.settings);
+  const crossingBounds=hasFinaleConditionalCrossingBounds(paidFinale)?
+    recordFinaleConditionalCrossingBounds(paidFinale):null;
+  if(crossingBounds)
+    validateFinaleConditionalCrossingBounds(paidFinale,crossingBounds);
+  const lastKm=recording.frames[recording.route.distanceKm-2];
+  const allTeams=recording.committedInputs.teams;
+  const decisions=allTeams.map(team=>({teamId:team.id,
+    baseline:team.orders.baseline,
+    finisherId:trial.finalePlans?.find(row=>row.teamId===team.id)
+      ?.finisherId??null,
+    leadOutRiderId:trial.finalePlans?.find(row=>row.teamId===team.id)
+      ?.leadOutRiderId??null}));
+  return {version:trial.roadStatus==='paid_conditional_line'?
+    'v91-offline-test-drive-5':'v91-offline-test-drive-1',
+    input:trial.settings,request,engineVersion:trial.version,
+    ...(energyAudit?{sourceEnergyAudit:energyAudit}:{}),
+    roadStatus:trial.roadStatus,
+    resultStatus:trial.classifiedResults===null?'unclassified':'classified',
+    pointsStatus:trial.pointsStatus,canCommitAwards:trial.canCommitAwards,
+    managerDecisions:decisions,
+    ...(pointContext?{provisionalPointPreview:
+      trial.roadStatus==='paid_conditional_line'&&
+        paidFinale.positionSourceStatus===
+          'provisional_inferred_independent_wheels'&&
+        paidFinale.passingRule==='open-road-lab-1'&&
+        Array.isArray(paidFinale.lineOrder)&&
+        paidFinale.lineOrder.every(row=>row.position!==null)?
+        projectV91ProvisionalPointPreview(trial,pointContext):
+        {status:'unavailable',reason:trial.roadStatus===
+          'paid_conditional_line'?'No unambiguous individual line.':
+          'No complete individual line.'}}:{}),
+    lastKmSource:{roadGroups:lastKm.roadGroups.map(group=>({
+      id:group.id,gapSeconds:group.gapSeconds,
+      riderIds:group.riderIds})),
+    droppedRiderIds:lastKm.riderGroups.filter(row=>
+      row.group==='dropped').map(row=>row.id),
+    chaserTeamIds:lastKm.chasers},
+    finale:trial.roadStatus==='paid_group_bands'?{
+      outcome:paidFinale.line.outcome,
+      roadFrames:paidFinale.roadFrames.map(frame=>({
+        elapsedSecondsFromBunchMarker:frame.elapsedSecondsFromBunchMarker,
+        bunchPositionM:frame.bunchPositionM,
+        frontPositionM:frame.frontPositionM,contact:frame.contact})),
+      finalRiderEnergy:paidFinale.line.finalRiderEnergy,
+      ...(trial.chaseAvailability?{
+        chaseAvailability:trial.chaseAvailability}:{}),
+      roadPlaceBounds:trial.roadPlaceBounds,
+      individualFinishStatus:'unresolved_within_road_bands'}:
+      trial.roadStatus==='paid_separated_bands'||
+      trial.roadStatus==='recorded_depleted_bands'||
+      trial.roadStatus==='recorded_dropped_bands'?{
+        outcome:paidFinale.line.outcome,
+        passageFrames:paidFinale.passageFrames,
+        bands:paidFinale.line.bands,
+        finalRiderEnergy:paidFinale.line.finalRiderEnergy,
+        ...(['recorded_depleted_bands','recorded_dropped_bands']
+          .includes(trial.roadStatus)?{
+          reserveStatus:paidFinale.passageFrames
+            .flatMap(frame=>frame.droppedPassages)
+            .some(row=>row.unmetEnergyDemand>0)?
+              'energy_demand_saturated_at_zero':'energy_demand_paid',
+          totalUnmetEnergyDemand:paidFinale.passageFrames
+            .flatMap(frame=>frame.droppedPassages)
+            .reduce((sum,row)=>sum+row.unmetEnergyDemand,0)}:{}),
+        individualFinishStatus:'unresolved_within_road_bands'}:{
+      individualFinishStatus:crossingBounds?
+        'conditional_crossing_bounds_only':'conditional_inferred_wheels',
+      lineTimes:paidFinale.finishers,
+      ...(crossingBounds?{conditionalCrossingBounds:crossingBounds}:{}),
+      provisionalLineOrder:paidFinale.lineOrder??null,
+      positionSourceStatus:paidFinale.positionSourceStatus,
+      passingRule:paidFinale.passingRule??null,
+      roadEvents:paidFinale.frames.flatMap(frame=>
+        frame.roadEvents??[]),
+      leadOutWork:paidFinale.frames.flatMap(frame=>frame.riders.filter(
+        row=>row.role?.startsWith('lead_out')).map(row=>({
+          riderId:row.riderId,role:row.role,
+          energySpent:row.energySpent,
+          distanceTravelledM:row.distanceTravelledM}))),
+      leadOutAttempts:paidFinale.frames.flatMap(frame=>
+        (frame.assemblyAttempts??[]).map(attempt=>({
+          endDistanceM:frame.endDistanceM,
+          teamId:attempt.teamId,helperId:attempt.helperId,
+          finisherId:attempt.finisherId,
+          helperEnergySpent:attempt.helperEnergySpent,
+          gapAtStartM:attempt.gapAtStartM,
+          gapAtEndM:attempt.gapAtEndM,
+          status:attempt.status}))),
+    }};
+}
+
+function summaryForIndividualGroupLine(trial,request,pointContext,line){
+  const base=summaryFor(trial,request,pointContext);
+  const decisions=new Map(line.sprintPlan.decisions.map(row=>
+    [row.teamId,row]));
+  const separateConditionalLine=!line.pre500ContactStatus&&
+    line.pre500Audit?.firstPotentialOverlap===null&&
+    line.overlapAudit.firstPotentialOverlap===null&&
+    Array.isArray(line.provisionalLineOrder)&&
+    line.provisionalLineOrder.every(row=>row.position!==null);
+  return {...base,version:separateConditionalLine?
+    'v91-offline-test-drive-13':line.pre500Audit?
+    'v91-offline-test-drive-4':line.pre500ContactStatus?
+      'v91-offline-test-drive-3':'v91-offline-test-drive-2',
+    roadStatus:line.pre500ContactStatus?
+      'conditional_depleted_line':'conditional_multiband_line',
+    individualLineVersion:line.version,
+    ...(pointContext?{provisionalPointPreview:
+      line.provisionalLineOrder?.every(row=>row.position!==null)?
+        projectV91ProvisionalMultibandPointPreview(
+          trial.recording,line,pointContext):
+        {status:'unavailable',reason:
+          line.pre500Audit?.firstPotentialOverlap?
+            'Road bands may meet before 500 m.':
+          line.overlapAudit.firstPotentialOverlap?
+            'Cross-band contact remains unresolved.':
+          line.pre500ContactStatus?
+            'Dropped-rider contact before 500 m remains unresolved.':
+            'The provisional line contains an unresolved place.'}}:{}),
+    managerDecisions:base.managerDecisions.map(row=>({
+      ...row,finisherId:decisions.get(row.teamId).finisherId,
+      leadOutRiderId:decisions.get(row.teamId).leadOutRiderId})),
+    finale:{
+      paidPassagesTo500:trial.roadStatus==='paid_group_bands'?
+        trial.paidFinale.line.approachFrames.filter(
+          frame=>frame.endDistanceM<=line.lineDistanceM-500)
+          .map(frame=>({endDistanceM:frame.endDistanceM,
+            frontElapsedSeconds:frame.frontElapsedSeconds,
+            pelotonElapsedSeconds:frame.pelotonElapsedSeconds,
+            frontWorkerRiderIds:frame.frontWorkerRiderIds??[],
+            chasePullRiderId:frame.chasePullRiderId})):
+        trial.paidFinale.passageFrames.filter(frame=>
+          frame.distanceM<=line.lineDistanceM-500)
+          .map(frame=>({endDistanceM:frame.distanceM,
+            bunchPassageSecondsFromBunchMarker:
+              frame.bunchPassageSecondsFromBunchMarker,
+            groups:frame.groups,
+            ...(frame.droppedPassages?{
+              droppedPassages:frame.droppedPassages}:{})})),
+      individualFinishStatus:
+        line.pre500ContactStatus==='provisional_separated'||
+        separateConditionalLine?
+          'conditional_separated_inferred_wheels':
+        line.pre500ContactStatus?
+          'conditional_dropped_pre500_contact_unresolved':
+          'conditional_band_local_cross_band_contact_unresolved',
+      ...(line.pre500ContactStatus?{
+        pre500ContactStatus:line.pre500ContactStatus}:{}),
+      ...(line.pre500Audit?{pre500Audit:line.pre500Audit}:{}),
+      overlapAudit:line.overlapAudit,
+      lineTimes:line.conditionalCrossings,
+      provisionalLineOrder:line.provisionalLineOrder,
+      positionSourceStatus:line.positionedSource.status,
+      roadEvents:line.bandRunners.flatMap(band=>
+        band.runner.frames.flatMap(frame=>frame.roadEvents??[])),
+      leadOutWork:line.bandRunners.flatMap(band=>
+        band.runner.frames.flatMap(frame=>frame.riders.filter(row=>
+          row.role?.startsWith('lead_out')).map(row=>({
+            roadBandId:band.roadBandId,riderId:row.riderId,
+            role:row.role,energySpent:row.energySpent,
+            distanceTravelledM:row.distanceTravelledM})))),
+      finalRiderEnergy:line.conditionalCrossings.map(row=>({
+        riderId:row.riderId,energy:row.energyAtLine}))}};
+}
+
+function summaryForNamedDroppedRoad(source,request,pointContext,road,
+  individualLine=null,finishRefusal=null){
+  const recording=source.recording;
+  const lastKm=recording.frames[recording.route.distanceKm-2];
+  const lateCatch=individualLine?.version===
+    FINALE_NAMED_DROPPED_LATE_CATCH_LINE_VERSION||
+    individualLine?.version===
+    FINALE_NAMED_MULTIPLE_DROPPED_LATE_CATCH_LINE_VERSION||
+    individualLine?.version===
+    FINALE_NAMED_MULTIPLE_DROPPED_SPRINT_LATE_CATCH_LINE_VERSION;
+  const sprintRoad=road.version===
+    FINALE_NAMED_ATTACK_MULTIPLE_DROPPED_SPRINT_ROAD_VERSION;
+  const multipleDroppedRoad=road.version===
+    FINALE_NAMED_ATTACK_MULTIPLE_DROPPED_ROAD_VERSION||sprintRoad;
+  const multipleDropped=multipleDroppedRoad;
+  const preview=pointContext?individualLine?.provisionalLineOrder
+    ?.every(row=>row.position!==null)?
+      (individualLine.version===
+        FINALE_NAMED_MULTIPLE_DROPPED_SPRINT_LATE_CATCH_LINE_VERSION?
+        projectV91ProvisionalNamedMultipleDroppedSprintLateCatchPointPreview:
+        individualLine.version===
+        FINALE_NAMED_MULTIPLE_DROPPED_SPRINT_SURVIVOR_LINE_VERSION?
+        projectV91ProvisionalNamedMultipleDroppedSprintSurvivorPointPreview:
+        individualLine.version===
+        FINALE_NAMED_MULTIPLE_DROPPED_LATE_CATCH_LINE_VERSION?
+        projectV91ProvisionalNamedMultipleDroppedLateCatchPointPreview:
+        lateCatch?
+        projectV91ProvisionalNamedDroppedLateCatchPointPreview:
+        individualLine.version===
+        FINALE_NAMED_MULTIPLE_DROPPED_SURVIVOR_LINE_VERSION?
+        projectV91ProvisionalNamedMultipleDroppedSurvivorPointPreview:
+        multipleDropped?
+        projectV91ProvisionalNamedMultipleDroppedPointPreview:
+        individualLine.version===
+        FINALE_NAMED_DROPPED_SURVIVOR_LINE_VERSION?
+        projectV91ProvisionalNamedDroppedSurvivorPointPreview:
+        projectV91ProvisionalNamedDroppedPointPreview)(
+        recording,road,individualLine,pointContext):
+      {status:'unavailable',reason:individualLine?
+          'Cross-band contact or an ambiguous place remains unresolved.':
+          'No complete individual line.'}:null;
+  return {version:sprintRoad?'v91-offline-test-drive-11':
+    multipleDroppedRoad?'v91-offline-test-drive-10':
+    lateCatch?'v91-offline-test-drive-9':
+    individualLine?'v91-offline-test-drive-8':
+    'v91-offline-test-drive-7',
+    status:individualLine?'conditional_line':'road_only',
+    roadStatus:finishRefusal?
+      'paid_named_attack_final_slice_contact_unresolved':
+      individualLine?.roadStatus??
+      'paid_named_attack_dropped_bands',
+    ...(finishRefusal?{reason:finishRefusal}:{}),
+    input:source.settings,request,engineVersion:road.version,
+    ...(individualLine?{individualLineVersion:individualLine.version}:{}),
+    resultStatus:'unclassified',pointsStatus:'withheld',
+    canCommitAwards:false,
+    managerDecisions:recording.committedInputs.teams.map(team=>({
+      teamId:team.id,baseline:team.orders.baseline,
+      finisherId:request.plans?.find(row=>row.teamId===team.id)
+        ?.finisherId??team.orders.captainId,
+      leadOutRiderId:request.plans?.find(row=>row.teamId===team.id)
+        ?.leadOutRiderId??null})),
+    lastKmSource:{roadGroups:lastKm.roadGroups.map(group=>({
+      id:group.id,gapSeconds:group.gapSeconds,
+      riderIds:group.riderIds})),
+    droppedRiderIds:lastKm.riderGroups.filter(row=>
+      row.group==='dropped').map(row=>row.id),
+    chaserTeamIds:lastKm.chasers},
+    ...(pointContext?{provisionalPointPreview:preview}:{}),
+    finale:{individualFinishStatus:finishRefusal?
+      'unresolved_at_final_slice_contact':
+      individualLine?.overlapAudit
+      .firstPotentialOverlap?
+      'conditional_crossings_contact_unresolved':
+      individualLine?'conditional_individual_crossings':
+      'unresolved_within_road_bands',
+      finalePlanStatus:lateCatch?'paid_after_late_contact':
+        individualLine?'paid_at_500m':'unapplied',
+      attackIntent:road.attackIntent,
+      roadFrames:road.frames.filter(frame=>!individualLine||
+        frame.distanceM<=individualLine.startDistanceM).map(frame=>({
+        distanceM:frame.distanceM,
+        bunchElapsedSecondsFromMarker:frame.bunchElapsedSecondsFromMarker,
+        roadGroups:frame.active.roadGroups,
+        catchDistanceM:frame.active.catchDistanceM??null,
+        attackWork:frame.active.riderEnergy.filter(row=>
+          row.riderId===road.attackIntent.riderId),
+        droppedTravel:frame.droppedTravel.riders})),
+      ...(individualLine?{[lateCatch?'bandsAtContactBoundary':
+        'bandsAt500M']:[
+        ...road.frames.find(frame=>frame.distanceM===
+          individualLine.startDistanceM).active.roadGroups.map(group=>({
+          id:group.id,riderIds:group.riderIds})),{
+        id:'peloton',riderIds:road.frames.find(frame=>
+          frame.distanceM===individualLine.startDistanceM)
+          .active.pelotonRiderIds},
+        ...(multipleDropped?road.frames.find(frame=>
+          frame.distanceM===individualLine.startDistanceM)
+          .droppedTravel.riders.map(row=>({
+            id:`isolated:${row.riderId}`,riderIds:[row.riderId]})):
+          [{id:'dropped',riderIds:road.frames.find(frame=>
+            frame.distanceM===individualLine.startDistanceM)
+            .droppedTravel.riders.map(row=>row.riderId)}])]}:
+        {bands:road.line.bands}),
+      finalRiderEnergy:individualLine?
+        individualLine.conditionalCrossings.map(row=>({
+          riderId:row.riderId,energy:row.energyAtLine})):
+        road.line.finalRiderEnergy,
+      ...(individualLine?{
+        lineTimes:individualLine.conditionalCrossings,
+        provisionalLineOrder:individualLine.provisionalLineOrder,
+        overlapAudit:individualLine.overlapAudit,
+        positionSourceStatus:individualLine.positionedSource.status,
+        passingRule:individualLine.bandRunners.find(band=>
+          band.roadBandId==='peloton').runner.passingRule,
+        roadEvents:individualLine.bandRunners.flatMap(band=>
+          band.runner.frames.flatMap(frame=>frame.roadEvents??[])),
+        sprintWork:individualLine.bandRunners.flatMap(band=>
+          band.runner.frames.flatMap(
+          frame=>frame.riders.filter(row=>row.role==='sprint'||
+            row.role==='solo_sprint').map(row=>({
+            riderId:row.riderId,energySpent:row.energySpent,
+            distanceTravelledM:row.distanceTravelledM})))),
+        separateBandTravel:individualLine.bandRunners.filter(band=>
+          band.roadBandId!=='peloton').flatMap(band=>
+          band.runner.frames.map(frame=>({
+            roadBandId:band.roadBandId,
+            startDistanceM:frame.startDistanceM,
+            endDistanceM:frame.endDistanceM,
+            elapsedSecondsAtStart:frame.elapsedSecondsAtStart,
+            durationSeconds:frame.durationSeconds,
+            riderId:frame.riders[0].riderId,
+            energySpent:frame.riders[0].energySpent}))),
+        leadOutWork:individualLine.bandRunners.flatMap(band=>
+          band.runner.frames.flatMap(frame=>frame.riders.filter(row=>
+            row.role?.startsWith('lead_out')).map(row=>({
+            roadBandId:band.roadBandId,riderId:row.riderId,
+            role:row.role,energySpent:row.energySpent,
+            distanceTravelledM:row.distanceTravelledM}))))}: {})}};
+}
+
+function validateDriveScenario(scenario){
+  if(!scenario||typeof scenario!=='object'||Array.isArray(scenario)||
+    Object.keys(scenario).some(key=>
+      !['settings','attack','finalePlans','pointContext',
+        'individualGroupLine','namedDroppedRoad','lateCatchLine']
+        .includes(key))||
+    scenario.individualGroupLine!==undefined&&
+      typeof scenario.individualGroupLine!=='boolean'||
+    scenario.namedDroppedRoad!==undefined&&
+      typeof scenario.namedDroppedRoad!=='boolean'||
+    scenario.lateCatchLine!==undefined&&
+      (typeof scenario.lateCatchLine!=='boolean'||
+        scenario.lateCatchLine&&!scenario.namedDroppedRoad))
+    throw new Error('Choose settings, an optional attack and finale plans.');
+  const pointContext=scenario.pointContext??null;
+  if(pointContext!==null&&(!pointContext||
+    typeof pointContext!=='object'||Array.isArray(pointContext)||
+    Object.keys(pointContext).sort().join(',')!==
+      'divisionCount,divisionIndex,tier'||
+    !Number.isInteger(pointContext.tier)||pointContext.tier<1||
+    pointContext.tier>6||
+    !Number.isInteger(pointContext.divisionCount)||
+    pointContext.divisionCount<1||
+    !Number.isInteger(pointContext.divisionIndex)||
+    pointContext.divisionIndex<1||
+    pointContext.divisionIndex>pointContext.divisionCount))
+    throw new Error('Choose a valid optional preview point context.');
+  return pointContext;
+}
+
+export function runV91TestDrive(scenario,{full=false,
+  retainRefusalSource=false}={}){
+  const pointContext=validateDriveScenario(scenario);
+  if(Array.isArray(scenario.settings?.managerFinaleOrders)&&
+    scenario.settings.managerFinaleOrders.filter(row=>
+      row?.attackRiderId!==undefined).length>=2)
+    return runV91ConcurrentTestDrive(scenario,{full});
+  const request=requestFor(scenario);
+  const refuse=error=>{
+    const summary=unsupportedRefusal(error,scenario,request,pointContext);
+    if(!full||!retainRefusalSource)return summary;
+    const recording=error.cause?.playtestSource;
+    return recording?{summary,recording}:{summary};
+  };
+  if(scenario.namedDroppedRoad===true&&request.attackTeamId===undefined)
+    throw new Error('Choose one named attack for the dropped-road trial.');
+  let trial;
+  let appliedRequest=request;
+  let unavailableLeadOuts=[];
+  let recoveredGroupPlan=false;
+  try{({trial,appliedRequest,unavailableLeadOuts}=
+    createWithAvailableEarlyLeadOuts(scenario.settings,request));}
+  catch(error){
+    if(!expectedRefusal(error.message))throw error;
+    const source=error.cause?.playtestSource??null;
+    const namedSource=source&&scenario.namedDroppedRoad===true&&
+      request.attackTeamId!==undefined?finaleSnapshotFromTour(
+        source.recording,{remainingKm:1,includeAttackLoad:true}):null;
+    if(scenario.individualGroupLine===true&&source&&
+      request.attackTeamId===undefined&&
+      ['Finisher and lead-out plans are not paid for a road group.',
+        'Finisher and lead-out plans are not paid for road groups.',
+        'Finisher and lead-out plans are not paid for depleted road bands.',
+        'Finisher and lead-out plans are not paid for dropped road bands.']
+        .includes(error.message)){
+      try{trial=createV91GroupFallbackFromLockedRace(source);}
+      catch(fallbackError){
+        if(!expectedRefusal(fallbackError.message))throw fallbackError;
+        return refuse(fallbackError);
+      }
+      recoveredGroupPlan=true;
+    }else if(namedSource&&namedSource.roadGroups.length===0&&
+      namedSource.droppedRiderIds.length>=1&&error.message===
+        'The controlled finale trial needs one complete source bunch.'){
+      let paidRoad;
+      const multipleDropped=namedSource.droppedRiderIds.length>1;
+      try{
+        paidRoad=(multipleDropped?
+          recordFinaleNamedAttackMultipleDroppedRoadFromTour:
+          recordFinaleNamedAttackDroppedRoadFromTour)(
+          source.recording,{teamId:request.attackTeamId});
+      }catch(roadError){
+        if(![
+          'The named dropped-road attack needs a bunch and one dropped rider.',
+          'The named dropped-road attack needs one payable intent.'
+        ].includes(roadError.message)&&
+          !/^A (?:finale|dropped finale|sheltered) rider cannot pay/.test(
+            roadError.message)&&
+          !/^A dropped finale rider needs recorded bunch contact:/.test(
+            roadError.message))throw roadError;
+        return refuse(new Error(roadError.message,{
+          cause:{playtestSource:source}}));
+      }
+      (multipleDropped?
+        validateFinaleNamedAttackMultipleDroppedRoadFromTour:
+        validateFinaleNamedAttackDroppedRoadFromTour)(source.recording,
+        {teamId:request.attackTeamId},paidRoad);
+      const finishM=source.recording.route.distanceKm*1000;
+      const at500=paidRoad.frames.find(frame=>
+        frame.distanceM===finishM-500);
+      const caughtBefore500=paidRoad.frames.some(frame=>
+        frame.distanceM<=finishM-500&&frame.active.catchDistanceM);
+      const isolatedIds=new Set(at500?.droppedTravel.riders.map(row=>
+        row.riderId)??[]);
+      const paidLineRequested=at500?.active.roadGroups.length===0&&
+        caughtBefore500||at500?.active.roadGroups.length===1&&
+        (paidRoad.frames.at(-1).active.roadGroups.length===1||
+          scenario.lateCatchLine===true);
+      const nominations=request.plans??source.recording.committedInputs.teams
+        .map(team=>({teamId:team.id,
+          finisherId:team.orders.captainId,leadOutRiderId:null}));
+      const lateContact=paidRoad.frames.find(frame=>
+        frame.active.catchDistanceM>finishM-500)
+        ?.active.catchDistanceM;
+      if(multipleDropped&&scenario.lateCatchLine===true&&
+        at500?.active.roadGroups.length===1&&
+        paidRoad.frames.at(-1).active.roadGroups.length===0&&
+        lateContact>finishM-300&&nominations.some(plan=>
+          plan.finisherId===paidRoad.attackIntent.riderId)){
+        try{
+          paidRoad=recordFinaleNamedAttackMultipleDroppedSprintRoadFromTour(
+            source.recording,{teamId:request.attackTeamId,
+              finisherId:paidRoad.attackIntent.riderId});
+          validateFinaleNamedAttackMultipleDroppedSprintRoadFromTour(
+            source.recording,{teamId:request.attackTeamId,
+              finisherId:paidRoad.attackIntent.riderId},paidRoad);
+        }catch(sprintRoadError){
+          if(!/^A (?:named solo|finale group|merged finale|sheltered) /.test(
+            sprintRoadError.message))throw sprintRoadError;
+          return refuse(new Error(sprintRoadError.message,{
+            cause:{playtestSource:source}}));
+        }
+      }
+      const sprintRoad=paidRoad.version===
+        FINALE_NAMED_ATTACK_MULTIPLE_DROPPED_SPRINT_ROAD_VERSION;
+      if(paidLineRequested&&nominations.some(plan=>
+        isolatedIds.has(plan.finisherId)))
+        return refuse(new Error(
+          'An isolated rider cannot be a paid finisher.',{
+            cause:{playtestSource:source}}));
+      let individualLine=null;
+      if(at500?.active.roadGroups.length===0&&
+        caughtBefore500){
+        try{
+          individualLine=(multipleDropped?
+            recordFinaleNamedMultipleDroppedIndividualLine:
+            recordFinaleNamedDroppedIndividualLine)(
+            source.recording,paidRoad,{plans:request.plans??null});
+          (multipleDropped?
+            validateFinaleNamedMultipleDroppedIndividualLine:
+            validateFinaleNamedDroppedIndividualLine)(source.recording,
+            paidRoad,{plans:request.plans??null},individualLine);
+        }catch(lineError){
+          if(![
+            'The nominated lead-out cannot work beside the finisher.'
+          ].includes(lineError.message)&&
+            !(multipleDropped&&
+              /^A positioned rider cannot pay to finish:/.test(
+                lineError.message)))throw lineError;
+          return refuse(new Error(lineError.message,{
+            cause:{playtestSource:source}}));
+        }
+      }else if(at500?.active.roadGroups.length===1&&
+        paidRoad.frames.at(-1).active.roadGroups.length===1){
+        try{
+          individualLine=(sprintRoad?
+            recordFinaleNamedMultipleDroppedSprintSurvivorLine:
+            multipleDropped?
+            recordFinaleNamedMultipleDroppedSurvivorLine:
+            recordFinaleNamedDroppedSurvivorLine)(
+            source.recording,paidRoad,{plans:request.plans??null});
+          (sprintRoad?
+            validateFinaleNamedMultipleDroppedSprintSurvivorLine:
+            multipleDropped?
+            validateFinaleNamedMultipleDroppedSurvivorLine:
+            validateFinaleNamedDroppedSurvivorLine)(source.recording,
+            paidRoad,{plans:request.plans??null},individualLine);
+        }catch(lineError){
+          if(![
+            'The nominated lead-out cannot work beside the finisher.',
+            'A nominated solo sprint needs separate paid work.'
+          ].includes(lineError.message))throw lineError;
+          return refuse(new Error(lineError.message,{
+            cause:{playtestSource:source}}));
+        }
+      }else if(scenario.lateCatchLine===true&&
+        at500?.active.roadGroups.length===1&&
+        paidRoad.frames.at(-1).active.roadGroups.length===0){
+        const soloId=at500.active.roadGroups[0].riderIds[0];
+        const catchFrame=paidRoad.frames.find(frame=>
+          frame.active.catchDistanceM>finishM-500);
+        const catchDistanceM=catchFrame?.active.catchDistanceM;
+        if(catchFrame?.distanceM===finishM){
+          const summary=summaryForNamedDroppedRoad(source,request,
+            pointContext,paidRoad,null,
+            'A final-slice catch has no recorded individual order at the line.');
+          return full?{summary,recording:source,paidRoad,
+            individualLine:null}:summary;
+        }
+        if(!sprintRoad&&catchDistanceM>finishM-300&&
+          nominations.some(plan=>
+          plan.finisherId===soloId))
+          return refuse(new Error(
+            'A nominated solo sprint before contact needs paid road work.',{
+              cause:{playtestSource:source}}));
+        try{
+          individualLine=(sprintRoad?
+            recordFinaleNamedMultipleDroppedSprintLateCatchLine:
+            multipleDropped?
+            recordFinaleNamedMultipleDroppedLateCatchLine:
+            recordFinaleNamedDroppedLateCatchLine)(
+            source.recording,paidRoad,{plans:request.plans??null});
+          (sprintRoad?
+            validateFinaleNamedMultipleDroppedSprintLateCatchLine:
+            multipleDropped?
+            validateFinaleNamedMultipleDroppedLateCatchLine:
+            validateFinaleNamedDroppedLateCatchLine)(source.recording,
+            paidRoad,{plans:request.plans??null},individualLine);
+        }catch(lineError){
+          if(![
+            'A pre-contact lead-out needs separate paid road work.',
+            'The named late catch needs one paid merged boundary and dropped rider.'
+          ].includes(lineError.message)&&
+            !/^A dropped finale rider (?:cannot pay for travel|needs recorded bunch contact):/.test(lineError.message)&&
+            !/^A rider cannot pay for actual finale travel:/.test(
+              lineError.message))throw lineError;
+          return refuse(new Error(lineError.message,{
+            cause:{playtestSource:source}}));
+        }
+      }
+      const summary=summaryForNamedDroppedRoad(source,request,
+        pointContext,paidRoad,individualLine);
+      return full?{summary,recording:source,paidRoad,
+        ...(individualLine?{individualLine}:{})}:summary;
+    }else{
+      return refuse(error);
+    }
+  }
+  validateV91ConditionalRaceFinal(scenario.settings,recoveredGroupPlan?
+    {...request,plans:null}:appliedRequest,trial);
+  if(scenario.individualGroupLine===true&&
+    ['paid_group_bands','paid_separated_bands',
+      'recorded_depleted_bands','recorded_dropped_bands']
+      .includes(trial.roadStatus)){
+    const separated=trial.roadStatus==='paid_separated_bands';
+    const depleted=['recorded_depleted_bands','recorded_dropped_bands']
+      .includes(trial.roadStatus);
+    const singleton=trial.roadStatus==='paid_group_bands'&&
+      trial.paidFinale.line.approachFrames.find(frame=>
+        frame.endDistanceM===trial.recording.route.distanceKm*1000-500)
+        ?.roadGroups[0]?.riderIds.length===1;
+    if(depleted&&trial.paidFinale.passageFrames.some(frame=>
+      frame.droppedPassages.some(row=>row.unmetEnergyDemand>0))){
+      const base=summaryFor(trial,request,pointContext);
+      const summary=request.plans?{...base,status:'unsupported',
+        individualLineStatus:'unpaid_dropped_travel',
+        reason:'The nominated finale cannot run with unmet dropped-rider energy demand.'}:base;
+      return full?{summary,recording:trial}:summary;
+    }
+    const droppedIds=new Set(depleted?
+      trial.paidFinale.trace.sourceDroppedRiderIds:[]);
+    const nominations=request.plans??trial.recording.committedInputs.teams
+      .map(team=>({teamId:team.id,
+        finisherId:team.orders.captainId,leadOutRiderId:null}));
+    if(nominations.some(plan=>droppedIds.has(plan.finisherId))){
+      const base=summaryFor(trial,request,pointContext);
+      const summary={...base,status:'unsupported',
+        individualLineStatus:'unsupported_plan',
+        reason:'An isolated rider cannot be a paid finisher.'};
+      return full?{summary,recording:trial}:summary;
+    }
+    const record=singleton?recordFinaleSingletonFrontIndividualLine:
+      depleted?recordFinaleUnorderedDroppedIndividualLine:
+      separated?recordFinaleSeparatedIndividualLine:
+        recordFinaleMultibandIndividualLine;
+    const validate=singleton?validateFinaleSingletonFrontIndividualLine:
+      depleted?validateFinaleDepletedIndividualLine:
+      separated?validateFinaleSeparatedIndividualLine:
+        validateFinaleMultibandIndividualLine;
+    let individualLine;
+    let linePlans=appliedRequest.plans??null;
+    const unavailableAt500=[];
+    for(;;){
+      try{
+        individualLine=record(trial.recording,trial.paidFinale,
+          {plans:linePlans});
+        break;
+      }catch(error){
+        const {teamId,helperId,reason}=error.cause??{};
+        const plan=linePlans?.find(row=>row.teamId===teamId);
+        if(error.message===
+          'The nominated lead-out cannot work beside the finisher.'&&
+          plan?.leadOutRiderId===helperId&&
+          unavailableAt500.length<linePlans.length){
+          unavailableAt500.push({teamId,helperId,
+            finisherId:plan.finisherId,status:'unavailable_at_500m',
+            reason,helperEnergySpent:0});
+          linePlans=linePlans.map(row=>row.teamId===teamId?
+            {...row,leadOutRiderId:null}:row);
+          continue;
+        }
+        if(!['The nominated lead-out cannot work beside the finisher.',
+          'The singleton cannot pay for the nominated sprint.',
+          'A separated singleton needs a paid 500 m road.',
+          'The separated singleton has unpaid final-500 m travel.']
+          .includes(error.message))
+          throw error;
+        const base=summaryFor(trial,request,pointContext);
+        const summary={...base,status:'unsupported',
+          individualLineStatus:'unsupported_plan',reason:error.message};
+        return full?{summary,recording:trial}:summary;
+      }
+    }
+    validate(trial.recording,trial.paidFinale,
+      {plans:linePlans},individualLine);
+    const base=summaryForIndividualGroupLine(trial,request,
+      pointContext,individualLine);
+    const unavailable=[...unavailableLeadOuts,...unavailableAt500];
+    const summary=unavailable.length?{...base,
+      version:'v91-offline-test-drive-14',
+      appliedRequest:{...request,plans:linePlans},
+      unavailableLeadOuts:unavailable}:base;
+    return full?{summary,recording:trial,individualLine}:summary;
+  }
+  if(!['paid_conditional_line','paid_group_bands','paid_separated_bands',
+    'recorded_depleted_bands','recorded_dropped_bands']
+    .includes(trial.roadStatus)){
+    const partial=trial.roadStatus==='unsupported_partial_contact'?
+      trial.paidFinale:null;
+    const contactFrame=partial?.frames?.at(-1);
+    const soloId=partial?.frames?.[0]?.roadGroups?.[0]
+      ?.riderIds?.[0];
+    const contactIds=new Set([soloId,...(partial?.contact?.riderIds??[])]);
+    const summary={version:'v91-offline-test-drive-1',
+      status:'unsupported',input:trial.settings,request,
+      engineVersion:trial.version,reason:trial.roadStatus,
+      ...(partial?.contact&&contactFrame?{partialContact:{
+        sourceVersion:partial.version,contact:partial.contact,
+        roadGroups:contactFrame.roadGroups,
+        leadOutRiderIds:contactFrame.leadOutRiderIds,
+        riderEnergyAtContact:contactFrame.riders.filter(row=>
+          contactIds.has(row.riderId)).map(row=>({
+          riderId:row.riderId,energy:row.energyAfter}))}}:{}),
+      ...(pointContext?{provisionalPointPreview:{status:'unavailable',
+        reason:'No complete individual line.'}}:{}),
+      pointsStatus:'withheld',canCommitAwards:false};
+    return full?{summary,recording:trial}:summary;
+  }
+  const base=summaryFor(trial,request,pointContext);
+  const summary=unavailableLeadOuts.length?{...base,
+    version:'v91-offline-test-drive-12',
+    appliedRequest,unavailableLeadOuts}:base;
+  return full?{summary,recording:trial}:summary;
+}
+
+// Select the already recorded individual-line continuations in one offline
+// entry. Each branch still proves its own paid road and replay; unresolved
+// contacts, energy and plans retain their explicit unavailable outcome.
+export function runV91IntegratedTestDrive(scenario,{full=false}={}){
+  const namedOrders=Array.isArray(scenario?.settings?.managerFinaleOrders)?
+    scenario.settings.managerFinaleOrders.filter(row=>
+      row?.attackRiderId!==undefined):[];
+  if(namedOrders.length>=2)
+    return runV91ConcurrentTestDrive(scenario,{full});
+  const namedAttack=scenario?.attack!==undefined;
+  const selected={...scenario,individualGroupLine:true,
+    ...(namedAttack?{namedDroppedRoad:true,lateCatchLine:true}:{})};
+  const output=runV91TestDrive(selected,{full,
+    retainRefusalSource:full});
+  const decorate=summary=>({
+    ...summary,integrationVersion:'v91-integrated-test-drive-1',
+    sourceDriveVersion:summary.version});
+  // Some refusals cannot carry a source. Keep the integrated full response
+  // shape while retaining the locked source whenever the drive has one.
+  if(!full)return decorate(output);
+  if(output.summary)return {...output,summary:decorate(output.summary)};
+  return {summary:decorate(output)};
+}
+
+// Separate opt-in laboratory view of the fixed-source-lane bunch finish.
+// It pays the selected full race and either complete-bunch kilometre or
+// caught-attack final 500 m, while refusing unsupported road outcomes.
+function laneQueuedSummary(base,tour,paidFinale,pointContext,extra={}){
+  let pointPreview=null;
+  if(pointContext){
+    try{pointPreview=projectFinaleLaneQueuedPointPreview(tour,
+      paidFinale,pointContext);}
+    catch(error){
+      if(error.message!==
+        'Lane-queued preview points need an unambiguous line.')throw error;
+      pointPreview={status:'unavailable',reason:error.message};
+    }
+  }
+  return {...base,...extra,status:'conditional',
+    individualFinishStatus:'conditional_fixed_source_lanes',
+    finaleVersion:paidFinale.version,
+    passingRule:paidFinale.passingRule,
+    conditionalLine:paidFinale.lineOrder,
+    leadOutAttempts:paidFinale.frames.flatMap(frame=>
+      frame.assemblyAttempts??[]),
+    leadOutWork:paidFinale.frames.flatMap(frame=>
+      frame.riders.filter(row=>row.role?.startsWith('lead_out'))
+        .map(row=>({riderId:row.riderId,role:row.role,
+          energySpent:row.energySpent,
+          distanceTravelledM:row.distanceTravelledM}))),
+    laneBlocks:paidFinale.frames.flatMap(frame=>
+      frame.riders.flatMap(row=>(row.laneBlocks??[]).map(block=>({
+        riderId:row.riderId,...block})))),
+    roadEvents:paidFinale.frames.flatMap(frame=>frame.roadEvents),
+    finalRiderEnergy:paidFinale.finishers.map(row=>({
+      riderId:row.riderId,energy:row.energyAtLine})),
+    ...(pointPreview?{provisionalPointPreview:pointPreview}:{})};
+}
+
+export function runV91LaneQueuedTestDrive(scenario,{full=false}={}){
+  validateDriveScenario(scenario);
+  if(scenario.individualGroupLine!==undefined||
+    scenario.namedDroppedRoad!==undefined||
+    scenario.lateCatchLine!==undefined)
+    throw new Error('Choose the lane queue without other finale branch flags.');
+  const request=requestFor(scenario);
+  const namedAttack=request.attackTeamId!==undefined;
+  let source,sourceRefusal=null,roadDecision=null;
+  try{
+    if(namedAttack){
+      const trial=createV91FinaleTrial(scenario.settings,request);
+      source={settings:trial.settings,recording:trial.recording};
+      roadDecision=trial.decision;
+    }else source=createV91Playtest(scenario.settings);
+  }catch(error){
+    if(error.message!==
+      'The controlled finale trial needs one complete source bunch.'||
+      !error.cause?.playtestSource)throw error;
+    source=error.cause.playtestSource;
+    sourceRefusal=error.message;
+  }
+  const tour=source.recording;
+  const plans=request.plans??tour.committedInputs.teams.map(team=>({
+    teamId:team.id,finisherId:team.orders.captainId,
+    leadOutRiderId:null}));
+  const handoff=finaleSnapshotFromTour(tour,{remainingKm:1,
+    includeAttackLoad:true});
+  const base={version:'v91-offline-lane-queued-test-drive-1',
+    input:source.settings,request:{...request,plans},
+    lastKmSource:{roadGroups:handoff.roadGroups.map(group=>({
+      id:group.id,gapSeconds:group.gapSeconds,
+      riderIds:group.riderIds})),
+    droppedRiderIds:handoff.droppedRiderIds,
+    riderEnergy:handoff.riders.map(row=>({riderId:row.riderId,
+      energy:row.energy})),
+    chaserTeamIds:tour.frames[handoff.sourceKm-1].chasers},
+    managerDecisions:tour.committedInputs.teams.map(team=>({
+      teamId:team.id,baseline:team.orders.baseline,
+      finaleOrder:orderAt(team.orders,tour.route.distanceKm-1),
+      finisherId:plans.find(plan=>plan.teamId===team.id).finisherId,
+      leadOutRiderId:plans.find(plan=>
+        plan.teamId===team.id).leadOutRiderId})),
+    ...(scenario.pointContext?{provisionalPointPreview:{
+      status:'unavailable',reason:'No classified individual result.'}}:{}),
+    ...(roadDecision?{attackRoadOutcome:roadDecision.branch}:{}),
+    pointsStatus:'withheld',canCommitAwards:false};
+  const namedOrders=tour.committedInputs.teams.map(team=>({
+    teamId:team.id,order:orderAt(team.orders,tour.route.distanceKm-1)}))
+    .filter(row=>row.order.attackRiderId!==null&&
+      row.order.attackRiderId!==undefined);
+  if(!namedAttack&&namedOrders.length===2){
+    let line;
+    try{
+      line=recordFinaleConcurrentDoubleCatchLaneQueuedLineFromTour(
+        tour,{plans});
+      validateFinaleConcurrentDoubleCatchLaneQueuedLineFromTour(
+        tour,{plans},line);
+    }catch(error){
+      if(error?.constructor!==Error)throw error;
+      const summary={...base,status:'unsupported',reason:error.message,
+        individualFinishStatus:'unavailable'};
+      return full?{summary,recording:tour}:summary;
+    }
+    const paidFinale=line.runner;
+    const summary=laneQueuedSummary(base,tour,paidFinale,
+      scenario.pointContext,{attackRoadOutcome:'double_catch',
+        paidContactRoadVersion:line.road.version,
+        individualLineVersion:line.version});
+    return full?{summary,recording:tour,paidFinale,
+      individualLine:line}:summary;
+  }
+  if(sourceRefusal||namedAttack&&
+    !['caught','contained'].includes(roadDecision.branch)){
+    const summary={...base,status:'unsupported',
+      reason:sourceRefusal??'The lane-queued finish needs a complete bunch at 500 m.',
+      individualFinishStatus:'unavailable'};
+    return full?{summary,recording:tour}:summary;
+  }
+  const record=namedAttack?
+    recordFinaleLaneQueuedCaughtBunchRunnerFromTour:
+    recordFinaleLaneQueuedEarlyBunchRunnerFromTour;
+  const validate=namedAttack?
+    validateFinaleLaneQueuedCaughtBunchRunnerFromTour:
+    validateFinaleLaneQueuedEarlyBunchRunnerFromTour;
+  let paidFinale;
+  try{paidFinale=record(tour,{...request,plans});}
+  catch(error){
+    if(!['An early bunch plan needs one inactive-attack bunch.',
+      'The nominated lead-out cannot work beside the finisher.']
+      .includes(error.message)&&
+      !/^An early lead-out helper needs an adjacent lane: (?:you|rival-[1-9]\d*)\.$/
+        .test(error.message)&&
+      !/^Lead-out helper is not on the finisher's source wheel: (?:you|rival-[1-9]\d*)\.$/
+        .test(error.message))throw error;
+    const summary={...base,status:'unsupported',reason:error.message,
+      ...(error.cause?.helperId?{leadOutUnavailable:error.cause}:{}),
+      individualFinishStatus:'unavailable'};
+    return full?{summary,recording:tour}:summary;
+  }
+  validate(tour,{...request,plans},paidFinale);
+  const summary=laneQueuedSummary(base,tour,paidFinale,
+    scenario.pointContext);
+  return full?{summary,recording:tour,paidFinale}:summary;
+}
+
+// The concurrent path uses the same committed kilometre tour as the other
+// offline drives. Only the already paid exact double catch can enter its
+// conditional individual runner; other contacts stay explicitly unresolved.
+export function runV91ConcurrentTestDrive(scenario,{full=false}={}){
+  validateDriveScenario(scenario);
+  if(scenario?.attack!==undefined)
+    throw new Error('Choose either one legacy attack or manager finale orders.');
+  const request=requestFor(scenario);
+  const source=createV91Playtest(scenario.settings);
+  const tour=source.recording;
+  const namedOrders=tour.committedInputs.teams.map(team=>({
+    teamId:team.id,order:orderAt(team.orders,tour.route.distanceKm-1)}))
+    .filter(row=>row.order.attackRiderId!==null&&
+      row.order.attackRiderId!==undefined);
+  const lastKm=finaleSnapshotFromTour(tour,{remainingKm:1,
+    includeAttackLoad:true});
+  const base={version:'v91-concurrent-test-drive-1',
+    integrationVersion:'v91-integrated-test-drive-2',
+    input:source.settings,request:{namedAttacks:namedOrders.map(row=>({
+      teamId:row.teamId,riderId:row.order.attackRiderId})),
+    ...(request.plans?{plans:request.plans}:{})},
+    managerDecisions:tour.committedInputs.teams.map(team=>({
+      teamId:team.id,baseline:team.orders.baseline,
+      finaleOrder:orderAt(team.orders,tour.route.distanceKm-1)})),
+    lastKmSource:{roadGroups:lastKm.roadGroups.map(group=>({
+      id:group.id,gapSeconds:group.gapSeconds,
+      riderIds:group.riderIds})),
+    droppedRiderIds:lastKm.droppedRiderIds,
+    riderEnergy:lastKm.riders.map(row=>({riderId:row.riderId,
+      energy:row.energy})),
+    chaserTeamIds:tour.frames[lastKm.sourceKm-1].chasers},
+    pointsStatus:'withheld',canCommitAwards:false,
+    ...(scenario.pointContext?{provisionalPointPreview:{
+      status:'unavailable',reason:'No classified individual result.'}}:{})};
+  let line;
+  const assembled=Boolean(request.plans?.some(plan=>
+    plan.leadOutRiderId!==null));
+  try{
+    if(namedOrders.length!==2)
+      throw new Error('The concurrent test drive supports exactly two named attack orders.');
+    line=(assembled?
+      recordFinaleConcurrentDoubleCatchAssembledLineFromTour:
+      recordFinaleConcurrentDoubleCatchLineFromTour)(tour,{
+      plans:request.plans??null});
+  }catch(error){
+    if(error?.constructor!==Error)throw error;
+    let lateLineRefusal=null,survivorLineRefusal=null,
+      sprintLineRefusal=null;
+    if(!assembled){
+      try{
+        const lateLine=recordFinaleConcurrentLateCatchLineFromTour(tour,{
+          plans:request.plans??null});
+        validateFinaleConcurrentLateCatchLineFromTour(tour,{
+          plans:request.plans??null},lateLine);
+        const summary={...base,status:'conditional',
+          roadStatus:lateLine.roadStatus,
+          individualLineVersion:lateLine.version,
+          positionSourceStatus:lateLine.positionedSource.status,
+          provisionalLineOrder:lateLine.provisionalLineOrder,
+          finale:{individualFinishStatus:'conditional_inferred_wheels',
+            lineTimes:lateLine.conditionalCrossings,
+            paidRoad:lateLine.roadPrefix,
+            leadOutWork:[]}};
+        return full?{summary,recording:source,individualLine:lateLine}:
+          summary;
+      }catch(lateError){
+        if(lateError?.constructor!==Error)throw lateError;
+        lateLineRefusal=lateError.message;
+      }
+      try{
+        const survivorLine=recordFinaleConcurrentSurvivorLineFromTour(tour,{
+          plans:request.plans??null});
+        validateFinaleConcurrentSurvivorLineFromTour(tour,{
+          plans:request.plans??null},survivorLine);
+        const summary={...base,status:'conditional',
+          roadStatus:survivorLine.roadStatus,
+          individualLineVersion:survivorLine.version,
+          positionSourceStatus:survivorLine.positionedSource.status,
+          provisionalLineOrder:survivorLine.provisionalLineOrder,
+          finale:{individualFinishStatus:'conditional_inferred_wheels',
+            lineTimes:survivorLine.conditionalCrossings,
+            paidRoad:survivorLine.roadPrefix,
+            soloRoad:survivorLine.frontSuffix,
+            crossBandContactAudit:survivorLine.contactAudit,
+            leadOutWork:[]}};
+        return full?{summary,recording:source,
+          individualLine:survivorLine}:summary;
+      }catch(survivorError){
+        if(survivorError?.constructor!==Error)throw survivorError;
+        survivorLineRefusal=survivorError.message;
+      }
+      try{
+        const priorRearCatchLine=
+          recordFinaleConcurrentPriorRearCatchLedgerLineFromTour(tour,{
+            plans:request.plans??null});
+        validateFinaleConcurrentPriorRearCatchLedgerLineFromTour(tour,{
+          plans:request.plans??null},priorRearCatchLine);
+        const summary={...base,status:'conditional',
+          roadStatus:priorRearCatchLine.roadStatus,
+          individualLineVersion:priorRearCatchLine.version,
+          positionSourceStatus:priorRearCatchLine.positionedSource.status,
+          provisionalLineOrder:priorRearCatchLine.provisionalLineOrder,
+          finale:{individualFinishStatus:'conditional_inferred_wheels',
+            lineTimes:priorRearCatchLine.conditionalCrossings,
+            priorContact:priorRearCatchLine.priorContact,
+            paidRoad:priorRearCatchLine.roadPrefix,
+            soloRoad:priorRearCatchLine.frontSuffix,
+            crossBandContactAudit:priorRearCatchLine.contactAudit,
+            leadOutWork:[]}};
+        return full?{summary,recording:source,
+          individualLine:priorRearCatchLine}:summary;
+      }catch(priorRearCatchError){
+        if(priorRearCatchError?.constructor!==Error)
+          throw priorRearCatchError;
+      }
+      if(request.plans?.some(plan=>namedOrders.some(order=>
+        order.order.attackRiderId===plan.finisherId))){
+        try{
+          const sprintLine=
+            recordFinaleConcurrentDualSurvivorSprintLineFromTour(tour,{
+              plans:request.plans});
+          validateFinaleConcurrentDualSurvivorSprintLineFromTour(tour,{
+            plans:request.plans},sprintLine);
+          const summary={...base,status:'conditional',
+            roadStatus:sprintLine.roadStatus,
+            individualLineVersion:sprintLine.version,
+            positionSourceStatus:sprintLine.positionedSource.status,
+            provisionalLineOrder:sprintLine.provisionalLineOrder,
+            finale:{individualFinishStatus:'conditional_inferred_wheels',
+              lineTimes:sprintLine.conditionalCrossings,
+              paidRoad:sprintLine.roadPrefix,
+              soloRoad:sprintLine.soloSuffix,
+              sprintWork:sprintLine.soloSprintWork,
+              preHandoffContactAudit:
+                sprintLine.preHandoffContactAudit,
+              crossBandContactAudit:
+                sprintLine.crossBandContactAudit,
+              leadOutWork:[]}};
+          return full?{summary,recording:source,
+            individualLine:sprintLine}:summary;
+        }catch(sprintError){
+          if(sprintError?.constructor!==Error)throw sprintError;
+          sprintLineRefusal=sprintError.message;
+        }
+      }
+      try{
+        const dualLine=recordFinaleConcurrentDualSurvivorLineFromTour(tour,{
+          plans:request.plans??null});
+        validateFinaleConcurrentDualSurvivorLineFromTour(tour,{
+          plans:request.plans??null},dualLine);
+        const summary={...base,status:'conditional',
+          roadStatus:dualLine.roadStatus,
+          individualLineVersion:dualLine.version,
+          positionSourceStatus:dualLine.positionedSource.status,
+          provisionalLineOrder:dualLine.provisionalLineOrder,
+          finale:{individualFinishStatus:'conditional_inferred_wheels',
+            lineTimes:dualLine.conditionalCrossings,
+            paidRoad:dualLine.roadPrefix,
+            soloRoad:dualLine.soloSuffix,
+            crossBandContactAudit:dualLine.crossBandContactAudit,
+            leadOutWork:[]}};
+        return full?{summary,recording:source,
+          individualLine:dualLine}:summary;
+      }catch(dualError){
+        if(dualError?.constructor!==Error)throw dualError;
+      }
+      try{
+        const rearCaught=recordFinaleConcurrentRearCaught400StepFromTour(
+          tour);
+        validateFinaleConcurrentRearCaught400StepFromTour(tour,
+          JSON.parse(JSON.stringify(rearCaught)));
+        let continuation=null,continuationRefusal=null;
+        try{
+          continuation=
+            recordFinaleConcurrentPriorRearCatchContinuationFromTour(tour);
+          validateFinaleConcurrentPriorRearCatchContinuationFromTour(tour,
+            JSON.parse(JSON.stringify(continuation)));
+        }catch(continuationError){
+          if(continuationError?.constructor!==Error)
+            throw continuationError;
+          continuationRefusal=continuationError.message;
+        }
+        const summary={...base,status:'unsupported',
+          roadStatus:continuation?.status==='band_crossings_only'?
+            'concurrent_prior_rear_catch_band_crossings_only':
+            continuation?.status==='stopped_at_exact_contact'?
+              'concurrent_prior_rear_catch_exact_contact':
+              'concurrent_rear_caught_paid_event',
+          reason:continuation?.status==='band_crossings_only'?
+            'The rear attacker was caught and the road bands reached the line, but the bunch has no paid individual finish.':
+            continuation?.status==='stopped_at_exact_contact'?
+              'The rear attacker was caught; the surviving solo met the bunch at an exact road contact before individual classification.':
+              'The rear attacker was caught; the surviving solo and bunch have paid travel to their next road event, but no individual line.',
+          lateLineRefusal,survivorLineRefusal,
+          ...(sprintLineRefusal?{sprintLineRefusal}:{}),
+          ...(continuationRefusal?{continuationRefusal}:{}),
+          paidRearCaughtEvent:{version:rearCaught.version,
+            event:rearCaught.event,
+            elapsedSinceLaunchSeconds:rearCaught.elapsedSinceLaunchSeconds,
+            frontRiderId:rearCaught.frontRiderId,
+            caughtRiderId:rearCaught.caughtRiderId,
+            frontPositionM:rearCaught.frontPositionM,
+            bunchPositionM:rearCaught.bunchPositionM,
+            roadBands:rearCaught.roadBands,
+            riders:rearCaught.riders,
+            individualFinishStatus:'unavailable',
+            pointsStatus:'withheld'},
+          ...(continuation?{paidBandContinuation:{
+            version:continuation.version,
+            status:continuation.status,
+            roadRelationshipStatus:continuation.roadRelationshipStatus,
+            contact:continuation.contact,
+            contactEvents:continuation.contactEvents,
+            bandCrossings:continuation.bandCrossings,
+            finalRiders:continuation.finalRiders,
+            finalePlansStatus:'not_applied_to_band_only_road',
+            individualFinishStatus:'unavailable',
+            pointsStatus:'withheld'}}:{})};
+        return full?{summary,recording:source,
+          rearCaught400Step:rearCaught,
+          ...(continuation?{bandContinuation:continuation}:{})}:summary;
+      }catch(rearCaughtError){
+        if(rearCaughtError?.constructor!==Error)throw rearCaughtError;
+      }
+    }
+    let event=null;
+    try{
+      event=recordFinaleConcurrentCommonTimeStateFromTour(tour);
+    }catch(eventError){
+      if(eventError?.constructor!==Error)
+        throw eventError;
+    }
+    if(event)validateFinaleConcurrentCommonTimeStateFromTour(tour,
+      JSON.parse(JSON.stringify(event)));
+    let laterEvent=null;
+    if(event){
+      try{
+        laterEvent=recordFinaleConcurrentNextBoundaryFromTour(tour);
+      }catch(laterError){
+        if(laterError?.constructor!==Error)throw laterError;
+      }
+    }
+    if(laterEvent)validateFinaleConcurrentNextBoundaryFromTour(tour,
+      JSON.parse(JSON.stringify(laterEvent)));
+    let bandContinuation=null;
+    if(laterEvent){
+      try{
+        bandContinuation=recordFinaleConcurrentFullCatchContinuationFromTour(
+          tour);
+      }catch(bandError){
+        if(bandError?.constructor!==Error)throw bandError;
+      }
+    }
+    if(bandContinuation)
+      validateFinaleConcurrentFullCatchContinuationFromTour(tour,
+        JSON.parse(JSON.stringify(bandContinuation)));
+    const firstPaidEvent=event?{version:event.version,event:event.event,
+      elapsedSinceLaunchSeconds:event.eventElapsedSeconds,
+      attackerPositions:event.attackerPositions,
+      bunchPositionM:event.bunchPositionM,
+      roadRelationshipStatus:event.roadRelationshipStatus,
+      riders:event.riders.map(row=>({riderId:row.riderId,
+        role:row.role,positionM:row.positionM,
+        energyAtDecision:row.energyAtDecision,
+        energySpentToEvent:row.energySpentToEvent,
+        energyAtEvent:row.energyAtEvent}))}:null;
+    const bandCrossingRefusal=sprintLineRefusal??
+      (survivorLineRefusal?.includes('solo finisher')?
+        survivorLineRefusal:
+        'Road bands reached the line, but individual bunch crossings and finale plans are unresolved.');
+    const summary={...base,status:'unsupported',
+      roadStatus:bandContinuation?.status==='band_crossings_only'?
+        'concurrent_band_crossings_only':'concurrent_road_unresolved',
+      reason:bandContinuation?.status==='band_crossings_only'?
+        bandCrossingRefusal:
+        error.message,
+      ...(lateLineRefusal?{lateLineRefusal}:{}),
+      ...(survivorLineRefusal?{survivorLineRefusal}:{}),
+      ...(sprintLineRefusal?{sprintLineRefusal}:{}),
+      ...(firstPaidEvent?{firstPaidEvent}:{}),
+      ...(laterEvent?{latestPaidEvent:{version:laterEvent.version,
+        event:laterEvent.event,
+        elapsedSinceLaunchSeconds:laterEvent.elapsedSinceLaunchSeconds,
+        firstRiderId:laterEvent.firstRiderId,
+        secondRiderId:laterEvent.secondRiderId,
+        firstPositionM:laterEvent.firstPositionM,
+        secondPositionM:laterEvent.secondPositionM,
+        bunchPositionM:laterEvent.bunchPositionM,
+        roadRelationshipStatus:laterEvent.roadRelationshipStatus,
+        riders:laterEvent.riders}}:{}),
+      ...(bandContinuation?{paidBandContinuation:{
+        version:bandContinuation.version,status:bandContinuation.status,
+        roadRelationshipStatus:bandContinuation.roadRelationshipStatus,
+        contact:bandContinuation.contact,
+        contactEvents:bandContinuation.contactEvents,
+        bandCrossings:bandContinuation.bandCrossings,
+        finalRiders:bandContinuation.finalRiders,
+        finalePlansStatus:'not_applied_to_band_only_road',
+        individualFinishStatus:'unavailable',
+        pointsStatus:'withheld'}}:{})};
+    return full?{summary,recording:source,
+      ...(bandContinuation?{bandContinuation}:{})}:summary;
+  }
+  (assembled?validateFinaleConcurrentDoubleCatchAssembledLineFromTour:
+    validateFinaleConcurrentDoubleCatchLineFromTour)(tour,{
+    plans:request.plans??null},line);
+  const summary={...base,status:'conditional',
+    roadStatus:line.roadStatus,individualLineVersion:line.version,
+    positionSourceStatus:line.positionedSource.status,
+    provisionalLineOrder:line.provisionalLineOrder,
+    finale:{individualFinishStatus:'conditional_inferred_wheels',
+      lineTimes:line.conditionalCrossings,
+      paidRoad:line.road.roadBands,
+      ...(assembled?{leadOutAttempts:line.runner.frames.flatMap(frame=>
+        frame.assemblyAttempts??[])}:{}),
+      leadOutWork:line.runner.frames.flatMap(frame=>frame.riders.filter(
+        row=>row.role?.startsWith('lead_out')).map(row=>({
+        riderId:row.riderId,role:row.role,
+        energySpent:row.energySpent,
+        distanceTravelledM:row.distanceTravelledM})))}};
+  return full?{summary,recording:source,individualLine:line}:summary;
+}
+
+if(process.argv[1]&&import.meta.url===pathToFileURL(
+  resolve(process.argv[1])).href){
+  const [path,...flags]=process.argv.slice(2);
+  if(!path||flags.some(flag=>
+    !['--full','--integrated','--lane-queue'].includes(flag))||
+    flags.includes('--integrated')&&flags.includes('--lane-queue')||
+    new Set(flags).size!==flags.length)
+    throw new Error('Usage: node scripts/engine-v2-test-drive.mjs input.json [--integrated | --lane-queue] [--full]');
+  const raw=readFileSync(path==='-'?0:path,'utf8').replace(/^\uFEFF/,'');
+  const result=(flags.includes('--lane-queue')?
+    runV91LaneQueuedTestDrive:flags.includes('--integrated')?
+      runV91IntegratedTestDrive:runV91TestDrive)(JSON.parse(raw),
+  {full:flags.includes('--full')});
+  console.log(JSON.stringify(result,null,2));
+}

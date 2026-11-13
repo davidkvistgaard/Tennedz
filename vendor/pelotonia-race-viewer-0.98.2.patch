@@ -1,0 +1,210 @@
+diff --git a/source/src/viewer/ViewerController.js b/source/src/viewer/ViewerController.js
+index dfa2782..ec8f1c9 100644
+--- a/source/src/viewer/ViewerController.js
++++ b/source/src/viewer/ViewerController.js
+@@ -158,6 +158,11 @@ export class ViewerController {
+       interpolation: feed.route.interpolation,
+       distanceStations: feed.route.distanceStations,
+     });
++    // The experimental full-distance schematic is a visual fixture. Its
++    // multi-pass shadow map is disproportionately expensive on integrated
++    // GPUs; diffuse light remains and recorded positions stay untouched.
++    this.sun.castShadow = !(feed.synthetic===true&&
++      feed.route.points?.length===2&&this.route.length>40000);
+     this.weatherEffects?.dispose();this.roadFlags?.dispose();
+     this.environment?.dispose();
+     this.field?.dispose();
+@@ -354,7 +359,8 @@ export class ViewerController {
+     const snapshot = this.sample(time);
+     const coverage=routeCoverage(snapshot.positions,this.route.length,time);
+     const sampled=performance.now();
+-    this.field.update(snapshot, this.route, time);
++    this.field.update(snapshot, this.route, time,
++      this.target?.type==='rider'?this.target.id:null);
+     const rigged=performance.now();
+     const poses = [...this.field.riderTransforms.values()];
+     const targets = targetPoses(poses, this.target);
+diff --git a/source/src/viewer/environment.js b/source/src/viewer/environment.js
+index bb2b6d4..0b33a92 100644
+--- a/source/src/viewer/environment.js
++++ b/source/src/viewer/environment.js
+@@ -298,7 +298,11 @@ export function buildEnvironment(scene, feed, route) {
+     );
+     add(edge.build());
+   }
+-  const baseCount=Math.ceil(route.length/1.8),roadDistances=[...new Set([...Array.from({length:baseCount+1},(_,i)=>i/baseCount*route.length),...(feed.route.surfaces||[]).flatMap(s=>[s.from,s.to]).filter(d=>d>=0&&d<=route.length)])].sort((a,b)=>a-b),count=roadDistances.length-1;
++  // A long, straight schematic has no bends to preserve between stations.
++  // This changes only visual tessellation, never route.at() or race data.
++  const schematicLongRoad=feed.synthetic===true&&
++    feed.route.points?.length===2&&route.length>40000;
++  const baseCount=Math.ceil(route.length/(schematicLongRoad?9:1.8)),roadDistances=[...new Set([...Array.from({length:baseCount+1},(_,i)=>i/baseCount*route.length),...(feed.route.surfaces||[]).flatMap(s=>[s.from,s.to]).filter(d=>d>=0&&d<=route.length)])].sort((a,b)=>a-b),count=roadDistances.length-1;
+   const roadPositions = [],
+     roadIndices = [];
+   for (let i = 0; i <= count; i++) {
+diff --git a/source/src/viewer/cyclists.js b/source/src/viewer/cyclists.js
+index 66ab1a7..83ba703 100644
+--- a/source/src/viewer/cyclists.js
++++ b/source/src/viewer/cyclists.js
+@@ -147,6 +147,13 @@ export class CyclistField {
+   constructor(scene, feed) {
+     this.scene = scene;
+     this.feed = feed;this.fabricTexture=createFabricTexture();
++    // A schematic with no recorded lanes has multiple source identities at
++    // exactly the same pose. Retain all samples, but draw one representative
++    // rig per occupied point instead of wasting GPU work on hidden copies.
++    this.compactUnplaced=feed.synthetic===true&&
++      feed.route.points?.length===2&&
++      feed.route.distanceStations?.at(-1)>40000&&
++      feed.frames.every(frame=>frame.positions.every(p=>p.lateral===0));
+     this.textures = new TextureAssets();
+     this.groups = [];
+     this.pickables = [];
+@@ -277,20 +284,33 @@ export class CyclistField {
+       scene.add(m);
+     }
+   }
+-  update(snapshot, route, time) {
++  update(snapshot, route, time, selectedId=null) {
+     const byId = new Map(snapshot.positions.filter(p=>onDisplayRoute(p,route.length)).map((p) => [p.riderId, p]));
++    let visibleIds=null;
++    if(this.compactUnplaced){
++      const byPoint=new Map();
++      for(const p of byId.values()){
++        const key=`${p.groupId}/${p.distance}`;
++        if(!byPoint.has(key)||p.riderId===selectedId)
++          byPoint.set(key,p.riderId);
++      }
++      visibleIds=new Set(byPoint.values());
++    }
+     this.riderTransforms.clear();
+     for (const group of this.groups) {
++      let visibleIndex=0;
+       for (let i = 0; i < group.riders.length; i++) {
+         const r = group.riders[i],
+           p = byId.get(r.id);
+         const root = new T.Object3D();
+         if (!p) {
+-          root.scale.setScalar(0);
+-          root.updateMatrix();
+-          group.body.setMatrixAt(i, root.matrix);
+-          group.torso.setMatrixAt(i, root.matrix);
+-          group.upperBody.setMatrixAt(i, root.matrix);
++          if(!this.compactUnplaced){
++            root.scale.setScalar(0);
++            root.updateMatrix();
++            group.body.setMatrixAt(i, root.matrix);
++            group.torso.setMatrixAt(i, root.matrix);
++            group.upperBody.setMatrixAt(i, root.matrix);
++          }
+           continue;
+         }
+         const pose = route.at(p.distance, p.lateral);
+@@ -301,9 +321,15 @@ export class CyclistField {
+         root.updateMatrix();
+         const upperLocal = crashUpper(upperBodyMatrix(motion.lift,motion.pitch),p.crash);
+         const upperMatrix = root.matrix.clone().multiply(upperLocal);
+-        group.body.setMatrixAt(i, root.matrix);
+-        group.torso.setMatrixAt(i, upperMatrix);
+-        group.upperBody.setMatrixAt(i, upperMatrix);
++        if(!visibleIds||visibleIds.has(r.id)){
++          const slot=this.compactUnplaced?visibleIndex++:i;
++          group.body.setMatrixAt(slot, root.matrix);
++          group.torso.setMatrixAt(slot, upperMatrix);
++          group.upperBody.setMatrixAt(slot, upperMatrix);
++          if(this.compactUnplaced)
++            for(const mesh of [group.body,group.torso,group.upperBody])
++              mesh.userData.riders[slot]=r;
++        }
+         this.riderTransforms.set(r.id, {
+           ...pose,
+           rider: r,
+@@ -323,14 +349,19 @@ export class CyclistField {
+           helmetColor: group.helmetColor,
+         });
+       }
++      if(this.compactUnplaced)
++        for(const mesh of [group.body,group.torso,group.upperBody])
++          mesh.count=visibleIndex;
+       group.body.instanceMatrix.needsUpdate = true;
+       group.torso.instanceMatrix.needsUpdate = true;
+       group.upperBody.instanceMatrix.needsUpdate = true;
+     }
+     let index = 0;
+     for (const r of this.feed.riders) {
++      if(visibleIds&&!visibleIds.has(r.id))continue;
+       const pose = this.riderTransforms.get(r.id);
+       for (let s of [-1, 1]) {
++        if(this.compactUnplaced)this.wheels.userData.riders[index]=r;
+         if (!pose) {
+           this.scratch.scale.setScalar(0);
+           this.scratch.updateMatrix();
+@@ -405,11 +436,13 @@ export class CyclistField {
+       this.armUpper,
+       this.armLower,
+       this.wheels,
+-    ])
++    ]){
++      if(this.compactUnplaced)m.count=index;
+       m.instanceMatrix.needsUpdate = true;
++    }
+     if (this.armUpper.instanceColor)
+       this.armUpper.instanceColor.needsUpdate = true;
+-    this.bibs.update(this.riderTransforms);
++    this.bibs.update(this.riderTransforms,visibleIds);
+   }
+   limb(mesh, index, a, b, parent, radialScale=1) {
+     const d = b.clone().sub(a);
+diff --git a/source/src/viewer/bibs.js b/source/src/viewer/bibs.js
+index b3ac461..af1947c 100644
+--- a/source/src/viewer/bibs.js
++++ b/source/src/viewer/bibs.js
+@@ -63,10 +63,11 @@ export class RiderBibs {
+     scene.add(this.mesh);
+     this.scene = scene;
+   }
+-  update(transforms) {
++  update(transforms,visibleIds=null) {
+     const attr = this.mesh.geometry.attributes.position;
+     this.riders.forEach((r, i) => {
+-      const pose = transforms.get(r.id);
++      const pose = visibleIds&&!visibleIds.has(r.id)?null:
++        transforms.get(r.id);
+       for (let k = 0; k < 6; k++) {
+         const p = pose
+           ? this.local[k].clone().applyMatrix4(pose.upperMatrix || pose.matrix)
+diff --git a/source/test/cyclists.test.js b/source/test/cyclists.test.js
+index 8d1c0da..eb536e1 100644
+--- a/source/test/cyclists.test.js
++++ b/source/test/cyclists.test.js
+@@ -17,6 +17,31 @@ const context = {
+ global.document = {
+   createElement: () => ({ width: 0, height: 0, getContext: () => context }),
+ };
++for(const riderCategory of ['men','women'])for(const riderCount of [30,150])
++test(`${riderCount} ${riderCategory} unplaced schematic riders retain samples but draw one rig`,()=>{
++  const feed=demoFeed(riderCount,'orchard',riderCategory);
++  feed.route.points=[[0,0,0],[0,0,120000]];
++  feed.route.distanceStations=[0,120000];
++  for(const frame of feed.frames)
++    for(const position of frame.positions)position.lateral=0;
++  const scene=new T.Scene(),route=createRoute(feed.route.points,
++    {distanceStations:feed.route.distanceStations});
++  const field=new CyclistField(scene,feed);
++  assert.equal(field.compactUnplaced,true);
++  const snapshot=createSampler(feed)(110);
++  for(const position of snapshot.positions){
++    position.distance=1100;position.groupId='peloton';
++  }
++  const source=JSON.stringify(snapshot);
++  field.update(snapshot,route,110,'r8');
++  assert.equal(field.riderTransforms.size,riderCount);
++  assert.equal(field.wheels.count,2);
++  assert.equal(field.wheels.userData.riders[0].id,'r8');
++  assert.equal(field.groups.reduce((sum,group)=>sum+group.body.count,0),1);
++  assert.equal(JSON.stringify(snapshot),source);
++  field.dispose();
++  assert.equal(scene.children.length,0);
++});
+ test("instanced rider picking stays correct after a large timeline seek", () => {
+   const feed = demoFeed(30),
+     scene = new T.Scene(),
