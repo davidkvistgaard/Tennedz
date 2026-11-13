@@ -2,20 +2,15 @@ import {NextResponse} from 'next/server';
 import {protectedRoute} from '../../../../lib/auth/server';
 import {AuthError} from '../../../../lib/auth/policy.mjs';
 import {uuid} from '../../../../lib/race/server';
-import {requirePositionRaceParticipantV1} from
-  '../../../../lib/race/position-race-access-v1.mjs';
 import {verifyGameSnapshotPositionViewerDocumentV1} from
   '../../../../lib/viewer/game-snapshot-position-viewer-v1.mjs';
-import {recordedGameBroadcastV1,
-  RECORDED_GAME_BROADCAST_RATE} from
-  '../../../../lib/viewer/recorded-game-broadcast-v1.mjs';
+import {scheduledGameBroadcastV2} from
+  '../../../../lib/viewer/scheduled-game-broadcast-v2.mjs';
 import {winterPositionPointsPreviewV1} from
   '../../../../lib/race/winter-position-points-preview-v1.mjs';
 
 export const GET=protectedRoute(async(req,context,auth)=>{
   const eventId=uuid(new URL(req.url).searchParams.get('event_id'));
-  await requirePositionRaceParticipantV1(
-    auth.db,eventId,auth.team.id);
   const {data:event,error:eventError}=await auth.db.from('events')
     .select('status,engine_version,stage_profile_id,scheduled_at')
     .eq('id',eventId).maybeSingle();
@@ -44,7 +39,7 @@ export const GET=protectedRoute(async(req,context,auth)=>{
   let broadcast,verified;
   try{
     verified=verifyGameSnapshotPositionViewerDocumentV1(document);
-    broadcast=recordedGameBroadcastV1({recorded_at,
+    broadcast=scheduledGameBroadcastV2({recorded_at,
       scheduled_at:event.scheduled_at,
       race_id:verified.raceId,duration:verified.feed.duration,
       events:verified.feed.events},Date.now());
@@ -52,9 +47,9 @@ export const GET=protectedRoute(async(req,context,auth)=>{
     throw new AuthError('POINTS_PREVIEW_UNAVAILABLE',
       'The recorded finish failed validation.',409);
   }
-  const firstFinishAt=broadcast.publicationAtMs+
-    Math.ceil(verified.feed.duration*1000/
-      RECORDED_GAME_BROADCAST_RATE);
+  const firstFinishAt=broadcast.finishAtMs??
+    broadcast.publicationAtMs+
+      verified.feed.duration*1000/broadcast.clock.rate;
   if(Date.now()<firstFinishAt)
     throw new AuthError('POINTS_PREVIEW_PENDING',
       'Points appear after the shared replay reaches the finish.',425);

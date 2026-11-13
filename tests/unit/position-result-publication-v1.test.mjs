@@ -12,11 +12,11 @@ const source={race_id:'race',duration:120,
   events:[{id:'start',time:0},{id:'finish',time:120}]};
 const db={rpc:async()=>({data:source,error:null})};
 
-test('official results remain hidden through the first shared finish',async()=>{
+test('result endpoints remain hidden until the shared finish',async()=>{
   assert.equal(await positionResultPublishedV1(db,event,start-1),false);
-  assert.equal(await positionResultPublishedV1(db,event,start+1999),false);
-  assert.equal(await positionResultPublishedV1(db,event,start+2000),true);
-  assert.equal(await positionResultPublishedV1(db,event,start+40_000),true);
+  assert.equal(await positionResultPublishedV1(db,event,start+1_799_999),false);
+  assert.equal(await positionResultPublishedV1(db,event,start+1_800_000),true);
+  assert.equal(await positionResultPublishedV1(db,event,start+7_200_000),true);
 });
 
 test('historic engines keep their published results',async()=>{

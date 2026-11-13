@@ -174,6 +174,17 @@ export default function ViewerPreviewScene({feed,coverage,mode='recorded',
           aria-expanded={detailsOpen} onClick={()=>setDetailsOpen(!detailsOpen)}>
           {detailsOpen?'Close details':'Race details'}</button>
       </nav>
+      {mode==='position'&&clock.version===
+        'scheduled-game-broadcast-v2'&&finishEvidence?
+        <div className="race-theatre-result-ready" role="status">
+          <div><strong>Preliminary finish available</strong>
+            <span>Recorded crossings{pointsPreview?
+              ' and points preview':''}. Ties remain unresolved;
+              no official result or points are awarded.</span></div>
+          <button type="button" onClick={()=>{
+            setDetailsOpen(true);setTab('results');
+          }}>View preliminary result</button>
+        </div>:null}
       <nav className="race-theatre-tools" aria-label="Camera controls">
         <button aria-label="Orbit camera left" onClick={()=>
           viewerRef.current?.orbit(-Math.PI/6)}>↶</button>
@@ -338,7 +349,9 @@ export default function ViewerPreviewScene({feed,coverage,mode='recorded',
           <div><small>START</small><small>{Math.round(progress)}% OF RACE</small>
             <small>FINISH</small></div>
         </div>
-        <span className="race-theatre-rate">{clock.rate}× shared</span>
+        <span className="race-theatre-rate">{clock.version===
+          'scheduled-game-broadcast-v2'?'30 min shared live race':
+          `${clock.rate}× shared`}</span>
       </div>
       <div className="race-theatre-footnote">
         <span>Camera is local · {mode==='lab'?'presentation time':
